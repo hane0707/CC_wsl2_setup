@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code WSL2 セットアップガイド</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0e1117;
+    --surface: #161b27;
+    --surface2: #1e2535;
+    --border: #2a3347;
+    --text: #cdd6f4;
+    --muted: #6c7a96;
+    --accent: #89b4fa;
+    --accent2: #cba6f7;
+    --green: #a6e3a1;
+    --yellow: #f9e2af;
+    --red: #f38ba8;
+    --teal: #94e2d5;
+    --tag-bg: #1e2d45;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans JP', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-end;
+    flex-shrink: 0;
+    padding-top: 4px;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .meta-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    width: 28px;
+    text-align: right;
+  }
+
+  .meta-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  /* ヘッダー */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 40px 48px 32px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .header-left h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .header-left p {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .badge.env { border-color: #89b4fa44; color: var(--accent); background: #89b4fa0d; }
+  .badge.warn { border-color: #f9e2af44; color: var(--yellow); background: #f9e2af0d; }
+
+  /* レイアウト */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 110px);
+  }
+
+  /* サイドバー */
+  nav {
+    border-right: 1px solid var(--border);
+    padding: 28px 0;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+
+  nav .nav-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    padding: 0 20px 8px;
+    text-transform: uppercase;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 20px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  nav a:hover { color: var(--text); background: var(--surface); }
+  nav a.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+
+  nav .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    width: 18px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  nav .nav-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 16px;
+  }
+
+  /* メインコンテンツ */
+  main {
+    padding: 36px 48px 80px;
+    max-width: 820px;
+  }
+
+  /* セクション */
+  .section {
+    margin-bottom: 52px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    background: var(--tag-bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .section-header h2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .section-header .tag {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .tag.required  { background: #f38ba815; border: 1px solid #f38ba844; color: var(--red); }
+  .tag.recommend { background: #a6e3a115; border: 1px solid #a6e3a144; color: var(--green); }
+  .tag.optional  { background: #6c7a9620; border: 1px solid #6c7a9644; color: var(--muted); }
+  /* 旧クラス互換 */
+  .tag.native-only { background: #f9e2af15; border: 1px solid #f9e2af44; color: var(--yellow); }
+  .tag.all { background: #a6e3a115; border: 1px solid #a6e3a144; color: var(--green); }
+
+  /* コピーボタン */
+  .copy-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+  /* 注意ボックス */
+  .notice {
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: flex;
+    gap: 12px;
+  }
+
+  .notice.info { background: #89b4fa0d; border-left: 3px solid var(--accent); }
+  .notice.warn { background: #f9e2af0d; border-left: 3px solid var(--yellow); }
+  .notice.danger { background: #f38ba80d; border-left: 3px solid var(--red); }
+  .notice.success { background: #a6e3a10d; border-left: 3px solid var(--green); }
+
+  .notice-icon { flex-shrink: 0; font-size: 14px; line-height: 1.7; }
+  .notice p { color: var(--text); }
+  .notice strong { font-weight: 500; }
+
+  /* コードブロック */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 12px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 右上のCOPYボタン */
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+    z-index: 1;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--tag-bg); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+  /* ラベル行：「タイトル」+「env-tag」を横並び、右端にCOPY用の余白 */
+  .code-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 70px 8px 14px; /* 右70pxはCOPYボタン用スペース */
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .code-label .label-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .code-block .env-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .env-tag.win  { background: #89b4fa15; color: #89b4fa; border: 1px solid #89b4fa33; }
+  .env-tag.wsl  { background: #a6e3a115; color: #a6e3a1; border: 1px solid #a6e3a133; }
+  .env-tag.file { background: #cba6f715; color: #cba6f7; border: 1px solid #cba6f733; }
+
+  .code-block pre {
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .code-block pre .comment { color: var(--muted); }
+  .code-block pre .cmd { color: var(--teal); }
+  .code-block pre .str { color: var(--green); }
+  .code-block pre .key { color: var(--accent2); }
+  .code-block pre .val { color: var(--yellow); }
+
+  /* インライン */
+  .inline-code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--teal);
+  }
+
+  p { margin-bottom: 10px; font-size: 13px; }
+
+  /* ステップリスト */
+  .step-list {
+    list-style: none;
+    margin: 12px 0;
+  }
+
+  .step-list li {
+    display: flex;
+    gap: 12px;
+    padding: 7px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step-list li:last-child { border-bottom: none; }
+
+  .step-list .li-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+    width: 20px;
+    padding-top: 1px;
+  }
+
+  /* 比較表 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 12.5px;
+  }
+
+  th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+
+  td.ok { color: var(--green); }
+  td.ng { color: var(--red); }
+  td.warn-td { color: var(--yellow); }
+  td.key-col { font-weight: 500; color: var(--text); }
+
+  /* フローチャート */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 16px 0;
+  }
+
+  .flow-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    font-size: 13px;
+  }
+
+  .flow-item:first-child { border-radius: 4px 4px 0 0; }
+  .flow-item:last-child { border-radius: 0 0 4px 4px; }
+  .flow-item + .flow-item { border-top: none; }
+
+  .flow-icon { font-size: 16px; flex-shrink: 0; }
+  .flow-arrow {
+    width: 1px;
+    height: 12px;
+    background: var(--border);
+    margin: 0 0 0 23px;
+  }
+
+  .flow-item strong { color: var(--accent); font-weight: 500; }
+  .flow-item .flow-note { color: var(--muted); font-size: 11px; margin-left: auto; font-family: 'IBM Plex Mono', monospace; }
+
+  /* セクション区切り */
+  .section-group-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 36px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-group-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Claude Code — WSL2 セットアップガイド</h1>
+    <p>Windows Terminal + WSL2 (Ubuntu) + GitHub 連携の完全手順</p>
+    <div class="badge-row">
+      <span class="badge env">Windows 10/11</span>
+      <span class="badge env">WSL2 Ubuntu</span>
+      <span class="badge env">Claude Code CLI</span>
+      <span class="badge warn">ネイティブインストール済み向け注記あり</span>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-row"><span class="meta-label">作成</span><span class="meta-val">2025-03-31</span></div>
+    <div class="meta-row"><span class="meta-label">更新</span><span class="meta-val">2026-03-31</span></div>
+    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">1.8</span></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav>
+    <div class="nav-label">セットアップ手順</div>
+    <a href="#pre" class="active"><span class="step-num">前</span>前提確認・注意事項</a>
+    <a href="#s1"><span class="step-num">1</span>WSL2 インストール</a>
+    <a href="#s2"><span class="step-num">2</span>.wslconfig 設定</a>
+    <a href="#s3"><span class="step-num">3</span>Ubuntu 初期設定</a>
+    <a href="#s4"><span class="step-num">4</span>Claude Code インストール</a>
+    <a href="#s5"><span class="step-num">5</span>サンドボックス &amp; settings.json</a>
+    <a href="#s6"><span class="step-num">6</span>認証 &amp; 動作確認</a>
+    <a href="#s7"><span class="step-num">7</span>Git 設定</a>
+    <a href="#s8"><span class="step-num">8</span>GitHub SSH 連携</a>
+    <a href="#s9"><span class="step-num">9</span>Windows Terminal 設定</a>
+    <div class="nav-divider"></div>
+    <div class="nav-label">補足</div>
+    <a href="#tips"><span class="step-num">+</span>運用上の注意点</a>
+  </nav>
+
+  <main>
+
+    <!-- 前提確認 -->
+    <div class="section" id="pre">
+      <div class="section-header">
+        <div class="step-badge">前提</div>
+        <h2>前提確認・ネイティブインストール済みの場合</h2>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>ネイティブインストール済みの場合：</strong>WSL2側とネイティブWindows側はそれぞれ独立したバイナリです。競合は起きませんが、PATH混入に注意してください。本手順の<strong>STEP 3・4・6</strong>に追加の注記があります。</p>
+      </div>
+
+      <p>セットアップを始める前に、各コンポーネントの関係を把握しておきましょう。</p>
+
+      <div style="margin: 16px 0 28px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface);">
+        <div style="padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border);">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.8px; color: var(--muted); text-transform: uppercase;">アーキテクチャ概要</span>
+        </div>
+        <div style="padding: 12px;">
+<svg width="100%" viewBox="0 0 680 980" style="display:block; font-family: 'IBM Plex Mono', 'IBM Plex Sans JP', monospace;">
+<style>
+  .dg-label-lg { font-size: 13px; font-weight: 600; }
+  .dg-label-sm { font-size: 11px; font-weight: 400; }
+  /* gray */
+  .bg-gray   { fill: #2a3347; stroke: #3d4f6a; }
+  .fg-gray   { fill: #cdd6f4; }
+  .fg-gray-s { fill: #6c7a96; }
+  /* teal */
+  .bg-teal   { fill: #0d2a2a; stroke: #1a4f4f; }
+  .fg-teal   { fill: #94e2d5; }
+  .fg-teal-s { fill: #5ab8aa; }
+  /* amber */
+  .bg-amber  { fill: #2a1f0a; stroke: #4a380f; }
+  .fg-amber  { fill: #f9e2af; }
+  .fg-amber-s{ fill: #c9a85a; }
+  /* coral */
+  .bg-coral  { fill: #2a0f0a; stroke: #4a1f15; }
+  .fg-coral  { fill: #f5b8a8; }
+  .fg-coral-s{ fill: #c07060; }
+  /* green */
+  .bg-green  { fill: #0a1f0a; stroke: #1a4a1a; }
+  .fg-green  { fill: #a6e3a1; }
+  .fg-green-s{ fill: #5ab055; }
+  /* purple */
+  .bg-purple { fill: #1a0f2a; stroke: #3a2060; }
+  .fg-purple { fill: #cba6f7; }
+  .fg-purple-s{ fill: #8a60c0; }
+  /* blue */
+  .bg-blue   { fill: #0a1527; stroke: #1a3a6a; }
+  .fg-blue   { fill: #89b4fa; }
+  .fg-blue-s { fill: #4a7acc; }
+  /* divider */
+  .dg-divider { stroke: #3d4f6a; }
+</style>
+
+<!-- Layer 0: Windows OS -->
+<rect x="16" y="12" width="648" height="960" rx="18" class="bg-gray" stroke-width="1.5"/>
+<text x="40" y="44" class="dg-label-lg fg-gray">Windows OS</text>
+<text x="40" y="62" class="dg-label-sm fg-gray-s">ホスト環境 · ファイルシステム · プロセス管理</text>
+
+<!-- Windows Terminal -->
+<rect x="40" y="80" width="608" height="56" rx="10" class="bg-gray" stroke-width="1.2"/>
+<text x="344" y="104" class="dg-label-lg fg-gray" text-anchor="middle">Windows Terminal</text>
+<text x="344" y="122" class="dg-label-sm fg-gray-s" text-anchor="middle">WSL2 / PowerShell / CMD タブを切り替えるターミナルアプリ</text>
+
+<!-- .wslconfig -->
+<rect x="40" y="152" width="296" height="62" rx="10" class="bg-gray" stroke-width="1.2"/>
+<text x="188" y="176" class="dg-label-lg fg-gray" text-anchor="middle">.wslconfig</text>
+<text x="188" y="194" class="dg-label-sm fg-gray-s" text-anchor="middle">C:\Users\name\.wslconfig</text>
+<text x="188" y="210" class="dg-label-sm fg-gray-s" text-anchor="middle">WSL2 メモリ・CPU 上限</text>
+
+<!-- .claude.json -->
+<rect x="352" y="152" width="296" height="62" rx="10" class="bg-gray" stroke-width="1.2"/>
+<text x="500" y="176" class="dg-label-lg fg-gray" text-anchor="middle">~/.claude.json</text>
+<text x="500" y="194" class="dg-label-sm fg-gray-s" text-anchor="middle">認証トークン・オンボーディング状態</text>
+<text x="500" y="210" class="dg-label-sm fg-gray-s" text-anchor="middle">Claude Code が自動管理</text>
+
+<!-- Layer 1: WSL2 VM -->
+<rect x="40" y="230" width="608" height="718" rx="14" class="bg-teal" stroke-width="1.5"/>
+<text x="64" y="258" class="dg-label-lg fg-teal">WSL2 (Ubuntu)</text>
+<text x="64" y="276" class="dg-label-sm fg-teal-s">Linux 仮想マシン — ext4 FS · ~/projects/ 以下で作業</text>
+
+<!-- MCP サーバー -->
+<rect x="64" y="294" width="568" height="122" rx="10" class="bg-amber" stroke-width="1.2"/>
+<text x="348" y="318" class="dg-label-lg fg-amber" text-anchor="middle">MCP サーバー（sandbox 外で動作）</text>
+<text x="348" y="336" class="dg-label-sm fg-amber-s" text-anchor="middle">sandbox の外で起動するため .env や SSH キーを</text>
+<text x="348" y="352" class="dg-label-sm fg-amber-s" text-anchor="middle">読み取り外部送信できるリスクがある</text>
+
+<rect x="80" y="366" width="148" height="38" rx="6" class="bg-amber" stroke-width="1"/>
+<text x="154" y="383" class="dg-label-lg fg-amber" text-anchor="middle">Gmail MCP</text>
+<text x="154" y="397" class="dg-label-sm fg-amber-s" text-anchor="middle">ユーザーが明示追加</text>
+
+<rect x="244" y="366" width="148" height="38" rx="6" class="bg-amber" stroke-width="1"/>
+<text x="318" y="383" class="dg-label-lg fg-amber" text-anchor="middle">GitHub MCP</text>
+<text x="318" y="397" class="dg-label-sm fg-amber-s" text-anchor="middle">ユーザーが明示追加</text>
+
+<rect x="408" y="366" width="208" height="38" rx="6" class="bg-coral" stroke-width="1"/>
+<text x="512" y="383" class="dg-label-lg fg-coral" text-anchor="middle">.mcp.json (repo)</text>
+<text x="512" y="397" class="dg-label-sm fg-coral-s" text-anchor="middle">enableAllProjectMcpServers: false でブロック</text>
+
+<!-- settings.json -->
+<rect x="64" y="432" width="568" height="134" rx="10" class="bg-green" stroke-width="1.2"/>
+<text x="348" y="456" class="dg-label-lg fg-green" text-anchor="middle">~/.claude/settings.json</text>
+<text x="348" y="474" class="dg-label-sm fg-green-s" text-anchor="middle">ユーザーグローバル設定 — Claude Code の全動作を制御</text>
+
+<rect x="80" y="488" width="168" height="62" rx="6" class="bg-green" stroke-width="1"/>
+<text x="164" y="510" class="dg-label-lg fg-green" text-anchor="middle">dangerouslySkip</text>
+<text x="164" y="526" class="dg-label-lg fg-green" text-anchor="middle">Permissions</text>
+<text x="164" y="542" class="dg-label-sm fg-green-s" text-anchor="middle">"disable" で無効化</text>
+
+<rect x="264" y="488" width="168" height="62" rx="6" class="bg-green" stroke-width="1"/>
+<text x="348" y="510" class="dg-label-lg fg-green" text-anchor="middle">enableAllProject</text>
+<text x="348" y="526" class="dg-label-lg fg-green" text-anchor="middle">McpServers</text>
+<text x="348" y="542" class="dg-label-sm fg-green-s" text-anchor="middle">false で自動読込ブロック</text>
+
+<rect x="448" y="488" width="168" height="62" rx="6" class="bg-green" stroke-width="1"/>
+<text x="532" y="510" class="dg-label-lg fg-green" text-anchor="middle">permissions {}</text>
+<text x="532" y="526" class="dg-label-sm fg-green-s" text-anchor="middle">allow / ask / deny</text>
+<text x="532" y="542" class="dg-label-sm fg-green-s" text-anchor="middle">ツール実行の可否制御</text>
+
+<!-- Layer 2: Sandbox -->
+<rect x="64" y="582" width="568" height="346" rx="12" class="bg-purple" stroke-width="1.5"/>
+<text x="88" y="608" class="dg-label-lg fg-purple">Sandbox（bubblewrap）</text>
+<text x="88" y="626" class="dg-label-sm fg-purple-s">OS レベル隔離 — Bash ツールのみに適用</text>
+<text x="88" y="644" class="dg-label-sm fg-purple-s">Read / Edit / WebFetch / MCP には適用されない</text>
+
+<rect x="88" y="660" width="248" height="62" rx="8" class="bg-coral" stroke-width="1.2"/>
+<text x="212" y="681" class="dg-label-lg fg-coral" text-anchor="middle">sandbox.filesystem</text>
+<text x="212" y="697" class="dg-label-lg fg-coral" text-anchor="middle">.denyRead</text>
+<text x="212" y="714" class="dg-label-sm fg-coral-s" text-anchor="middle">~/.ssh  ~/.aws  .env  *.pem</text>
+
+<rect x="352" y="660" width="264" height="62" rx="8" class="bg-coral" stroke-width="1.2"/>
+<text x="484" y="681" class="dg-label-lg fg-coral" text-anchor="middle">sandbox.network</text>
+<text x="484" y="697" class="dg-label-lg fg-coral" text-anchor="middle">.allowedDomains</text>
+<text x="484" y="714" class="dg-label-sm fg-coral-s" text-anchor="middle">api.anthropic.com  github.com  ...</text>
+
+<!-- Claude Code プロセス -->
+<rect x="88" y="738" width="528" height="174" rx="8" class="bg-blue" stroke-width="1.2"/>
+<text x="352" y="762" class="dg-label-lg fg-blue" text-anchor="middle">Claude Code CLI プロセス</text>
+<text x="352" y="780" class="dg-label-sm fg-blue-s" text-anchor="middle">permissions.deny が内蔵ツールへの副防御</text>
+<text x="352" y="796" class="dg-label-sm fg-blue-s" text-anchor="middle">sandbox と二重設定することで多層防御を実現</text>
+
+<rect x="104" y="810" width="112" height="48" rx="6" class="bg-blue" stroke-width="1"/>
+<text x="160" y="831" class="dg-label-lg fg-blue" text-anchor="middle">Read / Edit</text>
+<text x="160" y="849" class="dg-label-sm fg-blue-s" text-anchor="middle">ファイル操作</text>
+
+<rect x="232" y="810" width="112" height="48" rx="6" class="bg-blue" stroke-width="1"/>
+<text x="288" y="831" class="dg-label-lg fg-blue" text-anchor="middle">Bash ツール</text>
+<text x="288" y="849" class="dg-label-sm fg-blue-s" text-anchor="middle">sandbox 適用</text>
+
+<rect x="360" y="810" width="140" height="48" rx="6" class="bg-blue" stroke-width="1"/>
+<text x="430" y="831" class="dg-label-lg fg-blue" text-anchor="middle">WebFetch / Search</text>
+<text x="430" y="849" class="dg-label-sm fg-blue-s" text-anchor="middle">外部アクセス</text>
+
+<rect x="516" y="810" width="84" height="48" rx="6" class="bg-blue" stroke-width="1"/>
+<text x="558" y="831" class="dg-label-lg fg-blue" text-anchor="middle">Agent</text>
+<text x="558" y="849" class="dg-label-sm fg-blue-s" text-anchor="middle">サブエージェント</text>
+
+<!-- permissions.deny ライン -->
+<line x1="104" y1="874" x2="600" y2="874" class="dg-divider" stroke-width="1" stroke-dasharray="5 4" fill="none"/>
+<text x="352" y="892" class="dg-label-sm fg-blue-s" text-anchor="middle">permissions.deny — Bash(rm -rf *)  Bash(sudo *)  Read(~/.ssh/**)  Edit(~/.bashrc) ...</text>
+</svg>
+        </div>
+      </div>
+
+      <p>以下を確認してから進めてください。</p>
+
+      <table>
+        <tr>
+          <th>確認項目</th>
+          <th>要件</th>
+          <th>確認方法</th>
+        </tr>
+        <tr>
+          <td class="key-col">Windows バージョン</td>
+          <td>Windows 10 21H2 以上、または Windows 11</td>
+          <td><span class="inline-code">Win + R → winver</span></td>
+        </tr>
+        <tr>
+          <td class="key-col">CPU 仮想化</td>
+          <td>Virtualization: Enabled</td>
+          <td>タスクマネージャー → パフォーマンス → CPU</td>
+        </tr>
+        <tr>
+          <td class="key-col">空きメモリ</td>
+          <td>8GB 以上推奨（最低 4GB）</td>
+          <td>タスクマネージャー → パフォーマンス → メモリ</td>
+        </tr>
+        <tr>
+          <td class="key-col">空きディスク</td>
+          <td>10GB 以上</td>
+          <td>エクスプローラー → PC</td>
+        </tr>
+        <tr>
+          <td class="key-col">Claude アカウント</td>
+          <td>Pro / Max / Teams / Enterprise / Console のいずれか</td>
+          <td>無料プランは不可</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="section" id="s1">
+      <div class="section-header">
+        <div class="step-badge">STEP 1</div>
+        <h2>WSL2 インストール</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <div class="notice success">
+        <span class="notice-icon">✅</span>
+        <p><strong>この手順はすでに完了しています。</strong> ログで <span class="inline-code">yourname@hostname:~$</span> が表示されUbuntuに入れているので、WSL2のインストールは成功しています。STEP 2 に進んでください。</p>
+      </div>
+
+      <p>以下は記録として残します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">PowerShell（管理者）</span><span class="env-tag win">Windows</span></div>
+        <pre><span class="cmd">wsl</span> --install -d Ubuntu</pre>
+      </div>
+
+      <p>再起動後、自動的に Ubuntu のセットアップが始まります。ユーザー名・パスワードを設定して完了です。</p>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>よくある誤操作：</strong> Ubuntu内（プロンプトが <span class="inline-code">yourname@hostname:~$</span> の状態）で <span class="inline-code">wsl shutdown</span> と打っても「command not found」になります。<span class="inline-code">wsl --shutdown</span> は <strong>PowerShell から実行するコマンド</strong>です。Ubuntu から抜けるには <span class="inline-code">exit</span> を使います。</p>
+      </div>
+
+      <p>プロンプトの見た目で今どちらにいるかが分かります。</p>
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">Ubuntu 内（WSL）のプロンプト — Linux コマンドのみ有効</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre>yourname@hostname:~$</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">PowerShell のプロンプト — ここで wsl --shutdown を実行する</span><span class="env-tag win">Windows</span></div>
+        <pre>PS C:\Users\yourname></pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>STEP 2 の <span class="inline-code">wsl --shutdown</span> について：</strong> Ubuntu タブを <span class="inline-code">exit</span> で閉じてからPowerShellで実行してください。または Windows Terminal で PowerShell タブを新たに開いて実行するのが確実です。</p>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="step-badge">STEP 2</div>
+        <h2>.wslconfig でメモリ上限を設定</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <p>Claude Code は放置するとメモリを大量消費することがあります。WSL2 全体の上限を事前に設定します。</p>
+
+      <p>エクスプローラーで <span class="inline-code">C:\Users\<あなたのユーザー名>\</span> を開き、<strong>.wslconfig</strong> というファイルを新規作成して以下を記入します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">.wslconfig（新規作成）</span><span class="env-tag file">C:\Users\YourName\.wslconfig</span></div>
+        <pre><span class="key">[wsl2]</span>
+<span class="val">memory</span>=8GB
+<span class="val">swap</span>=16GB
+
+<span class="key">[experimental]</span>
+<span class="val">autoMemoryReclaim</span>=gradual</pre>
+      </div>
+
+      <p><span class="inline-code">memory</span> は搭載 RAM の 50% が目安です（16GB 搭載なら 8GB）。</p>
+
+      <p>保存後、<strong>UbuntuタブをすべてexitまたはタブのXで閉じてから</strong>、PowerShell で以下を実行して設定を反映します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">PowerShell（Ubuntuを閉じた後に実行）</span><span class="env-tag win">Windows</span></div>
+        <pre><span class="cmd">wsl</span> --shutdown</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>何も表示されなければ成功です。「致命的なエラー」が出た場合はすでに停止済みなので無視して次へ進んでください。</p>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><span class="inline-code">wsl --shutdown</span> はWindowsのコマンドです。Ubuntu内（<span class="inline-code">yourname@hostname:~$</span> の状態）では動きません。必ずPowerShellのプロンプト（<span class="inline-code">PS C:\...</span>）から実行してください。</p>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="step-badge">STEP 3</div>
+        <h2>Ubuntu 初期設定</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <p>Windows Terminal で <strong>Ubuntu タブ</strong>を開きます。タブバー右端の <span class="inline-code">∨</span> をクリックして「Ubuntu」を選ぶか、PowerShell で <span class="inline-code">wsl</span> と入力すると入れます。プロンプトが <span class="inline-code">yourname@hostname:~$</span> のような表示になればOKです。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">パッケージ更新</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">sudo apt</span> update && <span class="cmd">sudo apt</span> upgrade -y</pre>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>ネイティブインストール済みの場合：</strong>WSL内でも PATH にWindowsの <span class="inline-code">claude.exe</span> が混入することがあります。以下で確認してください。</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">PATH 汚染の確認（/mnt/c/ が出れば汚染あり）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">echo</span> $PATH | tr ':' '\n' | <span class="cmd">grep</span> -i mnt</pre>
+      </div>
+
+      <p><span class="inline-code">/mnt/c/</span> が出た場合は汚染ありです。以下を実行して <span class="inline-code">~/.bashrc</span> にフィルタを追記します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">PATH フィルタを .bashrc に追記</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">echo</span> <span class="str">'export PATH=$(echo $PATH | tr ":" "\n" | grep -v "/mnt/c" | tr "\n" ":" | sed "s/:$//")'</span> >> ~/.bashrc</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">.bashrc を反映</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">source</span> ~/.bashrc</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>PATH汚染がない（<span class="inline-code">/mnt/c/</span> が出ない）場合はこの操作は不要です。次のステップに進んでください。</p>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="step-badge">STEP 4</div>
+        <h2>Claude Code インストール（WSL内）</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>ネイティブインストール済みの場合：</strong>WSL内への追加インストールは問題ありません。Windows側のバイナリ（<span class="inline-code">~\.local\bin\claude.exe</span>）とWSL側のバイナリは完全に独立しています。設定ファイル（<span class="inline-code">~/.claude/</span>）は認証情報を含め<strong>共有されません</strong>。WSL内で別途ログインが必要です（STEP 6）。</p>
+      </div>
+
+      <p>公式推奨のネイティブインストーラーを使います（Node.js 不要）。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">Claude Code インストール</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">curl</span> -fsSL https://claude.ai/install.sh | bash</pre>
+      </div>
+
+      <p>インストール完了後、シェルを再読み込みして動作確認します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">PATH を反映</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">source</span> ~/.bashrc</pre>
+      </div>
+
+      <p>バージョン番号が表示されれば成功です。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">バージョン確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">claude</span> --version</pre>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><span class="inline-code">npm install -g @anthropic-ai/claude-code</span> は<strong>非推奨</strong>（公式が廃止予定）。上記の <span class="inline-code">curl</span> コマンドを使ってください。</p>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="step-badge">STEP 5</div>
+        <h2>サンドボックス有効化 &amp; settings.json 設定</h2>
+        <span class="tag recommend">推奨</span>
+      </div>
+
+      <p>WSL2 限定の機能です。Claude Code が Bash ツールで実行するコマンドをサンドボックス内に隔離し、意図しないネットワーク通信やシステム変更を防ぎます。</p>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>サンドボックスの適用範囲：</strong> Bash ツールの実行のみに適用されます。Read / Write / WebSearch / WebFetch / MCP ツールやフック（Hooks）には適用されません。ファイル操作の制限は別途 <span class="inline-code">permissions</span> で設定します。</p>
+      </div>
+
+      <div class="section-group-label">5-1 依存パッケージのインストール</div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">bubblewrap + socat インストール</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">sudo apt</span> install -y bubblewrap socat</pre>
+      </div>
+
+      <div class="section-group-label">5-2 settings.json の作成（推奨設定）</div>
+
+      <p>公式リポジトリには <span class="inline-code">settings-lax</span> / <span class="inline-code">settings-bash-sandbox</span> / <span class="inline-code">settings-strict</span> の3プリセットがあります。個人のWSL2開発環境には <strong>settings-bash-sandbox をベース</strong>にした以下の設定が適しています。設定は <span class="inline-code">~/.claude/settings.json</span>（全プロジェクト共通）に置きます。プロジェクト単位で上書きしたい場合は <span class="inline-code">.claude/settings.json</span> 、適用前にテストしたい場合は <span class="inline-code">.claude/settings.local.json</span> を使ってください。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">設定ディレクトリの作成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">mkdir</span> -p ~/.claude</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">settings.json の作成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">cat</span> > ~/.claude/settings.json << <span class="str">'EOF'</span>
+{
+  "dangerouslySkipPermissions": "disable",
+  "enableAllProjectMcpServers": false,
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": false,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "allowedDomains": [
+        "api.anthropic.com",
+        "github.com",
+        "registry.npmjs.org",
+        "pypi.org"
+      ],
+      "allowUnixSockets": [],
+      "allowAllUnixSockets": false,
+      "allowLocalBinding": true
+    },
+    "filesystem": {
+      "denyRead": [
+        "~/.ssh/**",
+        "~/.aws/**",
+        "~/.gnupg/**",
+        "**/.env",
+        "**/.env.*",
+        "**/*.pem",
+        "**/*.key"
+      ]
+    },
+    "excludedCommands": []
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(node *)",
+      "Bash(ls *)",
+      "Bash(cat *)"
+    ],
+    "ask": [
+      "Bash(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(sudo *)",
+      "Bash(dd *)",
+      "Bash(mkfs *)",
+      "Bash(git push --force*)",
+      "Bash(git push *--force*)",
+      "Bash(git reset --hard*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.gnupg/**)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Edit(~/.bashrc)",
+      "Edit(~/.zshrc)",
+      "Edit(~/.ssh/**)"
+    ]
+  }
+}
+<span class="str">EOF</span></pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>各設定の意図：</strong><br>
+        <span class="inline-code">enableAllProjectMcpServers: false</span> — リポジトリの <span class="inline-code">.mcp.json</span> に仕込まれた悪意ある MCP サーバーの自動読み込みを防ぎます。MCP はサンドボックスの外で動くため、自動有効化すると SSH キーや <span class="inline-code">.env</span> を外部送信できてしまいます。<br>
+        <span class="inline-code">sandbox.filesystem.denyRead</span> — OS レベルで機密パスへの読み取りを遮断します。サンドボックスが有効なとき、Bash コマンド（<span class="inline-code">cat ~/.ssh/id_rsa</span> 等）による迂回も防止します。<br>
+        <span class="inline-code">permissions.deny</span> — 内蔵ツール（Read / Edit）への防御線です。<span class="inline-code">sandbox.filesystem.denyRead</span> と同じパスを両方に設定することで多層防御になります。ただし deny ルールが無視されるバグの報告が複数あるため（GitHub issues #6699, #24846, #27040）、<strong>sandbox.filesystem.denyRead を主防御、permissions.deny を副防御</strong>として扱ってください。</p>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>permissions.deny の限界：</strong> sandbox なしでは Bash コマンドが deny ルールを完全に迂回できます（<span class="inline-code">cat ~/.ssh/id_rsa</span> は素通りします）。<strong>sandbox と deny を両方設定して初めて多層防御</strong>になります。sandbox が有効なとき、OS レベルで同じパスが遮断されるため、どちらか一方がバグで機能しなくても残りが守ります。</p>
+      </div>
+
+      <div class="notice success">
+        <span class="notice-icon">✅</span>
+        <p>settings.json の作成はここで完了です。STEP 6 で認証を済ませた後、セッション内から動作確認を行います。</p>
+      </div>
+    </div>
+
+
+    <!-- STEP 6 -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="step-badge">STEP 6</div>
+        <h2>認証（ログイン）</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>ネイティブインストール済みの場合：</strong>Windows側でログイン済みでも、WSL内では<strong>別途ログインが必要</strong>です。同じアカウントで問題ありません。</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">Claude Code 起動・認証</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">claude</span></pre>
+      </div>
+
+      <p>ブラウザが自動で開かない場合（WSLからWindowsブラウザへの連携ができていない場合）：</p>
+
+      <p>ブラウザが自動で開かない場合、ログイン画面で <span class="inline-code">c</span> キーを押すと URL がクリップボードにコピーされます。それを Windows のブラウザに貼り付けて認証してください。または以下で <span class="inline-code">BROWSER</span> 環境変数を設定しておくと自動で開くようになります。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">BROWSER 環境変数を .bashrc に追記</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">echo</span> <span class="str">'export BROWSER="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"'</span> >> ~/.bashrc</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">.bashrc を反映</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">source</span> ~/.bashrc</pre>
+      </div>
+
+      <p>ブラウザで認証完了後、表示されるトークンをターミナルに貼り付けて Enter。Claude Code のプロンプト（<span class="inline-code">&gt;</span> の表示）が出れば認証成功です。</p>
+
+      <p>認証が完了したセッション内で、settings.json とサンドボックスが正しく有効になっているか確認します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">settings.json の構文チェック（シェルで実行）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">cat</span> ~/.claude/settings.json | python3 -m json.tool</pre>
+      </div>
+
+      <p>エラーなく整形表示されれば JSON として正しい形式です。続けて Claude Code セッション内でサンドボックス状態を確認します。</p>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><span class="inline-code">/sandbox</span> と <span class="inline-code">/doctor</span> は <strong>Claude Code のスラッシュコマンド</strong>です。シェルプロンプトから実行すると「No such file or directory」になります。必ず <span class="inline-code">claude</span> で起動したセッション内（<span class="inline-code">&gt;</span> の表示）から入力してください。</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">サンドボックスの有効確認（「Sandbox: enabled」と表示されれば完了）</span><span class="env-tag wsl">Claude Code セッション内</span></div>
+        <pre>/sandbox</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">インストール状態・設定の総合チェック</span><span class="env-tag wsl">Claude Code セッション内</span></div>
+        <pre>/doctor</pre>
+      </div>
+
+      <div class="notice success">
+        <span class="notice-icon">✅</span>
+        <p>サンドボックス有効時、Bash コマンドは <span class="inline-code">allowedDomains</span> に列挙したドメイン以外への通信がブロックされます。Docker を使う場合は <span class="inline-code">allowUnixSockets</span> に <span class="inline-code">"/var/run/docker.sock"</span> を追加してください。</p>
+      </div>
+
+      <p>確認が終わったら <span class="inline-code">/exit</span> または <span class="inline-code">Ctrl+C</span> でシェルに戻り、STEP 7 へ進みます。</p>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="step-badge">STEP 7</div>
+        <h2>Git の設定（WSL内）</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>Windows側に Git for Windows が入っていても、WSL内では Linux 版の Git を別途設定する必要があります。</p>
+      </div>
+
+      <p>まず Git が入っているか確認します。入っていなければインストールします。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">Git バージョン確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">git</span> --version</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">Git インストール（入っていない場合のみ）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">sudo apt</span> install -y git</pre>
+      </div>
+
+      <p>GitHub アカウントと合わせてユーザー情報を設定します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">ユーザー情報の設定</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">git</span> config --global user.name <span class="str">"Your Name"</span>
+<span class="cmd">git</span> config --global user.email <span class="str">"<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="671e08121527020a060e0b4904080a">[email&#160;protected]</a>"</span></pre>
+      </div>
+
+      <p>デフォルトブランチを <span class="inline-code">main</span> に設定し、Windows 混在環境での改行コード変換を無効化します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">デフォルトブランチと改行コードの設定</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">git</span> config --global init.defaultBranch main
+<span class="cmd">git</span> config --global core.autocrlf false</pre>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="step-badge">STEP 8</div>
+        <h2>GitHub SSH 連携</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <p>HTTPS ではなく SSH を使うことで、push/pull のたびにパスワード入力が不要になります。Ed25519 形式が最新の推奨方式です。保存先はそのまま Enter、パスフレーズは任意です。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">SSH 鍵の生成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">ssh-keygen</span> -t ed25519 -C <span class="str">"<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d8a1b7adaa98bdb5b9b1b4f6bbb7b5">[email&#160;protected]</a>"</span></pre>
+      </div>
+
+      <p>生成された公開鍵を表示して GitHub に登録します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">公開鍵を表示（GitHubに登録する内容）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">cat</span> ~/.ssh/id_ed25519.pub</pre>
+      </div>
+
+      <ol class="step-list">
+        <li><span class="li-num">1.</span> 表示された <span class="inline-code">ssh-ed25519 AAAA...</span> から始まる1行をコピー</li>
+        <li><span class="li-num">2.</span> GitHub → Settings → SSH and GPG keys → <strong>New SSH key</strong> を開く</li>
+        <li><span class="li-num">3.</span> Title に適当な名前（例：<span class="inline-code">WSL2-Ubuntu</span>）、Key に貼り付けて保存</li>
+      </ol>
+
+      <p>「Hi username!」と返れば接続成功です。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">接続テスト</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">ssh</span> -T <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="492e203d092e203d213c2b672a2624">[email&#160;protected]</a></pre>
+      </div>
+
+      <p>プロジェクトディレクトリを作成してリポジトリをクローンします。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">projects ディレクトリを作成してクローン</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">mkdir</span> -p ~/projects
+<span class="cmd">cd</span> ~/projects
+<span class="cmd">git</span> clone <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="26414f5266414f524e53440845494b">[email&#160;protected]</a>:yourname/yourrepo.git</pre>
+      </div>
+
+      <div class="notice danger">
+        <span class="notice-icon">🚫</span>
+        <p><strong>プロジェクトは必ず <span class="inline-code">~/projects/</span> 以下に置いてください。</strong><br>
+        <span class="inline-code">/mnt/c/</span> 配下（Windows ドライブ上）に置くとファイルI/Oが約9倍遅くなり、Claude Code のパフォーマンスが大幅に低下します。</p>
+      </div>
+    </div>
+
+    <!-- STEP 9 -->
+    <div class="section" id="s9">
+      <div class="section-header">
+        <div class="step-badge">STEP 9</div>
+        <h2>Windows Terminal の設定（任意・推奨）</h2>
+        <span class="tag recommend">推奨</span>
+      </div>
+
+      <p>Windows Terminal（タスクバーの「ターミナル」アプリ）でUbuntuをデフォルトに設定します。</p>
+
+      <ol class="step-list">
+        <li><span class="li-num">1.</span> Windows Terminal を開き <span class="inline-code">Ctrl + ,</span> で設定を開く</li>
+        <li><span class="li-num">2.</span> 左メニュー「スタートアップ」→「既定のプロファイル」を <strong>Ubuntu</strong> に変更</li>
+        <li><span class="li-num">3.</span> 保存して閉じる</li>
+      </ol>
+
+      <p>次回からターミナルを開くと直接 Ubuntu（WSL2）に入ります。</p>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>デフォルトのまま（PowerShell）でも、タブ横の <span class="inline-code">∨</span> ボタンから Ubuntu を選べます。どちらでも問題ありません。</p>
+      </div>
+    </div>
+
+    <!-- 補足 -->
+    <div class="section" id="tips">
+      <div class="section-header">
+        <div class="step-badge">補足</div>
+        <h2>運用上の注意点</h2>
+      </div>
+
+      <div class="section-group-label">よくある問題</div>
+
+      <table>
+        <tr>
+          <th>症状</th>
+          <th>原因</th>
+          <th>対処</th>
+        </tr>
+        <tr>
+          <td class="key-col">メモリ不足・動作が重い</td>
+          <td>Node.jsのヒープ肥大</td>
+          <td><span class="inline-code">.wslconfig</span> でメモリ上限を設定（STEP 2）</td>
+        </tr>
+        <tr>
+          <td class="key-col"><span class="inline-code">claude: not found</span></td>
+          <td>PATH未反映</td>
+          <td><span class="inline-code">source ~/.bashrc</span> または新しいタブで再試行</td>
+        </tr>
+        <tr>
+          <td class="key-col">ブラウザが開かない</td>
+          <td>WSL→Windowsブラウザ連携</td>
+          <td>STEP 6 の <span class="inline-code">BROWSER</span> 設定、または <span class="inline-code">c</span> キーでURLコピー</td>
+        </tr>
+        <tr>
+          <td class="key-col">MCP サーバーに接続できない</td>
+          <td>NAT モードの制限</td>
+          <td><span class="inline-code">.wslconfig</span> に <span class="inline-code">networkingMode=mirrored</span> を追加し <span class="inline-code">wsl --shutdown</span></td>
+        </tr>
+        <tr>
+          <td class="key-col">git push でエラー</td>
+          <td>SSH鍵未登録</td>
+          <td><span class="inline-code">ssh -T <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="98fff1ecd8fff1ecf0edfab6fbf7f5">[email&#160;protected]</a></span> で接続確認（STEP 8）</td>
+        </tr>
+      </table>
+
+      <div class="section-group-label">Windows側（ネイティブ）との使い分け</div>
+
+      <table>
+        <tr>
+          <th></th>
+          <th>WSL2（本手順）</th>
+          <th>ネイティブWindows</th>
+        </tr>
+        <tr>
+          <td class="key-col">サンドボックス</td>
+          <td class="ok">✓ 対応</td>
+          <td class="ng">✗ 非対応</td>
+        </tr>
+        <tr>
+          <td class="key-col">ファイルI/O</td>
+          <td class="ok">✓ 高速（Linux FS上）</td>
+          <td class="warn-td">△ 普通</td>
+        </tr>
+        <tr>
+          <td class="key-col">セットアップ</td>
+          <td class="warn-td">△ 15〜20分</td>
+          <td class="ok">✓ 5分以内</td>
+        </tr>
+        <tr>
+          <td class="key-col">MCP（Windows側）</td>
+          <td class="warn-td">△ mirrored設定が必要</td>
+          <td class="ok">✓ シンプル</td>
+        </tr>
+        <tr>
+          <td class="key-col">推奨用途</td>
+          <td>本格開発・長時間利用</td>
+          <td>素早く試す・Windowsプロジェクト</td>
+        </tr>
+      </table>
+
+      <div class="section-group-label">未完了タスク</div>
+
+      <table>
+        <tr>
+          <th>タスク</th>
+          <th>条件</th>
+          <th>対応手順</th>
+        </tr>
+        <tr>
+          <td class="key-col">seccomp フィルタのインストール</td>
+          <td>Node.js / npm を WSL 内に導入したタイミング</td>
+          <td>
+            <span class="inline-code">npm install -g @anthropic-ai/sandbox-runtime</span> を実行後、
+            <span class="inline-code">claude</span> を再起動して <span class="inline-code">/doctor</span> で
+            <span class="inline-code">seccomp filter: installed</span> になったことを確認する。
+            これにより Unix ソケット経由の通信制限が有効になる。
+          </td>
+        </tr>
+      </table>
+
+    </div>
+
+  </main>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  document.querySelectorAll('.code-block').forEach(block => {
+    const pre = block.querySelector('pre');
+    if (!pre) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'COPY';
+
+    btn.addEventListener('click', () => {
+      const text = pre.innerText;
+      const markCopied = () => {
+        btn.textContent = 'COPIED ✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+      };
+      const doFallback = () => {
+        const ta = document.crea
