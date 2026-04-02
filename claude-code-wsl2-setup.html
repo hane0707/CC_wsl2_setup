@@ -489,7 +489,7 @@
     <a href="#s5"><span class="step-num">5</span>サンドボックス &amp; settings.json</a>
     <a href="#s6"><span class="step-num">6</span>認証 &amp; 動作確認</a>
     <a href="#s7"><span class="step-num">7</span>Git 設定</a>
-    <a href="#s8"><span class="step-num">8</span>GitHub SSH 連携</a>
+    <a href="#s8"><span class="step-num">8</span>GitHub HTTPS 連携</a>
     <a href="#s9"><span class="step-num">9</span>Windows Terminal 設定</a>
     <div class="nav-divider"></div>
     <div class="nav-label">補足</div>
@@ -1100,50 +1100,71 @@
     <div class="section" id="s8">
       <div class="section-header">
         <div class="step-badge">STEP 8</div>
-        <h2>GitHub SSH 連携</h2>
+        <h2>GitHub HTTPS 連携</h2>
         <span class="tag required">必須</span>
       </div>
 
-      <p>HTTPS ではなく SSH を使うことで、push/pull のたびにパスワード入力が不要になります。Ed25519 形式が最新の推奨方式です。保存先はそのまま Enter、パスフレーズは任意です。</p>
+      <p>HTTPS + PAT（Personal Access Token）を使って GitHub に接続します。credential helper でトークンを保存しておけば、2回目以降の push/pull でパスワード入力は不要です。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">SSH 鍵の生成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">ssh-keygen</span> -t ed25519 -C <span class="str">"<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d8a1b7adaa98bdb5b9b1b4f6bbb7b5">[email&#160;protected]</a>"</span></pre>
-      </div>
-
-      <p>生成された公開鍵を表示して GitHub に登録します。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">公開鍵を表示（GitHubに登録する内容）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">cat</span> ~/.ssh/id_ed25519.pub</pre>
-      </div>
+      <p>まず GitHub で PAT を発行します。</p>
 
       <ol class="step-list">
-        <li><span class="li-num">1.</span> 表示された <span class="inline-code">ssh-ed25519 AAAA...</span> から始まる1行をコピー</li>
-        <li><span class="li-num">2.</span> GitHub → Settings → SSH and GPG keys → <strong>New SSH key</strong> を開く</li>
-        <li><span class="li-num">3.</span> Title に適当な名前（例：<span class="inline-code">WSL2-Ubuntu</span>）、Key に貼り付けて保存</li>
+        <li><span class="li-num">1.</span> GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → <strong>Generate new token</strong> を開く</li>
+        <li><span class="li-num">2.</span> Note に適当な名前（例：<span class="inline-code">WSL2-Ubuntu</span>）を入力し、有効期限を設定</li>
+        <li><span class="li-num">3.</span> スコープの <strong>repo</strong> にチェックを入れて生成</li>
+        <li><span class="li-num">4.</span> 表示されたトークン（<span class="inline-code">ghp_...</span>）をコピー — <strong>画面を閉じると再表示されません</strong></li>
       </ol>
 
-      <p>「Hi username!」と返れば接続成功です。</p>
+      <p>次に、credential helper を設定してトークンをディスクに保存します。</p>
 
       <div class="code-block">
-        <div class="code-label"><span class="label-text">接続テスト</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">ssh</span> -T <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="492e203d092e203d213c2b672a2624">[email&#160;protected]</a></pre>
+        <div class="code-label"><span class="label-text">credential helper の設定</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">git</span> config --global credential.helper store</pre>
       </div>
 
-      <p>プロジェクトディレクトリを作成してリポジトリをクローンします。</p>
+      <p>プロジェクトディレクトリを作成してリポジトリをクローンします。初回のクローン時に Username と Password を求められます。</p>
 
       <div class="code-block">
         <div class="code-label"><span class="label-text">projects ディレクトリを作成してクローン</span><span class="env-tag wsl">WSL Ubuntu</span></div>
         <pre><span class="cmd">mkdir</span> -p ~/projects
 <span class="cmd">cd</span> ~/projects
-<span class="cmd">git</span> clone <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="26414f5266414f524e53440845494b">[email&#160;protected]</a>:yourname/yourrepo.git</pre>
+<span class="cmd">git</span> clone https://github.com/yourname/yourrepo.git</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>認証を求められたら <strong>Username</strong> に GitHub ユーザー名、<strong>Password</strong> に発行した PAT（パスワードではなくトークン）を入力してください。<br>
+        入力内容は <span class="inline-code">~/.git-credentials</span> に保存され、以降の push/pull では入力不要になります。</p>
       </div>
 
       <div class="notice danger">
         <span class="notice-icon">🚫</span>
         <p><strong>プロジェクトは必ず <span class="inline-code">~/projects/</span> 以下に置いてください。</strong><br>
         <span class="inline-code">/mnt/c/</span> 配下（Windows ドライブ上）に置くとファイルI/Oが約9倍遅くなり、Claude Code のパフォーマンスが大幅に低下します。</p>
+      </div>
+
+      <div class="section-group-label">Git for Windows 側の PAT 保存（任意）</div>
+
+      <p>Windows 側（PowerShell や Git Bash）でも同じリポジトリを操作する場合は、Git for Windows の credential helper に PAT を保存します。Git for Windows をインストールすると <strong>Git Credential Manager（GCM）</strong> が標準で組み込まれており、Windows 資格情報マネージャーに安全に保存できます。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">credential helper の確認</span><span class="env-tag win">Windows（PowerShell）</span></div>
+        <pre><span class="cmd">git</span> config --global credential.helper</pre>
+      </div>
+
+      <p><span class="inline-code">manager</span> と表示されれば GCM が有効です。未設定の場合は以下で有効化します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">GCM を有効化（未設定の場合のみ）</span><span class="env-tag win">Windows（PowerShell）</span></div>
+        <pre><span class="cmd">git</span> config --global credential.helper manager</pre>
+      </div>
+
+      <p>設定後、初回の <span class="inline-code">git clone</span> または <span class="inline-code">git push</span> 時にブラウザが開いてGitHub認証画面が表示されます。ログイン後、PAT は Windows 資格情報マネージャーに自動保存され、以降は入力不要です。</p>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>ブラウザ認証ではなく PAT を直接入力したい場合は、Username に GitHub ユーザー名、Password に PAT を入力してください。GCM が Windows 資格情報マネージャーに保存します。<br>
+        保存済みの認証情報は <strong>コントロールパネル → 資格情報マネージャー → Windows 資格情報</strong> から確認・削除できます。</p>
       </div>
     </div>
 
@@ -1207,9 +1228,9 @@
           <td><span class="inline-code">.wslconfig</span> に <span class="inline-code">networkingMode=mirrored</span> を追加し <span class="inline-code">wsl --shutdown</span></td>
         </tr>
         <tr>
-          <td class="key-col">git push でエラー</td>
-          <td>SSH鍵未登録</td>
-          <td><span class="inline-code">ssh -T <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="98fff1ecd8fff1ecf0edfab6fbf7f5">[email&#160;protected]</a></span> で接続確認（STEP 8）</td>
+          <td class="key-col">git push で認証エラー</td>
+          <td>PAT未設定または期限切れ</td>
+          <td>STEP 8 を参照。PAT を再発行し <span class="inline-code">~/.git-credentials</span> を更新</td>
         </tr>
       </table>
 
