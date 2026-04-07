@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code セキュリティ設定ガイド</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0e1117;
+    --surface: #161b27;
+    --surface2: #1e2535;
+    --border: #2a3347;
+    --text: #cdd6f4;
+    --muted: #6c7a96;
+    --accent: #89b4fa;
+    --accent2: #cba6f7;
+    --green: #a6e3a1;
+    --yellow: #f9e2af;
+    --red: #f38ba8;
+    --teal: #94e2d5;
+    --tag-bg: #1e2d45;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans JP', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-end;
+    flex-shrink: 0;
+    padding-top: 4px;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .meta-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    width: 28px;
+    text-align: right;
+  }
+
+  .meta-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  /* ヘッダー */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 40px 48px 32px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .header-left h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .header-left p {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .badge.env { border-color: #89b4fa44; color: var(--accent); background: #89b4fa0d; }
+  .badge.warn { border-color: #f9e2af44; color: var(--yellow); background: #f9e2af0d; }
+  .badge.src { border-color: #cba6f744; color: var(--accent2); background: #cba6f70d; }
+
+  /* レイアウト */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 110px);
+  }
+
+  /* サイドバー */
+  nav {
+    border-right: 1px solid var(--border);
+    padding: 28px 0;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+
+  nav .nav-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    padding: 0 20px 8px;
+    text-transform: uppercase;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 20px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  nav a:hover { color: var(--text); background: var(--surface); }
+  nav a.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+
+  nav .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    width: 18px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  nav .nav-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 16px;
+  }
+
+  /* メインコンテンツ */
+  main {
+    padding: 36px 48px 80px;
+    max-width: 820px;
+  }
+
+  /* セクション */
+  .section {
+    margin-bottom: 52px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    background: var(--tag-bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .section-header h2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .section-header .tag {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .tag.required  { background: #f38ba815; border: 1px solid #f38ba844; color: var(--red); }
+  .tag.recommend { background: #a6e3a115; border: 1px solid #a6e3a144; color: var(--green); }
+  .tag.optional  { background: #6c7a9620; border: 1px solid #6c7a9644; color: var(--muted); }
+
+  /* コピーボタン */
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+    z-index: 1;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--tag-bg); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+  /* 注意ボックス */
+  .notice {
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: flex;
+    gap: 12px;
+  }
+
+  .notice.info { background: #89b4fa0d; border-left: 3px solid var(--accent); }
+  .notice.warn { background: #f9e2af0d; border-left: 3px solid var(--yellow); }
+  .notice.danger { background: #f38ba80d; border-left: 3px solid var(--red); }
+  .notice.success { background: #a6e3a10d; border-left: 3px solid var(--green); }
+
+  .notice-icon { flex-shrink: 0; font-size: 14px; line-height: 1.7; }
+  .notice p { color: var(--text); }
+  .notice strong { font-weight: 500; }
+
+  /* コードブロック */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 12px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ラベル行 */
+  .code-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 70px 8px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .code-label .label-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .code-block .env-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .env-tag.wsl  { background: #a6e3a115; color: #a6e3a1; border: 1px solid #a6e3a133; }
+  .env-tag.file { background: #cba6f715; color: #cba6f7; border: 1px solid #cba6f733; }
+
+  .code-block pre {
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .code-block pre .comment { color: var(--muted); }
+  .code-block pre .cmd { color: var(--teal); }
+  .code-block pre .str { color: var(--green); }
+  .code-block pre .key { color: var(--accent2); }
+  .code-block pre .val { color: var(--yellow); }
+  .code-block pre .added { color: var(--green); }
+  .code-block pre .existing { color: var(--muted); }
+
+  /* インライン */
+  .inline-code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--teal);
+  }
+
+  p { margin-bottom: 10px; font-size: 13px; }
+
+  /* ステップリスト */
+  .step-list {
+    list-style: none;
+    margin: 12px 0;
+  }
+
+  .step-list li {
+    display: flex;
+    gap: 12px;
+    padding: 7px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step-list li:last-child { border-bottom: none; }
+
+  .step-list .li-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+    width: 20px;
+    padding-top: 1px;
+  }
+
+  /* 比較表 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 12.5px;
+  }
+
+  th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+
+  td.ok { color: var(--green); }
+  td.ng { color: var(--red); }
+  td.warn-td { color: var(--yellow); }
+  td.key-col { font-weight: 500; color: var(--text); }
+
+  /* セクション区切り */
+  .section-group-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 36px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-group-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* 現状バッジ */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    margin-bottom: 14px;
+  }
+  .status-badge.done { background: #a6e3a110; border: 1px solid #a6e3a133; color: var(--green); }
+  .status-badge.partial { background: #f9e2af10; border: 1px solid #f9e2af33; color: var(--yellow); }
+  .status-badge.todo { background: #f38ba810; border: 1px solid #f38ba833; color: var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Claude Code — セキュリティ設定ガイド</h1>
+    <p>~/.claude/settings.json を中心とした7つのセキュリティ強化手順</p>
+    <div class="badge-row">
+      <span class="badge env">WSL2 Ubuntu</span>
+      <span class="badge env">Claude Code CLI</span>
+      <span class="badge src">参照: zenn.dev/momozaki/articles/10cf58b08de335</span>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-row"><span class="meta-label">作成</span><span class="meta-val">2026-04-08</span></div>
+    <div class="meta-row"><span class="meta-label">更新</span><span class="meta-val">2026-04-08</span></div>
+    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">1.0</span></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav>
+    <div class="nav-label">現状確認</div>
+    <a href="#overview" class="active"><span class="step-num">概</span>現状と適用状況</a>
+    <div class="nav-divider"></div>
+    <div class="nav-label">セキュリティ設定</div>
+    <a href="#s1"><span class="step-num">1</span>.env ファイル保護</a>
+    <a href="#s2"><span class="step-num">2</span>file-history 自動削除</a>
+    <a href="#s3"><span class="step-num">3</span>dotenvx 暗号化</a>
+    <a href="#s4"><span class="step-num">4</span>サンドボックス設定</a>
+    <a href="#s5"><span class="step-num">5</span>CLAUDE.md セキュリティルール</a>
+    <a href="#s6"><span class="step-num">6</span>TDD プラグイン</a>
+    <a href="#s7"><span class="step-num">7</span>自動コンパクト設定</a>
+    <div class="nav-divider"></div>
+    <div class="nav-label">適用後</div>
+    <a href="#final"><span class="step-num">終</span>完成 settings.json</a>
+  </nav>
+
+  <main>
+
+    <!-- 現状と適用状況 -->
+    <div class="section" id="overview">
+      <div class="section-header">
+        <div class="step-badge">概要</div>
+        <h2>現状の設定と適用状況</h2>
+      </div>
+
+      <p>現在の <span class="inline-code">~/.claude/settings.json</span> と各セキュリティ対策の適用状況を確認します。</p>
+
+      <table>
+        <tr>
+          <th>#</th>
+          <th>セキュリティ対策</th>
+          <th>現状</th>
+          <th>対応</th>
+        </tr>
+        <tr>
+          <td class="key-col">1</td>
+          <td>.env ファイル保護（permissions.deny）</td>
+          <td class="warn-td">△ 部分適用</td>
+          <td>.env* / *.key / *.pem のパターンを追加</td>
+        </tr>
+        <tr>
+          <td class="key-col">2</td>
+          <td>file-history 自動削除（cron）</td>
+          <td class="ng">✗ 未設定</td>
+          <td>cron ジョブを追加</td>
+        </tr>
+        <tr>
+          <td class="key-col">3</td>
+          <td>dotenvx による .env 暗号化</td>
+          <td class="ng">✗ 未設定</td>
+          <td>dotenvx をインストール・設定</td>
+        </tr>
+        <tr>
+          <td class="key-col">4</td>
+          <td>サンドボックス隔離（sandbox）</td>
+          <td class="ok">✓ 適用済み</td>
+          <td>確認のみ（追加設定なし）</td>
+        </tr>
+        <tr>
+          <td class="key-col">5</td>
+          <td>CLAUDE.md セキュリティルール</td>
+          <td class="ng">✗ 未設定</td>
+          <td>~/.claude/CLAUDE.md を作成</td>
+        </tr>
+        <tr>
+          <td class="key-col">6</td>
+          <td>TDD モード（oh-my-claudecode プラグイン）</td>
+          <td class="ng">✗ 未設定</td>
+          <td>オプション：プラグイン追加</td>
+        </tr>
+        <tr>
+          <td class="key-col">7</td>
+          <td>自動コンパクト（PreToolUse フック）</td>
+          <td class="ng">✗ 未設定</td>
+          <td>オプション：フック追加</td>
+        </tr>
+      </table>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>優先度：</strong> STEP 1（.env保護追加）・STEP 2（cron）・STEP 5（CLAUDE.md）の3つが即効性の高い必須対応です。STEP 3・6・7 は任意です。</p>
+      </div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="section" id="s1">
+      <div class="section-header">
+        <div class="step-badge">STEP 1</div>
+        <h2>.env ファイル保護（permissions.deny 追加）</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <span class="status-badge partial">△ 部分適用 — 追加が必要</span>
+
+      <p>現在の <span class="inline-code">permissions.deny</span> には <span class="inline-code">Read(~/.env)</span> のみ設定されていますが、プロジェクト内の <span class="inline-code">.env</span> ファイルや <span class="inline-code">*.key</span> / <span class="inline-code">*.pem</span> は保護されていません。</p>
+
+      <p>Claude Code の内蔵ツール（Read・Glob・Edit・Write・Bash の cat / grep 等）による機密ファイルへのアクセスを拒否するルールを追加します。</p>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>sandbox との違い：</strong> sandbox は Bash ツールの実行のみに適用されます。Read / Edit / Glob / Write ツール経由のアクセスは <strong>permissions.deny でのみ</strong>制限できます。両方設定することで多層防御になります。</p>
+      </div>
+
+      <div class="section-group-label">追加する deny ルール</div>
+
+      <p><span class="inline-code">~/.claude/settings.json</span> の <span class="inline-code">permissions.deny</span> 配列に以下を追加します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">~/.claude/settings.json — permissions.deny に追加</span><span class="env-tag file">JSON</span></div>
+        <pre><span class="comment">// 以下を permissions.deny 配列に追記</span>
+
+<span class="comment">// --- .env / 秘密鍵ファイル保護 ---</span>
+<span class="str">"Read(.env*)"</span>,
+<span class="str">"Read(secrets*)"</span>,
+<span class="str">"Read(*.key)"</span>,
+<span class="str">"Read(*.pem)"</span>,
+<span class="str">"Glob(.env*)"</span>,
+<span class="str">"Glob(secrets*)"</span>,
+<span class="str">"Glob(*.key)"</span>,
+<span class="str">"Glob(*.pem)"</span>,
+<span class="str">"Edit(.env*)"</span>,
+<span class="str">"Edit(secrets*)"</span>,
+<span class="str">"Edit(*.key)"</span>,
+<span class="str">"Edit(*.pem)"</span>,
+<span class="str">"Write(.env*)"</span>,
+<span class="str">"Write(secrets*)"</span>,
+<span class="str">"Write(*.key)"</span>,
+<span class="str">"Write(*.pem)"</span>,
+<span class="str">"Bash(cat .env*)"</span>,
+<span class="str">"Bash(cat *secrets*)"</span>,
+<span class="str">"Bash(grep * .env*)"</span>,
+<span class="str">"Bash(less .env*)"</span>,
+<span class="str">"Bash(more .env*)"</span>,
+<span class="str">"Bash(head .env*)"</span>,
+<span class="str">"Bash(tail .env*)"</span></pre>
+      </div>
+
+      <p>以下のコマンドで現在の deny 設定を確認できます。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">現在の deny ルール確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">cat</span> ~/.claude/settings.json | python3 -m json.tool | grep -A50 '"deny"'</pre>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="step-badge">STEP 2</div>
+        <h2>file-history 自動削除（cron）</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <span class="status-badge todo">✗ 未設定</span>
+
+      <p>Claude Code は編集バックアップを <span class="inline-code">~/.claude/file-history/</span> に自動蓄積します。放置するとディスク使用量が数十 MB 以上になる場合があります。毎日 0 時に自動削除する cron ジョブを設定します。</p>
+
+      <div class="section-group-label">現在のサイズ確認</div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">file-history のサイズ確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">du</span> -sh ~/.claude/file-history/ 2>/dev/null || echo "ディレクトリなし"</pre>
+      </div>
+
+      <div class="section-group-label">手動削除</div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">手動で即座に削除</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">find</span> ~/.claude/file-history -mindepth 1 -delete</pre>
+      </div>
+
+      <div class="section-group-label">cron ジョブの設定</div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">crontab を編集</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">crontab</span> -e</pre>
+      </div>
+
+      <p>エディタが開いたら末尾に以下を追加します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">cron エントリ（毎日 0:00 に自動削除）</span><span class="env-tag file">crontab</span></div>
+        <pre>0 0 * * * find $HOME/.claude/file-history -mindepth 1 -delete >> /tmp/file-history-cleanup.log 2>&1</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">設定確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">crontab</span> -l</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>WSL2 環境では cron デーモンが自動起動しない場合があります。<span class="inline-code">sudo service cron start</span> で起動するか、<span class="inline-code">/etc/wsl.conf</span> に自動起動設定を追記してください。</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">WSL2 で cron を自動起動（/etc/wsl.conf に追記）</span><span class="env-tag file">/etc/wsl.conf</span></div>
+        <pre>[boot]
+<span class="val">command</span> = service cron start</pre>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="step-badge">STEP 3</div>
+        <h2>dotenvx による .env ファイル暗号化</h2>
+        <span class="tag optional">任意</span>
+      </div>
+
+      <span class="status-badge todo">✗ 未設定</span>
+
+      <p><span class="inline-code">dotenvx</span> は <span class="inline-code">.env</span> ファイルをコミット前に暗号化するツールです。暗号化済みの <span class="inline-code">.env</span> ファイルはリポジトリに含められ、複号鍵は <span class="inline-code">.env.keys</span> に分離管理されます。</p>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>STEP 1 の <span class="inline-code">permissions.deny</span> 設定のみでも .env 保護は機能します。dotenvx は Git リポジトリで .env を共有・管理する場合に有効です。</p>
+      </div>
+
+      <div class="section-group-label">インストール（Linux / WSL2）</div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">dotenvx インストール（Linux x64）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">curl</span> -fsSL https://github.com/dotenvx/dotenvx/releases/latest/download/dotenvx-linux-x64.tar.gz \
+  -o /tmp/dotenvx.tar.gz \
+  && tar xzf /tmp/dotenvx.tar.gz -C /tmp/ \
+  && mv /tmp/dotenvx ~/.local/bin/
+<span class="cmd">dotenvx</span> --version</pre>
+      </div>
+
+      <div class="section-group-label">使い方</div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">.env を暗号化（プロジェクトルートで実行）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">dotenvx</span> encrypt
+<span class="comment"># .env が暗号化され、複号鍵が .env.keys に書き出される</span>
+<span class="comment"># .env.keys は .gitignore に追加し、安全な場所で保管すること</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">暗号化済み .env を使ってコマンドを実行</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">dotenvx</span> run -- node server.js</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">.gitignore に .env.keys を追加</span><span class="env-tag file">.gitignore</span></div>
+        <pre>.env.keys</pre>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="step-badge">STEP 4</div>
+        <h2>サンドボックス隔離設定の確認</h2>
+        <span class="tag recommend">適用済み確認</span>
+      </div>
+
+      <span class="status-badge done">✓ 適用済み</span>
+
+      <p>現在の <span class="inline-code">settings.json</span> には sandbox 設定が適切に含まれています。以下の設定が有効であることを確認してください。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">現在の sandbox 設定（確認用）</span><span class="env-tag file">~/.claude/settings.json</span></div>
+        <pre><span class="key">"sandbox"</span>: {
+  <span class="key">"enabled"</span>: <span class="val">true</span>,
+  <span class="key">"autoAllowBashIfSandboxed"</span>: <span class="val">false</span>,
+  <span class="key">"allowUnsandboxedCommands"</span>: <span class="val">false</span>,
+  <span class="key">"network"</span>: {
+    <span class="key">"allowedDomains"</span>: [
+      <span class="str">"api.anthropic.com"</span>,
+      <span class="str">"github.com"</span>,
+      <span class="str">"registry.npmjs.org"</span>,
+      <span class="str">"pypi.org"</span>
+    ],
+    <span class="key">"allowUnixSockets"</span>: [],
+    <span class="key">"allowAllUnixSockets"</span>: <span class="val">false</span>,
+    <span class="key">"allowLocalBinding"</span>: <span class="val">true</span>
+  },
+  <span class="key">"filesystem"</span>: {
+    <span class="key">"denyRead"</span>: [
+      <span class="str">"~/.ssh"</span>,
+      <span class="str">"~/.aws"</span>,
+      <span class="str">"~/.gnupg"</span>,
+      <span class="str">"~/.env"</span>,
+      <span class="str">"~/.netrc"</span>
+    ]
+  }
+}</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>sandbox の適用範囲：</strong> Bash ツールの実行のみに適用されます。Read / Edit / WebFetch / MCP には適用されません。ファイル操作の制限は STEP 1 の <span class="inline-code">permissions.deny</span> と組み合わせることで多層防御を実現します。</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">sandbox の動作確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">claude</span> /doctor
+<span class="comment"># sandbox: enabled と表示されれば OK</span></pre>
+      </div>
+
+      <div class="section-group-label">追加で検討する allowedDomains</div>
+
+      <table>
+        <tr>
+          <th>ドメイン</th>
+          <th>用途</th>
+          <th>推奨</th>
+        </tr>
+        <tr>
+          <td class="key-col">api.anthropic.com</td>
+          <td>Claude API</td>
+          <td class="ok">✓ 設定済み</td>
+        </tr>
+        <tr>
+          <td class="key-col">github.com</td>
+          <td>GitHub / git 操作</td>
+          <td class="ok">✓ 設定済み</td>
+        </tr>
+        <tr>
+          <td class="key-col">registry.npmjs.org</td>
+          <td>npm パッケージ</td>
+          <td class="ok">✓ 設定済み</td>
+        </tr>
+        <tr>
+          <td class="key-col">pypi.org</td>
+          <td>Python パッケージ</td>
+          <td class="ok">✓ 設定済み</td>
+        </tr>
+        <tr>
+          <td class="key-col">pkg.go.dev / sum.golang.org</td>
+          <td>Go パッケージ</td>
+          <td class="warn-td">△ Go 使用時に追加</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="step-badge">STEP 5</div>
+        <h2>CLAUDE.md セキュリティルール</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <span class="status-badge todo">✗ 未設定</span>
+
+      <p><span class="inline-code">~/.claude/CLAUDE.md</span> に記述したルールは全セッションで自動的に読み込まれ、Claude Code の動作方針として機能します。セキュリティポリシーを明文化しておくことで、意図しない操作を防ぎます。</p>
+
+      <div class="section-group-label">ディレクトリ作成と CLAUDE.md の生成</div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">~/.claude/CLAUDE.md を作成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">mkdir</span> -p ~/.claude
+<span class="cmd">cat</span> > ~/.claude/CLAUDE.md << 'EOF'
+# セキュリティルール
+
+## 機密ファイルの取り扱い
+- `.env*`, `secrets*`, `*.key`, `*.pem` ファイルは読み取り・編集・表示を行わない
+- `~/.ssh/`, `~/.aws/`, `~/.gnupg/` 以下のファイルは操作しない
+- APIキーやトークンをコード・コメント・ログに含めない
+
+## 破壊的操作の禁止
+- `rm -rf` は明示的な確認なしに実行しない
+- `git push --force` / `git reset --hard` は確認後のみ実行する
+- `sudo` コマンドは最小権限の原則に従い、不要な場合は使用しない
+
+## ネットワーク・外部通信
+- 許可ドメイン以外への通信が必要な場合は事前に確認する
+- 認証情報を外部サービスに送信しない
+
+## コード品質
+- テストなしで本番コードを変更しない（既存テストがある場合）
+- セキュリティに関わるコード変更は必ず変更内容を説明する
+EOF
+echo "CLAUDE.md を作成しました"</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">作成確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">cat</span> ~/.claude/CLAUDE.md</pre>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="step-badge">STEP 6</div>
+        <h2>TDD モード（oh-my-claudecode プラグイン）</h2>
+        <span class="tag optional">任意</span>
+      </div>
+
+      <span class="status-badge todo">✗ 未設定</span>
+
+      <p><span class="inline-code">oh-my-claudecode</span> プラグインの TDD モードを有効にすると、コード変更時に Red → Green → Refactor サイクルを強制し、カバレッジ 80% 以上を維持するよう Claude Code が自律的に動作します。</p>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p>このプラグインは外部 Git リポジトリからキャッシュされます。プラグインのコードが <strong>sandbox 外</strong>で動作する点に注意してください。信頼できるソース以外のプラグインは使用しないでください。</p>
+      </div>
+
+      <div class="section-group-label">settings.json への追加</div>
+
+      <p>以下を <span class="inline-code">~/.claude/settings.json</span> に追加します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">~/.claude/settings.json — enabledPlugins に追加</span><span class="env-tag file">JSON</span></div>
+        <pre><span class="key">"enabledPlugins"</span>: {
+  <span class="comment">// 既存のプラグイン設定を保持しつつ追加</span>
+  <span class="str">"oh-my-claudecode@omc"</span>: <span class="val">true</span>
+}</pre>
+      </div>
+
+      <div class="section-group-label">TDD モードの使い方</div>
+
+      <ul class="step-list">
+        <li><span class="li-num">1.</span><span>Claude Code を起動後、<span class="inline-code">/omc tdd</span> または TDD モードを明示的に指示する</span></li>
+        <li><span class="li-num">2.</span><span>Red フェーズ：失敗するテストを先に書く</span></li>
+        <li><span class="li-num">3.</span><span>Green フェーズ：テストをパスする最小実装を書く</span></li>
+        <li><span class="li-num">4.</span><span>Refactor フェーズ：コードを整理する（テストはパスしたまま）</span></li>
+      </ul>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="step-badge">STEP 7</div>
+        <h2>自動コンパクト設定（PreToolUse フック）</h2>
+        <span class="tag optional">任意</span>
+      </div>
+
+      <span class="status-badge todo">✗ 未設定</span>
+
+      <p>コンテキスト使用量が閾値（デフォルト 50%、推奨 25%）を超えると自動的にチェックポイントを保存し、コンパクションの前に進捗を記録します。長時間のセッションで作業内容を失わないための安全策です。</p>
+
+      <div class="section-group-label">チェックポイントスクリプトの作成</div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">スクリプトディレクトリを作成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">mkdir</span> -p ~/.claude/scripts</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">~/.claude/scripts/save-progress.sh を作成</span><span class="env-tag file">~/.claude/scripts/save-progress.sh</span></div>
+        <pre>#!/bin/bash
+<span class="comment"># コンパクション前に進捗チェックポイントを保存するスクリプト</span>
+
+CHECKPOINT_FILE="$HOME/.claude/progress-checkpoint.md"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+SESSION_ID="${CLAUDE_SESSION_ID:-unknown}"
+PROJECT_NAME=$(basename "$PWD")
+
+cat >> "$CHECKPOINT_FILE" << EOF
+
+## チェックポイント: $TIMESTAMP
+- セッションID: $SESSION_ID
+- プロジェクト: $PROJECT_NAME
+- 作業ディレクトリ: $PWD
+EOF
+
+echo "チェックポイントを保存しました: $TIMESTAMP"</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">スクリプトに実行権限を付与</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">chmod</span> +x ~/.claude/scripts/save-progress.sh</pre>
+      </div>
+
+      <div class="section-group-label">settings.json への hooks 追加</div>
+
+      <p>以下を <span class="inline-code">~/.claude/settings.json</span> に追加します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">~/.claude/settings.json — hooks セクションを追加</span><span class="env-tag file">JSON</span></div>
+        <pre><span class="key">"hooks"</span>: {
+  <span class="key">"PreToolUse"</span>: [
+    {
+      <span class="key">"matcher"</span>: <span class="str">"Bash"</span>,
+      <span class="key">"hooks"</span>: [
+        {
+          <span class="key">"type"</span>: <span class="str">"command"</span>,
+          <span class="key">"command"</span>: <span class="str">"bash ~/.claude/scripts/save-progress.sh"</span>,
+          <span class="key">"environment"</span>: {
+            <span class="key">"COMPACT_THRESHOLD"</span>: <span class="str">"25"</span>
+          }
+        }
+      ]
+    }
+  ]
+}</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><span class="inline-code">COMPACT_THRESHOLD=25</span> はコンテキスト使用量 25% でチェックポイントを保存します。デフォルト (50) より早めに保存するため、長時間セッションで安全に使えます。</p>
+      </div>
+    </div>
+
+    <!-- 完成 settings.json -->
+    <div class="section" id="final">
+      <div class="section-header">
+        <div class="step-badge">完成</div>
+        <h2>適用後の完成 settings.json</h2>
+      </div>
+
+      <p>STEP 1・5 を適用（STEP 6・7 は任意）した後の <span class="inline-code">~/.claude/settings.json</span> の全体像です。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">~/.claude/settings.json（推奨構成）</span><span class="env-tag file">JSON</span></div>
+        <pre>{
+  <span class="key">"permissions"</span>: {
+    <span class="key">"allow"</span>: [
+      <span class="str">"Bash(git *)"</span>,
+      <span class="str">"Bash(npm *)"</span>,
+      <span class="str">"Bash(node *)"</span>,
+      <span class="str">"Bash(ls *)"</span>,
+      <span class="str">"Bash(cat *)"</span>
+    ],
+    <span class="key">"deny"</span>: [
+      <span class="comment">// --- 既存の deny ルール ---</span>
+      <span class="existing">"Bash(rm -rf *)",</span>
+      <span class="existing">"Bash(rm -fr *)",</span>
+      <span class="existing">"Bash(sudo *)",</span>
+      <span class="existing">"Bash(dd *)",</span>
+      <span class="existing">"Bash(mkfs *)",</span>
+      <span class="existing">"Bash(git push --force*)",</span>
+      <span class="existing">"Bash(git push *--force*)",</span>
+      <span class="existing">"Bash(git reset --hard*)",</span>
+      <span class="existing">"Read(~/.ssh)",</span>
+      <span class="existing">"Read(~/.aws)",</span>
+      <span class="existing">"Read(~/.gnupg)",</span>
+      <span class="existing">"Read(~/.env)",</span>
+      <span class="existing">"Read(~/.netrc)",</span>
+      <span class="existing">"Edit(~/.bashrc)",</span>
+      <span class="existing">"Edit(~/.zshrc)",</span>
+      <span class="existing">"Edit(~/.ssh)",</span>
+      <span class="comment">// --- STEP 1 で追加（.env / 秘密鍵 保護） ---</span>
+      <span class="added">"Read(.env*)",</span>
+      <span class="added">"Read(secrets*)",</span>
+      <span class="added">"Read(*.key)",</span>
+      <span class="added">"Read(*.pem)",</span>
+      <span class="added">"Glob(.env*)",</span>
+      <span class="added">"Glob(secrets*)",</span>
+      <span class="added">"Glob(*.key)",</span>
+      <span class="added">"Glob(*.pem)",</span>
+      <span class="added">"Edit(.env*)",</span>
+      <span class="added">"Edit(secrets*)",</span>
+      <span class="added">"Edit(*.key)",</span>
+      <span class="added">"Edit(*.pem)",</span>
+      <span class="added">"Write(.env*)",</span>
+      <span class="added">"Write(secrets*)",</span>
+      <span class="added">"Write(*.key)",</span>
+      <span class="added">"Write(*.pem)",</span>
+      <span class="added">"Bash(cat .env*)",</span>
+      <span class="added">"Bash(cat *secrets*)",</span>
+      <span class="added">"Bash(grep * .env*)",</span>
+      <span class="added">"Bash(less .env*)",</span>
+      <span class="added">"Bash(more .env*)",</span>
+      <span class="added">"Bash(head .env*)",</span>
+      <span class="added">"Bash(tail .env*)"</span>
+    ]
+  },
+  <span class="key">"enableAllProjectMcpServers"</span>: <span class="val">false</span>,
+  <span class="key">"dangerouslySkipPermissions"</span>: <span class="str">"disable"</span>,
+  <span class="key">"statusLine"</span>: {
+    <span class="key">"type"</span>: <span class="str">"command"</span>,
+    <span class="key">"command"</span>: <span class="str">"npx -y ccstatusline@latest"</span>,
+    <span class="key">"padding"</span>: <span class="val">0</span>
+  },
+  <span class="key">"enabledPlugins"</span>: {
+    <span class="str">"frontend-design@claude-plugins-official"</span>: <span class="val">true</span>,
+    <span class="str">"context7@claude-plugins-official"</span>: <span class="val">true</span>,
+    <span class="str">"code-simplifier@claude-plugins-official"</span>: <span class="val">true</span>,
+    <span class="str">"feature-dev@claude-plugins-official"</span>: <span class="val">true</span>,
+    <span class="str">"superpowers@claude-plugins-official"</span>: <span class="val">true</span>
+    <span class="comment">// STEP 6（任意）: "oh-my-claudecode@omc": true</span>
+  },
+  <span class="key">"sandbox"</span>: {
+    <span class="key">"enabled"</span>: <span class="val">true</span>,
+    <span class="key">"autoAllowBashIfSandboxed"</span>: <span class="val">false</span>,
+    <span class="key">"allowUnsandboxedCommands"</span>: <span class="val">false</span>,
+    <span class="key">"network"</span>: {
+      <span class="key">"allowedDomains"</span>: [
+        <span class="str">"api.anthropic.com"</span>,
+        <span class="str">"github.com"</span>,
+        <span class="str">"registry.npmjs.org"</span>,
+        <span class="str">"pypi.org"</span>
+      ],
+      <span class="key">"allowUnixSockets"</span>: [],
+      <span class="key">"allowAllUnixSockets"</span>: <span class="val">false</span>,
+      <span class="key">"allowLocalBinding"</span>: <span class="val">true</span>
+    },
+    <span class="key">"filesystem"</span>: {
+      <span class="key">"denyRead"</span>: [
+        <span class="str">"~/.ssh"</span>,
+        <span class="str">"~/.aws"</span>,
+        <span class="str">"~/.gnupg"</span>,
+        <span class="str">"~/.env"</span>,
+        <span class="str">"~/.netrc"</span>
+      ]
+    },
+    <span class="key">"excludedCommands"</span>: []
+  }
+  <span class="comment">// STEP 7（任意）: "hooks": { "PreToolUse": [ ... ] }</span>
+}</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><span style="color:var(--muted)">灰色</span>は既存の設定、<span style="color:var(--green)">緑色</span>は STEP 1 で新たに追加する部分です。</p>
+      </div>
+
+      <div class="section-group-label">適用後チェックリスト</div>
+
+      <table>
+        <tr>
+          <th>#</th>
+          <th>確認項目</th>
+          <th>確認方法</th>
+          <th>状態</th>
+        </tr>
+        <tr>
+          <td class="key-col">1</td>
+          <td>permissions.deny に .env* / *.key ルールが含まれる</td>
+          <td><span class="inline-code">cat ~/.claude/settings.json | grep ".env"</span></td>
+          <td class="warn-td">要適用</td>
+        </tr>
+        <tr>
+          <td class="key-col">2</td>
+          <td>file-history の cron が登録されている</td>
+          <td><span class="inline-code">crontab -l | grep file-history</span></td>
+          <td class="ng">未設定</td>
+        </tr>
+        <tr>
+          <td class="key-col">3</td>
+          <td>sandbox が有効</td>
+          <td><span class="inline-code">claude /doctor</span></td>
+          <td class="ok">適用済み</td>
+        </tr>
+        <tr>
+          <td class="key-col">4</td>
+          <td>enableAllProjectMcpServers が false</td>
+          <td><span class="inline-code">cat ~/.claude/settings.json | grep enableAllProject</span></td>
+          <td class="ok">適用済み</td>
+        </tr>
+        <tr>
+          <td class="key-col">5</td>
+          <td>~/.claude/CLAUDE.md が存在する</td>
+          <td><span class="inline-code">ls -la ~/.claude/CLAUDE.md</span></td>
+          <td class="ng">未作成</td>
+        </tr>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll('.code-block').forEach(block => {
+    const pre = block.querySelector('pre');
+    if (!pre) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'COPY';
+
+    btn.addEventListener('click', () => {
+      const text = pre.innerText;
+      const markCopied = () => {
+        btn.textContent = 'COPIED ✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+      };
+      const doFallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); markCopied(); } catch(e) {}
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(markCopied).catch(doFallback);
+      } else {
+        doFallback();
+      }
+    });
+
+    block.appendChild(btn);
+  });
+
+  // アクティブナビゲーション
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
