@@ -1192,6 +1192,57 @@
       </div>
     </div>
 
+    <!-- STEP 10 -->
+    <div class="section" id="s10">
+      <div class="section-header">
+        <div class="step-badge">STEP 10</div>
+        <h2>Zed / VS Code のターミナルを WSL2 に向ける（任意）</h2>
+        <span class="tag recommend">推奨</span>
+      </div>
+
+      <p>Zed や VS Code の組み込みターミナルはデフォルトで Windows 側のシェルを開くため、<span class="inline-code">claude</span> コマンドが見つかりません。以下の設定を追加すると、エディタのターミナルが直接 WSL2 Ubuntu を起動し、WSL2 内の <span class="inline-code">claude</span> をそのまま使えるようになります。</p>
+
+      <div class="section-group-label">Zed</div>
+
+      <p><span class="inline-code">~/.config/zed/settings.json</span>（または <kbd>Ctrl+,</kbd> で開く設定ファイル）に以下を追加します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">Zed — settings.json に追加</span><span class="env-tag win">Windows</span></div>
+        <pre>{
+  <span class="str">"terminal"</span>: {
+    <span class="str">"shell"</span>: {
+      <span class="str">"with_arguments"</span>: {
+        <span class="str">"program"</span>: <span class="str">"wsl.exe"</span>,
+        <span class="str">"args"</span>: [<span class="str">"-d"</span>, <span class="str">"Ubuntu"</span>]
+      }
+    }
+  }
+}</pre>
+      </div>
+
+      <div class="section-group-label">VS Code</div>
+
+      <p>VS Code のユーザー設定（<span class="inline-code">settings.json</span>）に以下を追加します。<kbd>Ctrl+Shift+P</kbd> →「Preferences: Open User Settings (JSON)」で開けます。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">VS Code — settings.json に追加</span><span class="env-tag win">Windows</span></div>
+        <pre>{
+  <span class="str">"terminal.integrated.profiles.windows"</span>: {
+    <span class="str">"WSL Ubuntu"</span>: {
+      <span class="str">"path"</span>: <span class="str">"wsl.exe"</span>,
+      <span class="str">"args"</span>: [<span class="str">"-d"</span>, <span class="str">"Ubuntu"</span>]
+    }
+  },
+  <span class="str">"terminal.integrated.defaultProfile.windows"</span>: <span class="str">"WSL Ubuntu"</span>
+}</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>設定後、エディタのターミナルを新規に開くと Ubuntu プロンプトが表示されます。<span class="inline-code">claude --version</span> で動作を確認してください。既存のターミナルタブは再起動が必要です。</p>
+      </div>
+    </div>
+
     <!-- 補足 -->
     <div class="section" id="tips">
       <div class="section-header">
