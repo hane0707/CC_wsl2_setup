@@ -51,6 +51,7 @@
   .step-badge.p2 { border-color: var(--accent2); color: var(--accent2); }
   .step-badge.p3 { border-color: var(--green); color: var(--green); }
   .step-badge.p4  { border-color: var(--pink); color: var(--pink); }
+  .step-badge.p5  { border-color: var(--teal); color: var(--teal); }
   .step-badge.mat { border-color: var(--teal); color: var(--teal); }
   .step-badge.uc  { border-color: var(--yellow); color: var(--yellow); }
   .step-badge.rec { border-color: var(--orange); color: var(--orange); }
@@ -143,6 +144,7 @@
   .rec-icon.omc { background: #cba6f715; border: 1px solid #cba6f744; color: var(--accent2); }
   .rec-icon.ecc { background: #a6e3a115; border: 1px solid #a6e3a133; color: var(--green); }
   .rec-icon.ralph { background: #f5c2e715; border: 1px solid #f5c2e733; color: var(--pink); }
+  .rec-icon.grill { background: #94e2d515; border: 1px solid #94e2d533; color: var(--teal); }
   .rec-body h4 { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
   .rec-body p  { font-size: 12px; color: var(--muted); margin-bottom: 0; }
 
@@ -271,6 +273,7 @@
     <a href="#omc"><span class="step-num">P2</span>oh-my-claudecode</a>
     <a href="#ecc"><span class="step-num">P3</span>everything-claude-code</a>
     <a href="#ralph"><span class="step-num">P4</span>snarktank/ralph</a>
+    <a href="#grill"><span class="step-num">P5</span>grill-me（別案）</a>
     <div class="nav-divider"></div>
     <div class="nav-label">比較・結論</div>
     <a href="#matrix"><span class="step-num">比</span>評価マトリクス</a>
@@ -711,6 +714,76 @@
       <div class="notice warn">
         <span class="notice-icon">⚠️</span>
         <p><strong>堅実実装との親和性: 条件付き（サンドボックス限定）。</strong> PRDスキルによる要件整理・反復学習の蓄積パターンは有用だが、<span class="inline-code">--dangerously-skip-permissions</span> は堅実実装の前提である「権限の最小化」と根本的に矛盾する。使用する場合は Docker / Devcontainer 等の隔離環境が必須。本番資産（DB接続情報・APIキー）は実行環境に置かないこと。</p>
+      </div>
+    </div>
+
+    <!-- grill-me (別案) -->
+    <div class="section" id="grill">
+      <div class="section-header">
+        <div class="step-badge p5">P5</div>
+        <h2>mattpocock/grill-me</h2>
+        <span class="tag experimental">skills.sh（★14.1k · 週21.6kインストール）</span>
+      </div>
+
+      <p><strong>哲学: 計画を実装前に「詰める」。</strong> Matt Pocock が設計した「徹底的インタビュースキル」。実装に入る前に計画・設計を体系的な質問で叩くことで、後段の手戻りを防ぐ。<span class="inline-code">/grill-me</span> を呼ぶと、Claude Code が設計の弱点・未検討ケース・矛盾点を1問ずつ掘り下げる。</p>
+
+      <p>上記4プラグインとは<strong>異なるエコシステム</strong>（skills.sh / npx 経由）であり、<span class="inline-code">enabledPlugins</span> ではなく <span class="inline-code">npx skills</span> CLI で管理する。</p>
+
+      <div class="section-group-label">インストール</div>
+
+      <div class="notice info">
+        <span class="notice-icon">📦</span>
+        <p><strong>npx でワンコマンド追加</strong></p>
+      </div>
+      <pre style="font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:14px 16px; margin-bottom:16px; overflow-x:auto; color:var(--teal);">npx skills add https://github.com/mattpocock/skills --skill grill-me</pre>
+
+      <div class="section-group-label">動作フロー</div>
+
+      <table>
+        <tr><th>フェーズ</th><th>動作</th></tr>
+        <tr><td class="key-col">1. 起動</td><td><span class="inline-code">/grill-me</span> を実行。対象は計画・設計・実装方針等のテキスト</td></tr>
+        <tr><td class="key-col">2. 自動調査</td><td>コードベースが利用可能な場合、コード探索で回答できる質問を自動解決（往復削減）</td></tr>
+        <tr><td class="key-col">3. 質問</td><td>1問ずつ提示。各質問に推奨回答を添える。意思決定ツリーを枝ごとに辿る</td></tr>
+        <tr><td class="key-col">4. 完了</td><td>共通理解に達したと判断した時点で終了。実装フェーズへ移行</td></tr>
+      </table>
+
+      <div class="section-group-label">採用・不採用の論点</div>
+
+      <div class="pro-con">
+        <div class="pc-box pro">
+          <h4>採用論点</h4>
+          <ul>
+            <li>設計フェーズの穴を実装前に発見できる（手戻りコスト削減）</li>
+            <li>コードベースを自動探索するため、余分なやり取りが発生しにくい</li>
+            <li>1問ずつ・推奨回答つきで認知負荷が低い</li>
+            <li>★14.1k で広く使われており、コミュニティ活発</li>
+            <li>superpowers の <span class="inline-code">brainstorm</span> / <span class="inline-code">write-plan</span> と相補的に組み合わせ可能</li>
+          </ul>
+        </div>
+        <div class="pc-box con">
+          <h4>懸念点</h4>
+          <ul>
+            <li>skills.sh エコシステムは Claude Code 本体と独立。バージョン管理が別途必要</li>
+            <li><span class="inline-code">enabledPlugins</span> で一元管理できない</li>
+            <li>インタビュー精度は入力する計画テキストの品質に依存</li>
+            <li>質問の深さ・終了タイミングが予測しにくく、長時間化することがある</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-group-label">別案ワークフロー — superpowers + grill-me</div>
+
+      <div class="notice info">
+        <span class="notice-icon">💡</span>
+        <p>
+          <strong>設計強化ワークフロー（grill-me を挟む）</strong><br>
+          <span class="inline-code">/brainstorm</span>（アイデア発散）
+          → <span class="inline-code">/write-plan</span>（計画作成）
+          → <span class="inline-code">/grill-me</span>（計画のストレステスト）
+          → <span class="inline-code">/tdd</span>（実装）<br><br>
+          grill-me をプランニングと実装の間に挟むことで、設計の前提・未考慮ケース・矛盾を潰してから実装に入れる。<br>
+          既存の推奨構成（superpowers + OMC + AgentShield）に<strong>追加して使える</strong>ため、移行コストがかからない。
+        </p>
       </div>
     </div>
 
@@ -1365,6 +1438,11 @@
           <td class="ng">通常セッションでは不採用</td>
           <td><span class="inline-code">--dangerously-skip-permissions</span>は堅実実装の前提（権限最小化）と根本矛盾。Docker等の隔離環境でのバッチ実行に限り、superpowersとの組み合わせで検討可。</td>
         </tr>
+        <tr>
+          <td class="key-col">grill-me（別案）</td>
+          <td class="ok">任意追加（推奨）</td>
+          <td>実装前の設計ストレステストとして有効。既存構成に追加するだけで使えるため移行コストゼロ。<span class="inline-code">/brainstorm</span> → <span class="inline-code">/write-plan</span> → <span class="inline-code">/grill-me</span> → <span class="inline-code">/tdd</span> の順で利用。</td>
+        </tr>
       </table>
     </div>
 
@@ -1403,6 +1481,14 @@
         <li>
           <span class="ref-label">セキュリティ設定</span>
           <a href="./claude-code-security-settings.html">claude-code-security-settings.html（本リポジトリ）</a>
+        </li>
+        <li>
+          <span class="ref-label">grill-me</span>
+          <a href="https://skills.sh/mattpocock/skills/grill-me" target="_blank">https://skills.sh/mattpocock/skills/grill-me</a>
+        </li>
+        <li>
+          <span class="ref-label">grill-me src</span>
+          <a href="https://github.com/mattpocock/skills" target="_blank">https://github.com/mattpocock/skills</a>
         </li>
       </ul>
     </div>
