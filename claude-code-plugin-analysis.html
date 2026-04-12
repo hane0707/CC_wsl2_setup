@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code プラグイン比較分析</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0e1117; --surface: #161b27; --surface2: #1e2535; --border: #2a3347;
+    --text: #cdd6f4; --muted: #6c7a96; --accent: #89b4fa; --accent2: #cba6f7;
+    --green: #a6e3a1; --yellow: #f9e2af; --red: #f38ba8; --teal: #94e2d5;
+    --orange: #fab387; --pink: #f5c2e7; --tag-bg: #1e2d45;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans JP', sans-serif; font-weight: 300; line-height: 1.7; font-size: 14px; }
+
+  .header-meta { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; flex-shrink: 0; padding-top: 4px; }
+  .meta-row { display: flex; align-items: center; gap: 8px; }
+  .meta-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; width: 28px; text-align: right; }
+  .meta-val { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text); }
+
+  header { border-bottom: 1px solid var(--border); padding: 40px 48px 32px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+  .header-left h1 { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; color: var(--accent); letter-spacing: -0.5px; margin-bottom: 6px; }
+  .header-left p { color: var(--muted); font-size: 13px; }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 10px; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); text-decoration: none; }
+  .badge.env { border-color: #89b4fa44; color: var(--accent); background: #89b4fa0d; }
+  .badge.src { border-color: #cba6f744; color: var(--accent2); background: #cba6f70d; }
+  .badge.src:hover { background: #cba6f720; }
+
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 116px); }
+
+  nav { border-right: 1px solid var(--border); padding: 28px 0; position: sticky; top: 0; height: calc(100vh - 116px); overflow-y: auto; }
+  nav .nav-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); padding: 0 20px 8px; text-transform: uppercase; }
+  nav a { display: flex; align-items: center; gap: 10px; padding: 7px 20px; color: var(--muted); text-decoration: none; font-size: 13px; transition: all 0.15s; border-left: 2px solid transparent; }
+  nav a:hover { color: var(--text); background: var(--surface); }
+  nav a.active { color: var(--accent); border-left-color: var(--accent); background: var(--tag-bg); }
+  nav .step-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); width: 18px; text-align: right; flex-shrink: 0; }
+  nav .nav-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+
+  main { padding: 36px 48px 80px; max-width: 860px; }
+
+  .section { margin-bottom: 52px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .step-badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; padding: 3px 8px; background: var(--tag-bg); border: 1px solid var(--accent); border-radius: 3px; color: var(--accent); flex-shrink: 0; }
+  .step-badge.p2 { border-color: var(--accent2); color: var(--accent2); }
+  .step-badge.p3 { border-color: var(--green); color: var(--green); }
+  .step-badge.p4  { border-color: var(--pink); color: var(--pink); }
+  .step-badge.mat { border-color: var(--teal); color: var(--teal); }
+  .step-badge.uc  { border-color: var(--yellow); color: var(--yellow); }
+  .step-badge.rec { border-color: var(--orange); color: var(--orange); }
+  .step-badge.ref { border-color: var(--muted); color: var(--muted); }
+
+  .section-header h2 { font-size: 16px; font-weight: 500; color: var(--text); }
+
+  .tag { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 2px; flex-shrink: 0; }
+  .tag.official    { background: #89b4fa15; border: 1px solid #89b4fa44; color: var(--accent); }
+  .tag.community   { background: #cba6f715; border: 1px solid #cba6f744; color: var(--accent2); }
+  .tag.experimental{ background: #f9e2af15; border: 1px solid #f9e2af44; color: var(--yellow); }
+
+  .inline-code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--surface2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; color: var(--teal); }
+
+  p { margin-bottom: 10px; font-size: 13px; }
+
+  .notice { border-radius: 4px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; display: flex; gap: 12px; }
+  .notice.info    { background: #89b4fa0d; border-left: 3px solid var(--accent); }
+  .notice.warn    { background: #f9e2af0d; border-left: 3px solid var(--yellow); }
+  .notice.success { background: #a6e3a10d; border-left: 3px solid var(--green); }
+  .notice.rec     { background: #fab3870d; border-left: 3px solid var(--orange); }
+  .notice-icon { flex-shrink: 0; font-size: 14px; line-height: 1.7; }
+  .notice p { color: var(--text); margin-bottom: 0; }
+  .notice strong { font-weight: 500; }
+
+  .section-group-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 28px 0 14px; display: flex; align-items: center; gap: 12px; }
+  .section-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 12.5px; }
+  th { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+  td.ok { color: var(--green); } td.ng { color: var(--red); } td.warn-td { color: var(--yellow); }
+  td.key-col { font-weight: 500; color: var(--text); }
+
+  /* スコアドット */
+  .score { display: inline-flex; align-items: center; gap: 4px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot.g { background: var(--green); }
+  .dot.y { background: var(--yellow); }
+  .dot.r { background: var(--red); }
+  .dot.e { background: transparent; border: 1px solid var(--muted); }
+  .score-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-left: 6px; }
+
+  /* プロコン */
+  .pro-con { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+  .pc-box { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; }
+  .pc-box.pro { border-top: 2px solid var(--green); }
+  .pc-box.con { border-top: 2px solid var(--red); }
+  .pc-box h4 { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .pc-box.pro h4 { color: var(--green); }
+  .pc-box.con h4 { color: var(--red); }
+  .pc-box ul { list-style: none; font-size: 12.5px; }
+  .pc-box ul li { padding: 3px 0 3px 16px; position: relative; color: var(--text); }
+  .pc-box.pro ul li::before { content: '+'; position: absolute; left: 0; color: var(--green); font-weight: 600; }
+  .pc-box.con ul li::before { content: '−'; position: absolute; left: 0; color: var(--red); font-weight: 600; }
+
+  /* スキルタグ */
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .skill-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 2px 8px; border-radius: 2px; border: 1px solid var(--border); color: var(--muted); }
+  .skill-tag.safe   { border-color: #a6e3a133; color: var(--green);  background: #a6e3a108; }
+  .skill-tag.caution{ border-color: #f9e2af33; color: var(--yellow); background: #f9e2af08; }
+  .skill-tag.avoid  { border-color: #f38ba833; color: var(--red);    background: #f38ba808; text-decoration: line-through; opacity: 0.7; }
+
+  /* UCカード */
+  .uc-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 16px 0; }
+  .uc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .uc-card.solid   { border-top: 2px solid var(--red); }
+  .uc-card.balance { border-top: 2px solid var(--green); }
+  .uc-card.speed   { border-top: 2px solid var(--yellow); }
+  .uc-card h3 { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; }
+  .uc-card.solid h3   { color: var(--red); }
+  .uc-card.balance h3 { color: var(--green); }
+  .uc-card.speed h3   { color: var(--yellow); }
+  .uc-card .uc-target { font-size: 11px; color: var(--muted); }
+  .uc-badge { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 2px; display: inline-block; margin: 2px 2px 2px 0; }
+  .uc-badge.adopt   { background: #a6e3a115; border: 1px solid #a6e3a133; color: var(--green); }
+  .uc-badge.partial { background: #f9e2af15; border: 1px solid #f9e2af33; color: var(--yellow); }
+  .uc-badge.skip    { background: #f38ba815; border: 1px solid #f38ba833; color: var(--red); }
+  .uc-stack-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+
+  /* 推奨ボックス */
+  .rec-box { background: var(--surface); border: 1px solid var(--border); border-top: 2px solid var(--orange); border-radius: 4px; padding: 22px; margin: 16px 0; }
+  .rec-box h3 { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: var(--orange); margin-bottom: 16px; }
+  .rec-layer { display: flex; gap: 14px; margin-bottom: 12px; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; }
+  .rec-layer:last-child { margin-bottom: 0; }
+  .rec-icon { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 2px; flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
+  .rec-icon.sp  { background: #89b4fa15; border: 1px solid #89b4fa44; color: var(--accent); }
+  .rec-icon.omc { background: #cba6f715; border: 1px solid #cba6f744; color: var(--accent2); }
+  .rec-icon.ecc { background: #a6e3a115; border: 1px solid #a6e3a133; color: var(--green); }
+  .rec-icon.ralph { background: #f5c2e715; border: 1px solid #f5c2e733; color: var(--pink); }
+  .rec-body h4 { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .rec-body p  { font-size: 12px; color: var(--muted); margin-bottom: 0; }
+
+  /* 参考URL */
+  .ref-list { list-style: none; margin: 12px 0; }
+  .ref-list li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 14px; align-items: baseline; }
+  .ref-list li:last-child { border-bottom: none; }
+  .ref-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); flex-shrink: 0; width: 90px; }
+  .ref-list a { color: var(--accent); text-decoration: none; word-break: break-all; }
+  .ref-list a:hover { text-decoration: underline; }
+
+  /* ── 開発フロー図 ───────────────────────────────── */
+  .flow-legend {
+    display: flex; flex-wrap: wrap; gap: 20px;
+    padding: 12px 16px; margin-bottom: 20px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  }
+  .fl-group { display: flex; gap: 10px; align-items: center; }
+  .fl-group-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+  .fl-item { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text); }
+  .fl-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .fl-swatch.sp   { background: var(--accent); }
+  .fl-swatch.omc  { background: var(--accent2); }
+  .fl-swatch.ecc  { background: var(--green); }
+  .fl-swatch.user { background: var(--muted); }
+  .fl-border-solid  { width: 22px; height: 11px; border: 1.5px solid var(--text);  border-radius: 2px; }
+  .fl-border-dashed { width: 22px; height: 11px; border: 1.5px dashed var(--muted); border-radius: 2px; }
+
+  .flow-diagram { display: flex; flex-direction: column; }
+  .flow-row { display: flex; gap: 12px; }
+  .flow-left { display: flex; flex-direction: column; align-items: center; width: 34px; flex-shrink: 0; }
+  .flow-circle {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600;
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); flex-shrink: 0;
+  }
+  .flow-circle.always { border-color: var(--teal); color: var(--teal); }
+  .flow-line { flex: 1; width: 1px; background: var(--border); min-height: 14px; margin: 3px 0; }
+  .flow-body { flex: 1; padding-bottom: 18px; }
+  .flow-phase-name {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600;
+    color: var(--text); padding: 2px 0 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .flow-phase-tag {
+    font-size: 9px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase;
+    padding: 1px 6px; border-radius: 2px; background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .flow-items { display: flex; flex-direction: column; gap: 5px; }
+  .fi {
+    display: flex; gap: 10px; padding: 8px 12px; border-radius: 3px;
+    background: var(--surface); border: 1px solid var(--border); border-left-width: 3px;
+  }
+  .fi.implicit { border-top-style: dashed; border-right-style: dashed; border-bottom-style: dashed; }
+  .fi.sp-c   { border-left-color: var(--accent); }
+  .fi.omc-c  { border-left-color: var(--accent2); }
+  .fi.ecc-c  { border-left-color: var(--green); }
+  .fi.user-c { border-left-color: var(--muted); }
+  .fi-meta { display: flex; flex-direction: column; gap: 4px; width: 54px; flex-shrink: 0; }
+  .fi-plugin {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 600;
+    padding: 2px 4px; border-radius: 2px; text-align: center;
+  }
+  .fi-plugin.sp   { background: #89b4fa15; color: var(--accent);  border: 1px solid #89b4fa33; }
+  .fi-plugin.omc  { background: #cba6f715; color: var(--accent2); border: 1px solid #cba6f733; }
+  .fi-plugin.ecc  { background: #a6e3a115; color: var(--green);   border: 1px solid #a6e3a133; }
+  .fi-plugin.user { background: #6c7a9615; color: var(--muted);   border: 1px solid #6c7a9633; }
+  .fi-timing {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+    padding: 1px 4px; border-radius: 2px; text-align: center;
+  }
+  .fi-timing.exp { color: var(--text);  border: 1px solid var(--border); background: var(--surface2); }
+  .fi-timing.imp { color: var(--muted); border: 1px dashed var(--border); }
+  .fi-body { flex: 1; min-width: 0; }
+  .fi-title { font-size: 12.5px; font-weight: 500; color: var(--text); margin-bottom: 2px; line-height: 1.4; }
+  .fi-cmd { font-family: 'IBM Plex Mono', monospace; color: var(--teal); font-size: 12px; }
+  .fi-desc { font-size: 11.5px; color: var(--muted); line-height: 1.55; }
+  .fi-gate {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 600;
+    padding: 1px 6px; border-radius: 2px; margin-left: 6px; vertical-align: middle;
+    background: #f38ba815; border: 1px solid #f38ba844; color: var(--red);
+  }
+  .flow-optional { border-left: 2px solid var(--surface2); padding-left: 10px; margin-top: 5px; display: flex; flex-direction: column; gap: 5px; }
+  .flow-optional-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 2px;
+  }
+  .flow-sub-title {
+    font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;
+    color: var(--accent); margin: 28px 0 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .flow-sub-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Claude Code — プラグイン比較分析</h1>
+    <p>セキュリティ観点から堅実に確実な設計・実装を積み上げるための採用指針</p>
+    <div class="badge-row">
+      <span class="badge env">superpowers v5.0.7</span>
+      <span class="badge env">oh-my-claudecode v4.11.5</span>
+      <span class="badge env">everything-claude-code</span>
+      <span class="badge env">snarktank/ralph</span>
+      <a href="https://zenn.dev/dk_/articles/26f88c8ae89864" class="badge src" target="_blank">参照: zenn.dev/dk_/articles/26f88c8ae89864</a>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-row"><span class="meta-label">作成</span><span class="meta-val">2026-04-11</span></div>
+    <div class="meta-row"><span class="meta-label">更新</span><span class="meta-val">2026-04-12</span></div>
+    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">1.2</span></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav>
+    <div class="nav-label">はじめに</div>
+    <a href="#overview" class="active"><span class="step-num">概</span>評価の目的と軸</a>
+    <div class="nav-divider"></div>
+    <div class="nav-label">プラグイン分析</div>
+    <a href="#sp"><span class="step-num">P1</span>superpowers</a>
+    <a href="#omc"><span class="step-num">P2</span>oh-my-claudecode</a>
+    <a href="#ecc"><span class="step-num">P3</span>everything-claude-code</a>
+    <a href="#ralph"><span class="step-num">P4</span>snarktank/ralph</a>
+    <div class="nav-divider"></div>
+    <div class="nav-label">比較・結論</div>
+    <a href="#matrix"><span class="step-num">比</span>評価マトリクス</a>
+    <a href="#usecases"><span class="step-num">UC</span>ユースケース別構成</a>
+    <a href="#flows"><span class="step-num">図</span>開発フロー図</a>
+    <a href="#recommend"><span class="step-num">推</span>推奨構成</a>
+    <div class="nav-divider"></div>
+    <div class="nav-label">参考</div>
+    <a href="#refs"><span class="step-num">参</span>参考URL</a>
+  </nav>
+
+  <main>
+
+    <!-- 概要 -->
+    <div class="section" id="overview">
+      <div class="section-header">
+        <div class="step-badge">概要</div>
+        <h2>評価の目的と軸</h2>
+      </div>
+
+      <p>「セキュリティ観点から堅実に確実な設計・実装を積み上げる」という基準で、Claude Code で利用可能な3つのプラグインを評価する。エージェント自律実行の利便性と、予測可能性・安全性のトレードオフを明示し、プロジェクト特性に応じた採用構成を導く。</p>
+
+      <div class="section-group-label">評価5軸</div>
+
+      <table>
+        <tr><th>#</th><th>評価軸</th><th>定義</th><th>重要度</th></tr>
+        <tr>
+          <td class="key-col">1</td>
+          <td>セキュリティガード力</td>
+          <td>シークレット検出・権限管理・ランタイムガードの充実度</td>
+          <td class="ok">高</td>
+        </tr>
+        <tr>
+          <td class="key-col">2</td>
+          <td>プロセス規律</td>
+          <td>TDD強制・設計先行・検証強制の有無</td>
+          <td class="ok">高</td>
+        </tr>
+        <tr>
+          <td class="key-col">3</td>
+          <td>予測可能性</td>
+          <td>エージェント行動の制御性・自律暴走リスクの低さ</td>
+          <td class="ok">高</td>
+        </tr>
+        <tr>
+          <td class="key-col">4</td>
+          <td>サプライチェーンリスク</td>
+          <td>外部依存度・更新頻度・コード監査可能性（低リスク = 高スコア）</td>
+          <td class="warn-td">中</td>
+        </tr>
+        <tr>
+          <td class="key-col">5</td>
+          <td>運用コスト</td>
+          <td>学習コスト・設定維持・バージョン追従の負荷（低コスト = 高スコア）</td>
+          <td class="warn-td">中</td>
+        </tr>
+      </table>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>スコアは <span class="inline-code">●●●●●</span>（5/5 最良）〜 <span class="inline-code">●○○○○</span>（1/5 最低）の5段階。サプライチェーンリスク・運用コストは <strong>低いほど高スコア</strong>。</p>
+      </div>
+    </div>
+
+    <!-- superpowers -->
+    <div class="section" id="sp">
+      <div class="section-header">
+        <div class="step-badge">P1</div>
+        <h2>superpowers</h2>
+        <span class="tag official">公式プラグイン</span>
+      </div>
+
+      <p><strong>哲学: 開発プロセスの体系化。</strong> TDD・YAGNI・DRY原則をエージェントに強制するスキルセット。実装より設計を先行させ、「未検証の完了宣言」「根拠なき修正」を厳しく禁じる。マルチプラットフォーム対応（Claude Code・Cursor・Codex・Gemini CLI）。全13スキルで構成されシンプル。</p>
+
+      <div class="section-group-label">主要スキル（全スキルが安全）</div>
+
+      <div class="skill-tags">
+        <span class="skill-tag safe">brainstorming</span>
+        <span class="skill-tag safe">writing-plans</span>
+        <span class="skill-tag safe">executing-plans</span>
+        <span class="skill-tag safe">test-driven-development</span>
+        <span class="skill-tag safe">systematic-debugging</span>
+        <span class="skill-tag safe">verification-before-completion</span>
+        <span class="skill-tag safe">subagent-driven-development</span>
+        <span class="skill-tag safe">requesting-code-review</span>
+        <span class="skill-tag safe">receiving-code-review</span>
+        <span class="skill-tag safe">dispatching-parallel-agents</span>
+        <span class="skill-tag safe">finishing-a-development-branch</span>
+        <span class="skill-tag safe">using-git-worktrees</span>
+        <span class="skill-tag safe">writing-skills</span>
+      </div>
+
+      <div class="section-group-label">採用・不採用の論点</div>
+
+      <div class="pro-con">
+        <div class="pc-box pro">
+          <h4>採用論点</h4>
+          <ul>
+            <li>TDD（RED→GREEN→REFACTOR）を強制し、テストのないコードを禁止</li>
+            <li><span class="inline-code">verification-before-completion</span> で未検証の完了宣言を禁止</li>
+            <li><span class="inline-code">systematic-debugging</span> で根拠なき修正を禁止</li>
+            <li>サブエージェントにセッション履歴を渡さないコンテキスト分離設計</li>
+            <li>YAGNI強制で不必要な複雑性・攻撃面を削減</li>
+            <li>公式プラグイン（claude-plugins-official）でSCリスク最小</li>
+            <li>13スキルで学習・管理コストが低い</li>
+          </ul>
+        </div>
+        <div class="pc-box con">
+          <h4>懸念点</h4>
+          <ul>
+            <li>シークレット検出・権限管理の専用機能を持たない</li>
+            <li>自律実行モードがなく生産性面では他に劣る</li>
+            <li>ランタイムセキュリティフックは別途設定が必要</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-group-label">強制ワークフロー（HARD-GATE）</div>
+
+      <p>superpowers の最大の特徴は、スキル間に <strong>HARD-GATE</strong>（通過しないと次に進めない検問）を設けている点。</p>
+
+      <table>
+        <tr><th>フェーズ</th><th>スキル</th><th>HARD-GATE の内容</th></tr>
+        <tr>
+          <td class="key-col">設計</td>
+          <td><span class="inline-code">brainstorming</span></td>
+          <td>設計を提示しユーザーが承認するまでコードを1行も書かない</td>
+        </tr>
+        <tr>
+          <td class="key-col">計画</td>
+          <td><span class="inline-code">writing-plans</span></td>
+          <td>実装計画をファイルに書き出し、ユーザーがレビューするまで実装しない</td>
+        </tr>
+        <tr>
+          <td class="key-col">実装</td>
+          <td><span class="inline-code">test-driven-development</span></td>
+          <td>テストが実際に失敗することを確認してから実装コードを書く（RED確認必須）</td>
+        </tr>
+        <tr>
+          <td class="key-col">完了</td>
+          <td><span class="inline-code">verification-before-completion</span></td>
+          <td>検証コマンドの実行結果を示さずに「完了した」と宣言できない</td>
+        </tr>
+        <tr>
+          <td class="key-col">デバッグ</td>
+          <td><span class="inline-code">systematic-debugging</span></td>
+          <td>根本原因を特定する前に修正コードを書けない（推測での修正禁止）</td>
+        </tr>
+      </table>
+
+      <div class="notice success">
+        <span class="notice-icon">✅</span>
+        <p><strong>堅実実装との親和性: 最高。</strong> セキュリティガードは薄いが、「間違いを未然に防ぐプロセス」の強制力は4プラグイン中で突出。HARD-GATEにより、エージェントが勝手に実装を進める・未検証で完了を宣言するという典型的なリスクを構造的に排除する。全構成で基盤として採用すべき唯一のプラグイン。</p>
+      </div>
+    </div>
+
+    <!-- oh-my-claudecode -->
+    <div class="section" id="omc">
+      <div class="section-header">
+        <div class="step-badge p2">P2</div>
+        <h2>oh-my-claudecode</h2>
+        <span class="tag community">コミュニティ</span>
+      </div>
+
+      <p><strong>哲学: エージェント火力の最大化。</strong> autopilot・ralph・ultrawork など複数の自律実行モードで高スループットを実現。Claude・Codex・Gemini の3モデル連携も可能。スキル数37と豊富で頻繁に更新される。superpowers との最大の違いは「プロセスを守る」より「タスクを完遂する」ことを優先する点。</p>
+
+      <div class="section-group-label">スキル分類（セキュリティ観点）</div>
+
+      <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">緑: 安全に使用可能 &nbsp;/&nbsp; 黄: 使用前に目的を確認 &nbsp;/&nbsp; 赤: 堅実実装では原則不使用</p>
+
+      <div class="skill-tags">
+        <span class="skill-tag safe">ralplan</span>
+        <span class="skill-tag safe">verify</span>
+        <span class="skill-tag safe">trace</span>
+        <span class="skill-tag safe">deep-interview</span>
+        <span class="skill-tag safe">plan</span>
+        <span class="skill-tag safe">wiki</span>
+        <span class="skill-tag safe">remember</span>
+        <span class="skill-tag caution">ralph</span>
+        <span class="skill-tag caution">ultraqa</span>
+        <span class="skill-tag caution">team</span>
+        <span class="skill-tag caution">deepinit</span>
+        <span class="skill-tag avoid">autopilot</span>
+        <span class="skill-tag avoid">ultrawork</span>
+        <span class="skill-tag avoid">ccg</span>
+        <span class="skill-tag avoid">self-improve</span>
+      </div>
+
+      <div class="section-group-label">採用・不採用の論点</div>
+
+      <div class="pro-con">
+        <div class="pc-box pro">
+          <h4>採用論点（分析系スキル）</h4>
+          <ul>
+            <li><span class="inline-code">ralplan</span>: 曖昧タスクを自律実行前にプランナー・アーキテクト・クリティックの3者合意で精査</li>
+            <li><span class="inline-code">verify</span>: 完了宣言前の確認強制（superpowersと補完）</li>
+            <li><span class="inline-code">trace</span>: エビデンス駆動の競合仮説並列追跡でデバッグ精度向上</li>
+            <li><span class="inline-code">deep-interview</span>: 数学的曖昧さゲーティングで要件を結晶化</li>
+            <li><span class="inline-code">pre-tool-enforcer</span>・<span class="inline-code">permission-handler</span> フックがツール実行前に動作</li>
+          </ul>
+        </div>
+        <div class="pc-box con">
+          <h4>懸念点</h4>
+          <ul>
+            <li><span class="inline-code">autopilot</span>/<span class="inline-code">ralph</span>/<span class="inline-code">ultrawork</span>: 権限・影響範囲が広く行動が予測困難</li>
+            <li>外部GitリポジトリキャッシュによるSCA（サプライチェーン攻撃）リスク</li>
+            <li>高頻度アップデートで設定が突然無効化されるリスク</li>
+            <li>sandbox 外で動作する旨がドキュメントに明記されている</li>
+            <li>37スキルで学習・管理コストが高い</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-group-label">懸念点の補足説明</div>
+
+      <table>
+        <tr><th>懸念事項</th><th>具体的な意味</th><th>対策</th></tr>
+        <tr>
+          <td class="key-col">SCAリスク</td>
+          <td>Claude Code はプラグインを <span class="inline-code">~/.claude/plugins/cache/</span> に Git クローンして使用する。oh-my-claudecode は非公式リポジトリのため、リポジトリへの不正コミット・タグ改ざん等でマルウェア入りスキルが自動配布されるリスクがある</td>
+          <td>定期的に <span class="inline-code">git log</span> でコミット履歴を確認する。メジャー更新前はスキルの差分をレビューする</td>
+        </tr>
+        <tr>
+          <td class="key-col">sandbox外動作</td>
+          <td><span class="inline-code">settings.json</span> の sandbox はBashツールの実行のみに適用される。oh-my-claudecodeのスキルが呼び出す Read・Edit・WebFetch・MCP ツールにはsandbox制限が<strong>かからない</strong>。ドキュメントにも「プラグインのコードがsandbox外で動作する」と明記</td>
+          <td><span class="inline-code">permissions.deny</span> で機密ファイルへのRead/Edit/Writeを禁止し、sandbox非適用ツールの補完とする</td>
+        </tr>
+        <tr>
+          <td class="key-col">pre-tool-enforcer の実態</td>
+          <td>ツール実行前に権限チェックを行うフック。ただし oh-my-claudecode の設定に基づいた独自ルールであり、settings.json の <span class="inline-code">permissions.deny</span> とは別系統。両方設定しておくことで多層防御になる</td>
+          <td>oh-my-claudecodeのフックに頼らず、settings.jsonのpermissions.denyを必ず設定する</td>
+        </tr>
+      </table>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>堅実実装との親和性: 条件付き。</strong> <span class="inline-code">ralplan / verify / trace / deep-interview / plan</span> は安全かつ有用。自律実行モード（<span class="inline-code">autopilot / ralph / ultrawork</span>）は堅実実装では原則不使用。使用する場合は明示的な承認と影響範囲の事前確認を必須とする。</p>
+      </div>
+    </div>
+
+    <!-- everything-claude-code -->
+    <div class="section" id="ecc">
+      <div class="section-header">
+        <div class="step-badge p3">P3</div>
+        <h2>everything-claude-code</h2>
+        <span class="tag experimental">実験的</span>
+      </div>
+
+      <p><strong>哲学: 包括的パフォーマンス最適化。</strong> Anthropicハッカソン優勝を起点とした大規模システム。エージェント47体・スキル181個・ルール34個・フック8種以上。特にAgentShieldと呼ぶ統合セキュリティ機能がユニーク。他の2プラグインにはないシークレット検出・ランタイムブロック機能を持つ。</p>
+
+      <div class="section-group-label">AgentShield — 2層の保護構造</div>
+
+      <p>AgentShieldは<strong>静的解析（事前検査）</strong>と<strong>ランタイムフック（実行時ブロック）</strong>の2層で構成される。</p>
+
+      <table>
+        <tr><th>層</th><th>タイミング</th><th>機能</th><th>評価</th></tr>
+        <tr>
+          <td class="key-col" style="color:var(--accent);">層1 静的解析</td>
+          <td>セッション開始前</td>
+          <td>102ルール・1282テストでCLAUDE.md・settings.json・MCPコンフィグ・hooksを走査。権限過剰付与・フックインジェクション・MCPリスクを検出</td>
+          <td class="ok">有用</td>
+        </tr>
+        <tr>
+          <td class="key-col" style="color:var(--green);">層2 ランタイムフック①</td>
+          <td>プロンプト送信直前</td>
+          <td><span class="inline-code">beforeSubmitPrompt</span> フック: <span class="inline-code">sk-</span>・<span class="inline-code">ghp_</span>・<span class="inline-code">AKIA</span>等14パターンのシークレットをスキャン。含まれていれば送信をブロック</td>
+          <td class="ok">★ ユニーク</td>
+        </tr>
+        <tr>
+          <td class="key-col" style="color:var(--green);">層2 ランタイムフック②</td>
+          <td>ファイル読み取り直前</td>
+          <td><span class="inline-code">beforeTabFileRead</span> フック: <span class="inline-code">.env</span>・<span class="inline-code">.key</span>・<span class="inline-code">.pem</span>へのアクセスをブロック。<span class="inline-code">permissions.deny</span>が効かないエディタ系ツールの補完として機能</td>
+          <td class="ok">★ 有用</td>
+        </tr>
+      </table>
+
+      <div class="section-group-label">既存のsandbox / permissions.deny との違い</div>
+
+      <table>
+        <tr><th>手段</th><th>適用タイミング</th><th>カバー範囲</th><th>カバーできないもの</th></tr>
+        <tr>
+          <td class="key-col">sandbox.filesystem</td>
+          <td>Bashコマンド実行時</td>
+          <td>Bashツール経由のファイルアクセス</td>
+          <td class="ng">Read/Edit/Glob/Write ツール</td>
+        </tr>
+        <tr>
+          <td class="key-col">permissions.deny</td>
+          <td>各ツール呼び出し時</td>
+          <td>Read・Edit・Glob・Write・Bash</td>
+          <td class="ng">プロンプト内容のシークレット</td>
+        </tr>
+        <tr>
+          <td class="key-col" style="color:var(--green);">AgentShield フック</td>
+          <td>プロンプト送信前・ファイル読取前</td>
+          <td><strong>プロンプトに含まれるシークレット</strong>・ファイル読取</td>
+          <td class="warn-td">Bash経由のネットワーク通信</td>
+        </tr>
+      </table>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>AgentShieldが防ぐ固有のリスク:</strong> <span class="inline-code">permissions.deny</span> はファイルへの「読み取りアクセス」を防ぐが、ユーザーが手動でAPIキーをプロンプトに貼り付けた場合や、環境変数がプロンプトに展開されてしまった場合は防げない。AgentShieldの <span class="inline-code">beforeSubmitPrompt</span> フックはプロンプト送信直前のシークレット検出により、この「最後の砦」となる。</p>
+      </div>
+
+      <div class="section-group-label">採用上の注意点（フック名について）</div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><span class="inline-code">beforeSubmitPrompt</span>・<span class="inline-code">beforeTabFileRead</span> は everything-claude-code が独自に定義したフック名称。標準Claude Code のフックイベント名（<span class="inline-code">PreToolUse</span>・<span class="inline-code">PostToolUse</span>・<span class="inline-code">Stop</span>等）とは異なる。<br>
+        採用前に必ず以下を確認すること:<br>
+        ① リポジトリから実際のスクリプトを取得し、フックの実装コードを自分でレビューする<br>
+        ② Claude Code のバージョンでこれらのフックイベントが有効かを確認する<br>
+        ③ <span class="inline-code">plugin.json</span> に <span class="inline-code">hooks</span> フィールドを追加しない（v2.1+ では <span class="inline-code">hooks/hooks.json</span> の自動読み込みと重複してエラーになる）</p>
+      </div>
+
+      <div class="section-group-label">採用・不採用の論点</div>
+
+      <div class="pro-con">
+        <div class="pc-box pro">
+          <h4>採用論点</h4>
+          <ul>
+            <li>AgentShieldのシークレット検出は3プラグイン中で唯一の機能</li>
+            <li>.env/.key/.pemのランタイムブロックはpermissions.denyの多層防御として有効</li>
+            <li>フックインジェクション分析・MCPリスク評価はユニーク</li>
+            <li>1282テスト・102静的解析ルールの量的充実</li>
+          </ul>
+        </div>
+        <div class="pc-box con">
+          <h4>懸念点</h4>
+          <ul>
+            <li>ハッカソン起点でエンタープライズ実績が未検証</li>
+            <li>ルールは手動インストールが必須（自動配布不可）</li>
+            <li>plugin.jsonのhooksフィールド制約など運用上の落とし穴（Issue #29/#52/#103）</li>
+            <li>エージェント47体・スキル181個で管理コストが甚大</li>
+            <li>Claude Code CLI v2.1.0以降が必須</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>堅実実装との親和性: AgentShieldのみ高。</strong> プラグイン全体の採用はリスクが高い。AgentShieldのシークレット検出とランタイムガード部分のみを手動設定する部分採用が現実的な選択。</p>
+      </div>
+    </div>
+
+    <!-- snarktank/ralph -->
+    <div class="section" id="ralph">
+      <div class="section-header">
+        <div class="step-badge p4">P4</div>
+        <h2>snarktank/ralph</h2>
+        <span class="tag community">コミュニティ（★15.5k）</span>
+      </div>
+
+      <p><strong>哲学: 完了するまでループで回し続ける。</strong> Geoffrey Huntley が考案した「Bashループ自律コーディング」パターンの実装。本質は <span class="inline-code">while :; do cat PROMPT.md | claude; done</span> の1行に集約される。各反復でAIインスタンスを新規起動してコンテキスト汚染を回避し、記憶は <span class="inline-code">git history</span>・<span class="inline-code">progress.txt</span>・<span class="inline-code">prd.json</span> の3ファイルだけで管理する。</p>
+
+      <p>oh-my-claudecodeの <span class="inline-code">ralph</span> スキルとは<strong>独立した別実装</strong>。Star数15,500・Fork数1,600と他ツールに比べ異例の規模を持ち、Claude Plugin Marketplace でも公式提供（インストール数129,572）されている。</p>
+
+      <div class="section-group-label">コアコンポーネント</div>
+
+      <table>
+        <tr><th>ファイル</th><th>役割</th></tr>
+        <tr><td class="key-col">ralph.sh</td><td>メインループスクリプト。<span class="inline-code">amp</span>または<span class="inline-code">claude</span>を繰り返し起動</td></tr>
+        <tr><td class="key-col">prd.json</td><td>ユーザーストーリーの完了状態を管理するJSON</td></tr>
+        <tr><td class="key-col">progress.txt</td><td>各反復の知見・学習を蓄積するテキストファイル</td></tr>
+        <tr><td class="key-col">CLAUDE.md</td><td>10ステップの行動プロンプトテンプレート（毎反復投入）</td></tr>
+        <tr><td class="key-col">PRD スキル</td><td>会話から<span class="inline-code">prd.json</span>を生成。ストーリー粒度・依存順序を自動確認</td></tr>
+      </table>
+
+      <div class="section-group-label">セキュリティ上の重大な注意点</div>
+
+      <div class="notice danger" style="background:#f38ba80d; border-left: 3px solid var(--red);">
+        <span class="notice-icon">🚨</span>
+        <p><strong>Claude Code モードでは <span class="inline-code">--dangerously-skip-permissions</span> が必須。</strong> 全ツール呼び出し確認ダイアログが無効化され、AIが任意のファイル操作・コマンド実行を無制限に行える状態になる。<br>
+        <br>
+        <strong>実際に起きた事故（記録済み）:</strong><br>
+        · 2025年12月: <span class="inline-code">rm -rf tests/ patches/ ~/</span> の末尾 <span class="inline-code">~/</span> が展開され、デスクトップ・Keychain・アプリデータが消滅<br>
+        · 2025年11月: <span class="inline-code">~</span> という名前のディレクトリを誤作成後、後続の <span class="inline-code">rm -rf *</span> がホームディレクトリを削除</p>
+      </div>
+
+      <div class="section-group-label">採用・不採用の論点</div>
+
+      <div class="pro-con">
+        <div class="pc-box pro">
+          <h4>採用論点</h4>
+          <ul>
+            <li>要件と完了条件が明確なタスク（テストが通る等）に対して強力</li>
+            <li>各反復でフレッシュなコンテキストを使うためコンテキスト汚染を回避</li>
+            <li>bash + jq だけで動く最小構成。学習・導入コストが最低</li>
+            <li>Amp CLI / Claude Code CLI どちらでも動くツール非依存設計</li>
+            <li>グリーンフィールド開発の夜間自律実行（Y-CombinatorHackで一晩6リポジトリの実績）</li>
+          </ul>
+        </div>
+        <div class="pc-box con">
+          <h4>懸念点</h4>
+          <ul>
+            <li><span class="inline-code">--dangerously-skip-permissions</span> 必須 → サンドボックス外での実行は事故の元</li>
+            <li>ガード機能ゼロ。ralph.sh 自体に危険なコマンドを検出する仕組みなし</li>
+            <li>セキュリティセンシティブなコード（認証・暗号・ACL）を書かせるのは高リスク</li>
+            <li>完了シグナル（<span class="inline-code">&lt;promise&gt;COMPLETE&lt;/promise&gt;</span>）は単純なgrep一致で信頼性が低い</li>
+            <li>メンテナー体制が不安定（Issue #107/#108 でメンテナー不在問題が議論中）</li>
+            <li>50反復ループで大規模コードベースは $50〜$100 超えも現実的</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-group-label">他プラグインとの立ち位置</div>
+
+      <table>
+        <tr><th>ツール</th><th>アーキテクチャ</th><th>並列性</th><th>対象</th></tr>
+        <tr><td class="key-col">ralph</td><td>シングルエージェント Bash ループ</td><td class="ng">なし</td><td>完了条件が明確な単一フィーチャー</td></tr>
+        <tr><td class="key-col">superpowers</td><td>プロセス規律プラグイン</td><td class="ng">なし</td><td>Claude Code の思考品質向上</td></tr>
+        <tr><td class="key-col">oh-my-claudecode</td><td>多エージェントオーケストレーション</td><td class="ok">あり</td><td>複数ドメイン同時開発</td></tr>
+        <tr><td class="key-col">everything-CC</td><td>スキル/フック/エージェント統合</td><td class="ng">なし</td><td>TDD・コード品質重視の長期PJ</td></tr>
+      </table>
+
+      <div class="section-group-label">--dangerously-skip-permissions の代替手段</div>
+
+      <table>
+        <tr><th>手段</th><th>概要</th><th>安全性</th></tr>
+        <tr>
+          <td class="key-col">--dangerously-skip-permissions</td>
+          <td>全ツール確認を無効化。ralph のデフォルト</td>
+          <td class="ng">最低（事故事例複数あり）</td>
+        </tr>
+        <tr>
+          <td class="key-col">Claude Code Auto Mode</td>
+          <td>Anthropic公式。モデルベースの分類器が安全な操作を自動承認・危険な操作をブロック。偽陰性率17%（危険操作の見逃し）</td>
+          <td class="warn-td">中（完全ではないが --dangerously より安全）</td>
+        </tr>
+        <tr>
+          <td class="key-col">Docker / Devcontainer</td>
+          <td>コンテナ内に隔離してから --dangerously-skip-permissions を使用。ホスト資産へのアクセスを物理的に遮断</td>
+          <td class="ok">高（隔離による被害局所化）</td>
+        </tr>
+      </table>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>堅実実装との親和性: 条件付き（サンドボックス限定）。</strong> PRDスキルによる要件整理・反復学習の蓄積パターンは有用だが、<span class="inline-code">--dangerously-skip-permissions</span> は堅実実装の前提である「権限の最小化」と根本的に矛盾する。使用する場合は Docker / Devcontainer 等の隔離環境が必須。本番資産（DB接続情報・APIキー）は実行環境に置かないこと。</p>
+      </div>
+    </div>
+
+    <!-- 評価マトリクス -->
+    <div class="section" id="matrix">
+      <div class="section-header">
+        <div class="step-badge mat">比較</div>
+        <h2>評価マトリクス</h2>
+      </div>
+
+      <table style="font-size:12px;">
+        <tr>
+          <th>評価軸</th>
+          <th>superpowers</th>
+          <th>oh-my-CC<br><small style="font-weight:300;letter-spacing:0;">(分析系限定)</small></th>
+          <th>everything-CC<br><small style="font-weight:300;letter-spacing:0;">(AgentShieldのみ)</small></th>
+          <th>ralph<br><small style="font-weight:300;letter-spacing:0;">(sandbox必須)</small></th>
+        </tr>
+        <tr>
+          <td class="key-col">セキュリティガード力</td>
+          <td><span class="score"><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">2/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">3/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="score-label">5/5</span></span></td>
+          <td><span class="score"><span class="dot r"></span><span class="dot e"></span><span class="dot e"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">1/5</span></span></td>
+        </tr>
+        <tr>
+          <td class="key-col">プロセス規律</td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="score-label">5/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">3/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">2/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">3/5</span></span></td>
+        </tr>
+        <tr>
+          <td class="key-col">予測可能性</td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="score-label">5/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="score-label">4/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">3/5</span></span></td>
+          <td><span class="score"><span class="dot r"></span><span class="dot r"></span><span class="dot e"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">2/5</span></span></td>
+        </tr>
+        <tr>
+          <td class="key-col">SCリスク <small style="color:var(--muted);">(低=高)</small></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="score-label">5/5</span></span></td>
+          <td><span class="score"><span class="dot r"></span><span class="dot r"></span><span class="dot e"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">2/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">3/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">3/5</span></span></td>
+        </tr>
+        <tr>
+          <td class="key-col">運用コスト <small style="color:var(--muted);">(低=高)</small></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="score-label">4/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">3/5</span></span></td>
+          <td><span class="score"><span class="dot r"></span><span class="dot r"></span><span class="dot e"></span><span class="dot e"></span><span class="dot e"></span><span class="score-label">2/5</span></span></td>
+          <td><span class="score"><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot g"></span><span class="dot e"></span><span class="score-label">4/5</span></span></td>
+        </tr>
+        <tr style="background:var(--surface2);">
+          <td class="key-col" style="font-weight:600;">合計</td>
+          <td style="font-weight:600; color:var(--green); font-family:'IBM Plex Mono',monospace;">21 / 25</td>
+          <td style="font-weight:600; color:var(--yellow); font-family:'IBM Plex Mono',monospace;">15 / 25</td>
+          <td style="font-weight:600; color:var(--yellow); font-family:'IBM Plex Mono',monospace;">15 / 25</td>
+          <td style="font-weight:600; color:var(--red); font-family:'IBM Plex Mono',monospace;">13 / 25</td>
+        </tr>
+      </table>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p>oh-my-claudecodeのスコアは<strong>分析系スキル限定時</strong>の評価。フル機能使用時は予測可能性2/5・SCリスク2/5に低下する。everything-claude-codeはAgentShieldのみ手動設定した場合の評価（フル採用時は運用コスト1/5）。ralphのスコアはサンドボックス環境使用を前提とした評価。サンドボックスなしでの実行は全スコアが低下する。</p>
+      </div>
+    </div>
+
+    <!-- ユースケース別構成 -->
+    <div class="section" id="usecases">
+      <div class="section-header">
+        <div class="step-badge uc">UC</div>
+        <h2>ユースケース別構成</h2>
+      </div>
+
+      <div class="uc-cards">
+        <div class="uc-card solid">
+          <h3>堅実重視</h3>
+          <p class="uc-target">機密情報を扱うプロジェクト・規制業界・大規模チーム</p>
+          <div>
+            <span class="uc-stack-label">採用</span>
+            <span class="uc-badge adopt">superpowers 全スキル</span>
+            <span class="uc-badge adopt">AgentShield フックのみ</span>
+          </div>
+          <div>
+            <span class="uc-stack-label">不採用</span>
+            <span class="uc-badge skip">oh-my-claudecode</span>
+            <span class="uc-badge skip">ecc フル機能</span>
+          </div>
+          <div style="font-size:12px; color:var(--muted); line-height:1.7; margin-top:4px;">
+            <div style="color:var(--green);">+ 最強のプロセス規律</div>
+            <div style="color:var(--green);">+ シークレット検出で多層防御</div>
+            <div style="color:var(--red);">− 自律実行なし・生産性は最低</div>
+          </div>
+        </div>
+
+        <div class="uc-card balance">
+          <h3>バランス型 ★推奨</h3>
+          <p class="uc-target">一般的なプロダクト開発・個人・小チーム</p>
+          <div>
+            <span class="uc-stack-label">採用</span>
+            <span class="uc-badge adopt">superpowers 全スキル</span>
+            <span class="uc-badge partial">omc 分析系5スキル</span>
+            <span class="uc-badge adopt">AgentShield フックのみ</span>
+          </div>
+          <div>
+            <span class="uc-stack-label">不採用</span>
+            <span class="uc-badge skip">autopilot / ralph / ultrawork</span>
+          </div>
+          <div style="font-size:12px; color:var(--muted); line-height:1.7; margin-top:4px;">
+            <div style="color:var(--green);">+ セキュリティと生産性のバランス</div>
+            <div style="color:var(--green);">+ 3層防御（規律・分析・ガード）</div>
+            <div style="color:var(--red);">− omc バージョン追従が必要</div>
+          </div>
+        </div>
+
+        <div class="uc-card speed">
+          <h3>生産性重視</h3>
+          <p class="uc-target">プロトタイプ・内部ツール・時間優先</p>
+          <div>
+            <span class="uc-stack-label">採用</span>
+            <span class="uc-badge adopt">oh-my-claudecode 全スキル</span>
+            <span class="uc-badge partial">superpowers verification/debugging</span>
+          </div>
+          <div>
+            <span class="uc-stack-label">不採用</span>
+            <span class="uc-badge skip">everything-claude-code</span>
+          </div>
+          <div style="font-size:12px; color:var(--muted); line-height:1.7; margin-top:4px;">
+            <div style="color:var(--green);">+ 最高スループット</div>
+            <div style="color:var(--red);">− セキュリティガードは最弱</div>
+            <div style="color:var(--red);">− 予測可能性が低い</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>oh-my-claudecodeの分析系スキル（<span class="inline-code">ralplan</span>・<span class="inline-code">verify</span>・<span class="inline-code">trace</span>・<span class="inline-code">deep-interview</span>・<span class="inline-code">plan</span>）はsuperpowersと競合せず相互補完する。superpowersが「設計→実装→検証のプロセスを守る」のに対し、omcは「設計精度・問題調査の深度を高める」役割分担になる。</p>
+      </div>
+
+      <div class="section-group-label">ralph の位置づけ</div>
+
+      <div class="notice warn">
+        <span class="notice-icon">🔄</span>
+        <p><strong>ralph は上記3構成とは異なる次元のツール。</strong> プラグインというより「実行エンジンパターン」に近い。上記3構成はいずれも <em>インタラクティブなClaude Codeセッション中に何をするか</em> を定義するが、ralphは <em>セッションそのものを自律的に反復する</em>。<br><br>
+        <strong>追加構成: バッチ自律実行型（サンドボックス限定）</strong><br>
+        採用: <span class="inline-code">superpowers</span>（PRD作成・品質基準）+ <span class="inline-code">ralph</span>（Dockerコンテナ内で夜間実行）<br>
+        前提: Docker/Devcontainerによる完全隔離・本番資産の排除・max_iterationsの上限設定<br>
+        用途: 大規模リファクタリング・テスト追加の一括適用・グリーンフィールド開発の夜間バッチ</p>
+      </div>
+    </div>
+
+    <!-- 開発フロー図 -->
+    <div class="section" id="flows">
+      <div class="section-header">
+        <div class="step-badge mat">図</div>
+        <h2>開発フロー図</h2>
+      </div>
+
+      <p>各プラグインの機能がどのタイミング・順序で発動するかを示す。<strong>実線ボックス = 明示的（ユーザーがコマンドを打つ）</strong>、<strong>破線ボックス = 暗黙的（自動発動）</strong>。</p>
+
+      <!-- 凡例 -->
+      <div class="flow-legend">
+        <div class="fl-group">
+          <span class="fl-group-label">プラグイン</span>
+          <span class="fl-item"><span class="fl-swatch sp"></span>superpowers</span>
+          <span class="fl-item"><span class="fl-swatch omc"></span>oh-my-claudecode</span>
+          <span class="fl-item"><span class="fl-swatch ecc"></span>AgentShield</span>
+          <span class="fl-item"><span class="fl-swatch user"></span>ユーザー操作</span>
+        </div>
+        <div class="fl-group">
+          <span class="fl-group-label">発動</span>
+          <span class="fl-item"><span class="fl-border-solid"></span>明示的（コマンド入力）</span>
+          <span class="fl-item"><span class="fl-border-dashed"></span>暗黙的（自動発動）</span>
+        </div>
+      </div>
+
+      <!-- ── 堅実重視フロー ── -->
+      <div class="flow-sub-title">堅実重視フロー — superpowers 全スキル ＋ AgentShield フック2本</div>
+
+      <div class="flow-diagram">
+
+        <!-- STEP 00 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle always">00</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">セッション開始 <span class="flow-phase-tag">常時・自動</span></div>
+            <div class="flow-items">
+              <div class="fi ecc-c implicit">
+                <div class="fi-meta"><span class="fi-plugin ecc">ECC</span><span class="fi-timing imp">暗黙</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">AgentShield 静的解析</div>
+                  <div class="fi-desc">CLAUDE.md・settings.json・MCPコンフィグ・hooks設定を102ルール／1282テストでスキャン。権限過剰付与・フックインジェクション・MCPリスクを検出してレポート</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 01 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">01</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">要件・設計</div>
+            <div class="flow-items">
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/brainstorming</span> を呼び出す</div>
+                  <div class="fi-desc">「何を作るか」を自然言語で伝える。ここがすべての起点</div>
+                </div>
+              </div>
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">HARD-GATE 発動 <span class="fi-gate">GATE</span></div>
+                  <div class="fi-desc">設計を提示 → ユーザーの承認があるまでコードを1行も書かない。質問は1度に1つ、多選択肢形式で実施</div>
+                </div>
+              </div>
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">設計ドキュメントを保存・コミット</div>
+                  <div class="fi-desc">承認後、<span class="fi-cmd">docs/superpowers/specs/YYYY-MM-DD-topic-design.md</span> に書き出してgitコミット。仕様の自己レビュー（プレースホルダー・矛盾・スコープ）を自動実施</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 02 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">02</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">実装計画</div>
+            <div class="flow-items">
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/writing-plans</span> を呼び出す</div>
+                  <div class="fi-desc">設計ドキュメントを入力として実装計画を作成するよう依頼</div>
+                </div>
+              </div>
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">HARD-GATE 発動 <span class="fi-gate">GATE</span></div>
+                  <div class="fi-desc">詳細タスクを <span class="fi-cmd">docs/superpowers/plans/</span> に書き出し → ユーザーのレビュー完了まで実装を開始しない。YAGNI・TDD・頻繁コミットを前提としたタスク分解</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 03 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">03</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">実装（TDD）</div>
+            <div class="flow-items">
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">🔴 RED — 失敗するテストを書く</div>
+                  <div class="fi-desc">テストを実行して実際に失敗することを確認。失敗確認をスキップして実装に進むことは禁止</div>
+                </div>
+              </div>
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">🟢 GREEN — 最小実装でテストを通す</div>
+                  <div class="fi-desc">テストを通過させる最小限のコードのみを書く。余計な機能は追加しない（YAGNI）</div>
+                </div>
+              </div>
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">🔵 REFACTOR — コードを整理</div>
+                  <div class="fi-desc">テストが通った状態を維持しながらリファクタリング。完了後にコミット</div>
+                </div>
+              </div>
+              <div class="fi ecc-c implicit">
+                <div class="fi-meta"><span class="fi-plugin ecc">ECC</span><span class="fi-timing imp">常時</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">beforeSubmitPrompt hook — シークレット検出</div>
+                  <div class="fi-desc">プロンプト送信のたびに <span class="fi-cmd">sk-</span>・<span class="fi-cmd">ghp_</span>・<span class="fi-cmd">AKIA</span> 等14パターンをスキャン。検出時は送信をブロック</div>
+                </div>
+              </div>
+              <div class="fi ecc-c implicit">
+                <div class="fi-meta"><span class="fi-plugin ecc">ECC</span><span class="fi-timing imp">随時</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">beforeTabFileRead hook — ファイルアクセスブロック</div>
+                  <div class="fi-desc"><span class="fi-cmd">.env</span>・<span class="fi-cmd">.key</span>・<span class="fi-cmd">.pem</span> への読み取りアクセスを即時ブロック。permissions.deny が効かないエディタ系ツールも遮断</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 04 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">04</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">コードレビュー</div>
+            <div class="flow-items">
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/requesting-code-review</span> を呼び出す</div>
+                  <div class="fi-desc">実装完了後にレビューを依頼</div>
+                </div>
+              </div>
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">レビュアーサブエージェントを派遣</div>
+                  <div class="fi-desc">セッション履歴を引き継がないコンテキスト分離設計。バグ・ロジックエラー・セキュリティ脆弱性・コード品質を独立した目線でレビュー</div>
+                </div>
+              </div>
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/receiving-code-review</span> でフィードバックを受け取る</div>
+                  <div class="fi-desc">指摘を技術的に評価。盲目的な実装や感情的反応を禁じるルールが適用される</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 05 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">05</div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">完了・リリース</div>
+            <div class="flow-items">
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">HARD-GATE 発動 <span class="fi-gate">GATE</span></div>
+                  <div class="fi-desc">verification-before-completion: 検証コマンド（テスト・lint・ビルド）の実行結果を出力するまで「完了した」と宣言できない</div>
+                </div>
+              </div>
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/finishing-a-development-branch</span> を呼び出す</div>
+                  <div class="fi-desc">マージ / PR作成 / ブランチクリーンアップのオプションを提示。選択に応じて処理を実行</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /flow-diagram 堅実重視 -->
+
+      <!-- ── バランス型フロー ── -->
+      <div class="flow-sub-title">バランス型フロー — superpowers 全スキル ＋ oh-my-claudecode 分析系 ＋ AgentShield フック2本</div>
+
+      <div class="flow-diagram">
+
+        <!-- STEP 00 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle always">00</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">セッション開始 <span class="flow-phase-tag">常時・自動</span></div>
+            <div class="flow-items">
+              <div class="fi ecc-c implicit">
+                <div class="fi-meta"><span class="fi-plugin ecc">ECC</span><span class="fi-timing imp">暗黙</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">AgentShield 静的解析</div>
+                  <div class="fi-desc">堅実重視フローと同様。設定ファイル全体をスキャンしリスクを検出</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 01 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">01</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">要件整理 <span class="flow-phase-tag">バランス型で追加</span></div>
+            <div class="flow-items">
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">要件が曖昧なとき: <span class="fi-cmd">/deep-interview</span>（OMC）</div>
+                  <div class="fi-desc">数学的曖昧さゲーティングで要件の不明確さを定量評価。ソクラテス式の対話で要件を結晶化してから設計フェーズに進む</div>
+                </div>
+              </div>
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">自律実行前の計画合意: <span class="fi-cmd">/ralplan</span>（OMC）</div>
+                  <div class="fi-desc">プランナー・アーキテクト・クリティックの3者が独立に評価・議論し合意する。OMCの自律実行モードを使う場合は必ずここを通す</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 02 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">02</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">設計</div>
+            <div class="flow-items">
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/brainstorming</span>（SP）を呼び出す</div>
+                  <div class="fi-desc">要件整理の成果物を入力として設計を進める</div>
+                </div>
+              </div>
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">HARD-GATE 発動 <span class="fi-gate">GATE</span></div>
+                  <div class="fi-desc">承認まで実装ブロック。設計ドキュメントを保存・コミット（堅実重視フローと同様）</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 03 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">03</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">実装計画</div>
+            <div class="flow-items">
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/writing-plans</span>（SP）を呼び出す</div>
+                  <div class="fi-desc">設計ドキュメントを基に詳細実装計画を作成。HARD-GATE 発動</div>
+                </div>
+              </div>
+              <div class="flow-optional">
+                <div class="flow-optional-label">オプション — より深い戦略的計画が必要な場合</div>
+                <div class="fi user-c">
+                  <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                  <div class="fi-body">
+                    <div class="fi-title"><span class="fi-cmd">/plan</span>（OMC）を呼び出す</div>
+                    <div class="fi-desc">インタビューワークフロー付きの戦略的プランニング。writing-plans の前段として使うとより詳細な計画が得られる</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 04 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">04</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">実装（TDD）</div>
+            <div class="flow-items">
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">🔴 RED → 🟢 GREEN → 🔵 REFACTOR</div>
+                  <div class="fi-desc">堅実重視フローと同様のTDDサイクル。テスト失敗確認→最小実装→リファクタリング</div>
+                </div>
+              </div>
+              <div class="fi ecc-c implicit">
+                <div class="fi-meta"><span class="fi-plugin ecc">ECC</span><span class="fi-timing imp">常時</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">beforeSubmitPrompt / beforeTabFileRead hook</div>
+                  <div class="fi-desc">毎プロンプトのシークレット検出・.env/.key/.pem アクセスブロック（堅実重視フローと同様）</div>
+                </div>
+              </div>
+              <div class="flow-optional">
+                <div class="flow-optional-label">デバッグが必要な場合</div>
+                <div class="fi user-c">
+                  <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                  <div class="fi-body">
+                    <div class="fi-title"><span class="fi-cmd">/systematic-debugging</span>（SP）を呼び出す</div>
+                    <div class="fi-desc">HARD-GATE: 根本原因を特定する前に修正コードを書けない。推測での修正を禁止</div>
+                  </div>
+                </div>
+                <div class="fi user-c">
+                  <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                  <div class="fi-body">
+                    <div class="fi-title">複雑なバグの場合: <span class="fi-cmd">/trace</span>（OMC）を呼び出す</div>
+                    <div class="fi-desc">複数の仮説を並列エージェントで同時追跡。エビデンス駆動で最も有力な根本原因を特定する</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 05 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">05</div>
+            <div class="flow-line"></div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">レビュー・検証 <span class="flow-phase-tag">バランス型で強化</span></div>
+            <div class="flow-items">
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/verify</span>（OMC）を呼び出す</div>
+                  <div class="fi-desc">コードレビューを依頼する前の自己確認。変更が本当に意図通りに動作するかを検証。verification-before-completion（SP）との二重確認</div>
+                </div>
+              </div>
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/requesting-code-review</span>（SP）を呼び出す</div>
+                  <div class="fi-desc">レビュアーサブエージェントを派遣。セッション履歴なしの独立した視点でレビュー</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 06 -->
+        <div class="flow-row">
+          <div class="flow-left">
+            <div class="flow-circle">06</div>
+          </div>
+          <div class="flow-body">
+            <div class="flow-phase-name">完了・リリース</div>
+            <div class="flow-items">
+              <div class="fi sp-c implicit">
+                <div class="fi-meta"><span class="fi-plugin sp">SP</span><span class="fi-timing imp">自動</span></div>
+                <div class="fi-body">
+                  <div class="fi-title">HARD-GATE 発動 <span class="fi-gate">GATE</span></div>
+                  <div class="fi-desc">verification-before-completion: 検証コマンドの実行結果を示すまで完了宣言不可</div>
+                </div>
+              </div>
+              <div class="fi user-c">
+                <div class="fi-meta"><span class="fi-plugin user">USER</span><span class="fi-timing exp">明示</span></div>
+                <div class="fi-body">
+                  <div class="fi-title"><span class="fi-cmd">/finishing-a-development-branch</span>（SP）を呼び出す</div>
+                  <div class="fi-desc">マージ / PR作成 / クリーンアップのオプションを提示して処理を実行</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /flow-diagram バランス型 -->
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>2つのフローの主な差分:</strong> バランス型はSTEP 01（要件整理）とSTEP 05（/verify による二重確認）が追加される。デバッグ時に <span class="inline-code">/trace</span> による競合仮説並列追跡が使える点も差分。いずれのフローでも HARD-GATE と AgentShieldフックは常に有効。</p>
+      </div>
+    </div>
+
+    <!-- 推奨構成 -->
+    <div class="section" id="recommend">
+      <div class="section-header">
+        <div class="step-badge rec">推奨</div>
+        <h2>推奨構成</h2>
+      </div>
+
+      <div class="notice rec">
+        <span class="notice-icon">★</span>
+        <p><strong>結論: バランス型をベースに、AgentShieldで最終防衛線を張る3層構成。</strong><br>
+        superpowers でプロセス規律を確立し、oh-my-claudecode の分析力で設計精度を高め、AgentShield のフック2本でシークレット漏洩を防ぐ。各層が独立しているため、リスク許容度に応じて段階的に適用できる。</p>
+      </div>
+
+      <div class="rec-box">
+        <h3>推奨採用スタック（バランス型）</h3>
+
+        <div class="rec-layer">
+          <span class="rec-icon sp">SP</span>
+          <div class="rec-body">
+            <h4>superpowers — 全スキル（第1層: プロセス規律の基盤）</h4>
+            <p>TDD・YAGNI・verification-before-completion・systematic-debugging を常時適用。設計先行・未検証完了禁止・サブエージェントコンテキスト分離で「間違いを作らない構造」を維持する。公式プラグインのため追従コスト低。</p>
+          </div>
+        </div>
+
+        <div class="rec-layer">
+          <span class="rec-icon omc">OMC</span>
+          <div class="rec-body">
+            <h4>oh-my-claudecode — 分析・計画系5スキルのみ（第2層: 設計精度の向上）</h4>
+            <p>意識的に使用するスキル: <span class="inline-code">ralplan</span>・<span class="inline-code">verify</span>・<span class="inline-code">trace</span>・<span class="inline-code">deep-interview</span>・<span class="inline-code">plan</span>。<br>
+            <span class="inline-code">autopilot</span>・<span class="inline-code">ralph</span>・<span class="inline-code">ultrawork</span> は明示的な承認なしに使用しない。高頻度アップデートへの追従コストを許容できない場合は本層を外し堅実重視構成へ切り替える。</p>
+          </div>
+        </div>
+
+        <div class="rec-layer">
+          <span class="rec-icon ecc">ECC</span>
+          <div class="rec-body">
+            <h4>everything-claude-code — AgentShieldフック2本のみ手動設定（第3層: シークレット防衛）</h4>
+            <p>プロンプト送信前のシークレット検出フック（<span class="inline-code">beforeSubmitPrompt</span>）と、<span class="inline-code">.env/.key/.pem</span> のランタイムアクセスブロックフックの2本のみ手動設定。プラグイン全体は採用しない。設定前にスクリプトの内容を必ず自身でレビューすること。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-group-label">採用判断サマリー</div>
+
+      <table>
+        <tr><th>プラグイン</th><th>採用範囲</th><th>理由</th></tr>
+        <tr>
+          <td class="key-col">superpowers</td>
+          <td class="ok">全スキル採用</td>
+          <td>公式プラグイン・プロセス規律最強・SCリスク最小・学習コスト低。全構成で基盤として採用。</td>
+        </tr>
+        <tr>
+          <td class="key-col">oh-my-claudecode</td>
+          <td class="warn-td">分析系5スキルのみ</td>
+          <td>自律実行モードは予測困難・SCリスクあり。分析系は安全で価値が高い。バージョン追従が不要になったら再評価。</td>
+        </tr>
+        <tr>
+          <td class="key-col">everything-claude-code</td>
+          <td class="warn-td">AgentShield 2フックのみ</td>
+          <td>成熟度・管理コストの問題でフル採用リスク大。シークレット検出は4プラグイン中唯一の価値があり、この部分のみ手動設定で活用する。</td>
+        </tr>
+        <tr>
+          <td class="key-col">snarktank/ralph</td>
+          <td class="ng">通常セッションでは不採用</td>
+          <td><span class="inline-code">--dangerously-skip-permissions</span>は堅実実装の前提（権限最小化）と根本矛盾。Docker等の隔離環境でのバッチ実行に限り、superpowersとの組み合わせで検討可。</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 参考URL -->
+    <div class="section" id="refs">
+      <div class="section-header">
+        <div class="step-badge ref">参考</div>
+        <h2>参考URL</h2>
+      </div>
+
+      <ul class="ref-list">
+        <li>
+          <span class="ref-label">Zenn 記事</span>
+          <a href="https://zenn.dev/dk_/articles/26f88c8ae89864" target="_blank">https://zenn.dev/dk_/articles/26f88c8ae89864</a>
+        </li>
+        <li>
+          <span class="ref-label">everything-CC</span>
+          <a href="https://github.com/affaan-m/everything-claude-code" target="_blank">https://github.com/affaan-m/everything-claude-code</a>
+        </li>
+        <li>
+          <span class="ref-label">oh-my-CC</span>
+          <a href="https://github.com/Yeachan-Heo/oh-my-claudecode" target="_blank">https://github.com/Yeachan-Heo/oh-my-claudecode</a>
+        </li>
+        <li>
+          <span class="ref-label">公式プラグイン</span>
+          <a href="https://github.com/anthropics/claude-code" target="_blank">https://github.com/anthropics/claude-code</a>
+        </li>
+        <li>
+          <span class="ref-label">ralph</span>
+          <a href="https://github.com/snarktank/ralph" target="_blank">https://github.com/snarktank/ralph</a>
+        </li>
+        <li>
+          <span class="ref-label">ralph 解説</span>
+          <a href="https://ghuntley.com/loop/" target="_blank">everything is a ralph loop — ghuntley.com</a>
+        </li>
+        <li>
+          <span class="ref-label">セキュリティ設定</span>
+          <a href="./claude-code-security-settings.html">claude-code-security-settings.html（本リポジトリ）</a>
+        </li>
+      </ul>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const a = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { threshold: 0.25 });
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

@@ -434,8 +434,8 @@
   </div>
   <div class="header-meta">
     <div class="meta-row"><span class="meta-label">作成</span><span class="meta-val">2026-04-08</span></div>
-    <div class="meta-row"><span class="meta-label">更新</span><span class="meta-val">2026-04-08</span></div>
-    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">1.0</span></div>
+    <div class="meta-row"><span class="meta-label">更新</span><span class="meta-val">2026-04-11</span></div>
+    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">1.4</span></div>
   </div>
 </header>
 
@@ -456,6 +456,9 @@
     <div class="nav-divider"></div>
     <div class="nav-label">適用後</div>
     <a href="#final"><span class="step-num">終</span>完成 settings.json</a>
+    <div class="nav-divider"></div>
+    <div class="nav-label">関連</div>
+    <a href="./claude-code-plugin-analysis.html"><span class="step-num">→</span>プラグイン比較分析</a>
   </nav>
 
   <main>
@@ -479,8 +482,8 @@
         <tr>
           <td class="key-col">1</td>
           <td>.env ファイル保護（permissions.deny）</td>
-          <td class="warn-td">△ 部分適用</td>
-          <td>.env* / *.key / *.pem のパターンを追加</td>
+          <td class="ok">✓ 適用済み</td>
+          <td>完了（追加対応なし）</td>
         </tr>
         <tr>
           <td class="key-col">2</td>
@@ -503,20 +506,20 @@
         <tr>
           <td class="key-col">5</td>
           <td>CLAUDE.md セキュリティルール</td>
-          <td class="ng">✗ 未設定</td>
-          <td>~/.claude/CLAUDE.md を作成</td>
+          <td class="ok">✓ 適用済み</td>
+          <td>完了（追加対応なし）</td>
         </tr>
         <tr>
           <td class="key-col">6</td>
           <td>TDD モード（oh-my-claudecode プラグイン）</td>
-          <td class="ng">✗ 未設定</td>
-          <td>オプション：プラグイン追加</td>
+          <td class="ok">✓ 適用済み</td>
+          <td>完了（追加対応なし）</td>
         </tr>
         <tr>
           <td class="key-col">7</td>
           <td>自動コンパクト（PreToolUse フック）</td>
-          <td class="ng">✗ 未設定</td>
-          <td>オプション：フック追加</td>
+          <td class="ok">✓ 適用済み</td>
+          <td>完了（追加対応なし）</td>
         </tr>
       </table>
 
@@ -534,11 +537,11 @@
         <span class="tag required">必須</span>
       </div>
 
-      <span class="status-badge partial">△ 部分適用 — 追加が必要</span>
+      <span class="status-badge done">✓ 適用済み</span>
 
-      <p>現在の <span class="inline-code">permissions.deny</span> には <span class="inline-code">Read(~/.env)</span> のみ設定されていますが、プロジェクト内の <span class="inline-code">.env</span> ファイルや <span class="inline-code">*.key</span> / <span class="inline-code">*.pem</span> は保護されていません。</p>
+      <p><span class="inline-code">permissions.deny</span> に <span class="inline-code">.env*</span>・<span class="inline-code">*.key</span>・<span class="inline-code">*.pem</span> などの保護ルールが適用済みです。</p>
 
-      <p>Claude Code の内蔵ツール（Read・Glob・Edit・Write・Bash の cat / grep 等）による機密ファイルへのアクセスを拒否するルールを追加します。</p>
+      <p>Claude Code の内蔵ツール（Read・Glob・Edit・Write・Bash の cat / grep 等）による機密ファイルへのアクセスが拒否されています。</p>
 
       <div class="notice warn">
         <span class="notice-icon">⚠️</span>
@@ -788,7 +791,7 @@
         <span class="tag required">必須</span>
       </div>
 
-      <span class="status-badge todo">✗ 未設定</span>
+      <span class="status-badge done">✓ 適用済み</span>
 
       <p><span class="inline-code">~/.claude/CLAUDE.md</span> に記述したルールは全セッションで自動的に読み込まれ、Claude Code の動作方針として機能します。セキュリティポリシーを明文化しておくことで、意図しない操作を防ぎます。</p>
 
@@ -831,39 +834,21 @@ echo "CLAUDE.md を作成しました"</pre>
     <div class="section" id="s6">
       <div class="section-header">
         <div class="step-badge">STEP 6</div>
-        <h2>TDD モード（oh-my-claudecode プラグイン）</h2>
+        <h2>プラグインの導入</h2>
         <span class="tag optional">任意</span>
       </div>
 
-      <span class="status-badge todo">✗ 未設定</span>
+      <p>
+        Claude Code にはサードパーティプラグインを追加できます。<span class="inline-code">oh-my-claudecode</span>（TDD モード等）はその選択肢の一つです。プラグインは外部 Git リポジトリからキャッシュされ、<strong>sandbox 外</strong>で動作するため、導入前に各プラグインのセキュリティリスクと機能を比較検討してください。
+      </p>
 
-      <p><span class="inline-code">oh-my-claudecode</span> プラグインの TDD モードを有効にすると、コード変更時に Red → Green → Refactor サイクルを強制し、カバレッジ 80% 以上を維持するよう Claude Code が自律的に動作します。</p>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p>このプラグインは外部 Git リポジトリからキャッシュされます。プラグインのコードが <strong>sandbox 外</strong>で動作する点に注意してください。信頼できるソース以外のプラグインは使用しないでください。</p>
+      <div class="notice info">
+        <span class="notice-icon">📄</span>
+        <p>
+          <strong><a href="claude-code-plugin-analysis.html" target="_blank">Claude Code — プラグイン比較分析</a></strong><br>
+          superpowers・oh-my-claudecode・everything-claude-code・snarktank/ralph の各プラグインについて、セキュリティ観点からの採用指針・機能詳細・インストール手順をまとめています。
+        </p>
       </div>
-
-      <div class="section-group-label">settings.json への追加</div>
-
-      <p>以下を <span class="inline-code">~/.claude/settings.json</span> に追加します。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">~/.claude/settings.json — enabledPlugins に追加</span><span class="env-tag file">JSON</span></div>
-        <pre><span class="key">"enabledPlugins"</span>: {
-  <span class="comment">// 既存のプラグイン設定を保持しつつ追加</span>
-  <span class="str">"oh-my-claudecode@omc"</span>: <span class="val">true</span>
-}</pre>
-      </div>
-
-      <div class="section-group-label">TDD モードの使い方</div>
-
-      <ul class="step-list">
-        <li><span class="li-num">1.</span><span>Claude Code を起動後、<span class="inline-code">/omc tdd</span> または TDD モードを明示的に指示する</span></li>
-        <li><span class="li-num">2.</span><span>Red フェーズ：失敗するテストを先に書く</span></li>
-        <li><span class="li-num">3.</span><span>Green フェーズ：テストをパスする最小実装を書く</span></li>
-        <li><span class="li-num">4.</span><span>Refactor フェーズ：コードを整理する（テストはパスしたまま）</span></li>
-      </ul>
     </div>
 
     <!-- STEP 7 -->
@@ -874,7 +859,7 @@ echo "CLAUDE.md を作成しました"</pre>
         <span class="tag optional">任意</span>
       </div>
 
-      <span class="status-badge todo">✗ 未設定</span>
+      <span class="status-badge done">✓ 適用済み</span>
 
       <p>コンテキスト使用量が閾値（デフォルト 50%、推奨 25%）を超えると自動的にチェックポイントを保存し、コンパクションの前に進捗を記録します。長時間のセッションで作業内容を失わないための安全策です。</p>
 
@@ -1068,7 +1053,7 @@ echo "チェックポイントを保存しました: $TIMESTAMP"</pre>
           <td class="key-col">1</td>
           <td>permissions.deny に .env* / *.key ルールが含まれる</td>
           <td><span class="inline-code">cat ~/.claude/settings.json | grep ".env"</span></td>
-          <td class="warn-td">要適用</td>
+          <td class="ok">適用済み</td>
         </tr>
         <tr>
           <td class="key-col">2</td>
@@ -1092,7 +1077,7 @@ echo "チェックポイントを保存しました: $TIMESTAMP"</pre>
           <td class="key-col">5</td>
           <td>~/.claude/CLAUDE.md が存在する</td>
           <td><span class="inline-code">ls -la ~/.claude/CLAUDE.md</span></td>
-          <td class="ng">未作成</td>
+          <td class="ok">適用済み</td>
         </tr>
       </table>
     </div>

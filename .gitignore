@@ -1,0 +1,41 @@
+# Claude Code / OMC ローカル状態
+.omc/
+.claude/
+
+# MCP 設定（APIキー等を含む可能性）
+.mcp.json
+
+# IDE 設定（ファイル・ディレクトリ両方対応）
+.idea
+.idea/
+.vscode
+.vscode/
+*.iml
+
+# 個人用 dotfiles（WSL2 キャラクターデバイス含む）
+.bashrc
+.bash_profile
+.zshrc
+.zprofile
+.profile
+.gitconfig
+.gitmodules
+.ripgreprc
+
+# OS ファイル
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# シークレット・認証情報
+*.key
+*.pem
+*.env
+.env.*
+secrets.*
+
+# ログ・一時ファイル
+*.log
+*.tmp
+*.swp
+*~
