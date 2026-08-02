@@ -858,6 +858,26 @@
     <b>WSL2 特有の注意：</b>ブラウザを複数同時に立ち上げると、WSL2 の GPU メモリ制約で連鎖クラッシュする既知の問題があります。並列実行を避けるか、GPU 無効化フラグを付けてください。
   </p>
 
+  <div class="callout danger">
+    <div class="co-title">最重要の落とし穴：このコマンドは AI に実行させてはいけない</div>
+    <p><b>実測で判明（2026-08-02〜03）。</b>AI が Bash からこのコマンドを実行すると、<b>「追加しました」と成功報告が返るのに、実際には何も登録されません</b>。</p>
+    <p>原因は、サンドボックスが MCP の設定ファイル（<code>~/.claude/.config.json</code>）に <b><code>/dev/null</code> をマウント</b>しているためです。書き込みは<b>エラーを出さずに捨てられます</b>。<code>.git/config</code> の保護と同じ仕組みですが、<b>失敗が一切表面化しない</b>点でより厄介です。</p>
+    <p><b>対処：MCP の追加は、あなた自身のターミナル（サンドボックスの外）で実行してください。</b>実行後は <code>claude mcp list</code> に <code>playwright</code> が現れることを必ず確認します。</p>
+  </div>
+
+  <h4>Chromium 本体のダウンロードについて</h4>
+  <p><code>strictAllowlist</code> を有効にすると、Playwright の配布元（<code>cdn.playwright.dev</code>）は<b>遮断されます</b>（実測で 403 を確認）。ただし影響範囲は限定的です。</p>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:34%">実行経路</th><th style="width:16%">ダウンロード</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td>MCP サーバー経由（画面確認）</td><td class="ok">可能</td><td>MCP はサンドボックスの外で動くため、ネットワーク制限を受けない（第1章）</td></tr>
+      <tr><td>Bash から <code>npx playwright install</code></td><td class="ng">遮断される</td><td>サンドボックス内のため。E2E テストを Bash で回す構成にする場合は <code>cdn.playwright.dev</code> の許可追加が必要</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="why"><b>先回りして許可を足さないこと。</b>MCP 経由だけで足りるなら、遮断されたままで問題ありません。実際に必要になった時点で追加する——これが許可リスト運用の基本です。</p>
+
   <h3>9-2. PR 作成 skill</h3>
   <p>「ブランチを切る → コミット → push → 非対話フラグ付きで PR 作成 → 失敗時は <code>gh api</code> で再試行」を1つの手順書ファイルにまとめます。AI が毎回同じ手順を踏むようになり、第3章の詰まりが再発しません。</p>
   <p>配置先は <code>~/.claude/skills/create-pr/SKILL.md</code>。<b>チーム配布を見据え、本リポジトリの <code>skills/</code> 配下でも同じものを管理</b>し、そこから配置する運用にします。</p>
@@ -917,14 +937,36 @@
     <p>第3章の「対話性が真因」は当初<b>状況証拠からの推定</b>でしたが、2026-08-02 に<a href="https://github.com/hane0707/CC_wsl2_setup/pull/1">実際の PR 作成に成功</a>し、確定しました（第7章「実施結果」）。ただし<b>当時の失敗時のエラーメッセージは残っていない</b>ため、「過去の失敗も同じ原因だった」と断定はできません。今後同じ症状が出た場合は、エラー全文を記録してから切り分けてください。</p>
   </div>
 
+  <div class="callout danger">
+    <div class="co-title">最重要：設定ファイルへの書き込みは「黙って失敗する」</div>
+    <p>本書で<b>最も実務に影響する発見</b>です。サンドボックスは Claude Code 自身の設定ファイル群を <code>/dev/null</code> でマウントして保護します。確認できたものは以下です。</p>
+    <ul>
+      <li><code>~/.claude/.config.json</code>（MCP の登録先）</li>
+      <li><code>~/.mcp.json</code></li>
+      <li><code>.git/config</code>（<code>.git/config.lock</code> 経由）</li>
+    </ul>
+    <p>問題は<b>失敗の伝わり方</b>です。<code>.git/config</code> はエラーを返しますが、<b><code>.config.json</code> は成功したように見えて何も残りません</b>。実際、<code>claude mcp add</code> は「Added stdio MCP server playwright / File modified: …」と表示したにもかかわらず、再起動後に一切登録されていませんでした。</p>
+    <p><b>原則：Claude Code の設定を変える操作は、AI の Bash に任せず、自分のターミナルで実行する。</b>実行後は必ず結果を確認してください（MCP なら <code>claude mcp list</code>）。なお <code>~/.claude/settings.json</code> は AI のファイル編集ツール経由なら書き換えられます（サンドボックスは Bash にしか効かないため）。</p>
+  </div>
+
   <div class="callout">
     <div class="co-title">まだ検証していない事項</div>
-    <p>以下は本書作成時点で<b>未検証</b>です。適用時に確認してください。</p>
+    <p>以下は本書時点で<b>未検証</b>です。</p>
     <ul style="margin-bottom:0">
-      <li><b><code>strictAllowlist</code> の効果と副作用</b> — 未適用。適用は PR 検証完了後の第2段階</li>
-      <li><b>Playwright MCP の実動作</b> — 設定追加は完了。MCP サーバーは Claude Code の<b>起動時に接続</b>されるため、実際の画面取得の確認は再起動後になる。ブラウザ本体（Chromium）の追加ダウンロードが必要になる可能性もある</li>
+      <li><b>Playwright MCP の実動作</b> — 上記のとおり登録自体が失敗していたため、画面取得の確認は<b>手動での再登録後</b>に持ち越し</li>
       <li><b>Chrome DevTools MCP（ルートB）</b> — Windows 側の設定変更を伴うため未着手</li>
+      <li><b><code>strictAllowlist</code> の長期運用</b> — 遮断が正しく効くことは実測済み（下記）。ただし業務で使う全ドメインを洗い出せたかは、数日運用してみないと分からない</li>
     </ul>
+  </div>
+
+  <div class="callout good">
+    <div class="co-title">検証済み：strictAllowlist は正しく機能した</div>
+    <p>2026-08-03 に再起動後、実測で確認しました。</p>
+    <ul style="margin-bottom:0">
+      <li>許可済み（<code>api.github.com</code> / <code>registry.npmjs.org</code>）→ <b>200 で通過</b></li>
+      <li>未許可（<code>example.com</code> / <code>cdn.playwright.dev</code>）→ <b><code>CONNECT tunnel failed, response 403</code> で遮断</b></li>
+    </ul>
+    <p style="margin-top:10px;margin-bottom:0">第5章で指摘した「穴」は塞がりました。適用前は <code>example.com</code> に 200 で到達できていたため、<b>この設定は実効性のある改善</b>だったことが裏付けられています。</p>
   </div>
 </section>
 
