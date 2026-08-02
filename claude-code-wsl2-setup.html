@@ -327,6 +327,7 @@
   .code-block pre .comment { color: var(--muted); }
   .code-block pre .cmd { color: var(--teal); }
   .code-block pre .str { color: var(--green); }
+  .code-block pre .cmt { color: var(--muted); }
   .code-block pre .key { color: var(--accent2); }
   .code-block pre .val { color: var(--yellow); }
 
@@ -472,8 +473,8 @@
   </div>
   <div class="header-meta">
     <div class="meta-row"><span class="meta-label">作成</span><span class="meta-val">2025-03-31</span></div>
-    <div class="meta-row"><span class="meta-label">更新</span><span class="meta-val">2026-04-07</span></div>
-    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">1.9</span></div>
+    <div class="meta-row"><span class="meta-label">更新</span><span class="meta-val">2026-08-03</span></div>
+    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">2.0</span></div>
   </div>
 </header>
 
@@ -489,8 +490,10 @@
     <a href="#s5"><span class="step-num">5</span>サンドボックス &amp; settings.json</a>
     <a href="#s6"><span class="step-num">6</span>認証 &amp; 動作確認</a>
     <a href="#s7"><span class="step-num">7</span>Git 設定</a>
-    <a href="#s8"><span class="step-num">8</span>GitHub HTTPS 連携</a>
-    <a href="#s9"><span class="step-num">9</span>Windows Terminal 設定</a>
+    <a href="#s8"><span class="step-num">8</span>GitHub HTTPS 連携 &amp; PR</a>
+    <a href="#s9"><span class="step-num">9</span>ブラウザ確認環境</a>
+    <a href="#s10"><span class="step-num">10</span>Windows Terminal 設定</a>
+    <a href="#s11"><span class="step-num">11</span>Zed / VS Code 設定</a>
     <div class="nav-divider"></div>
     <div class="nav-label">補足</div>
     <a href="#tips"><span class="step-num">+</span>運用上の注意点</a>
@@ -911,10 +914,17 @@
     "network": {
       "allowedDomains": [
         "api.anthropic.com",
+        "*.anthropic.com",
         "github.com",
+        "*.github.com",
+        "*.githubusercontent.com",
         "registry.npmjs.org",
-        "pypi.org"
+        "*.npmjs.org",
+        "nodejs.org",
+        "pypi.org",
+        "files.pythonhosted.org"
       ],
+      "strictAllowlist": true,
       "allowUnixSockets": [],
       "allowAllUnixSockets": false,
       "allowLocalBinding": true
@@ -930,7 +940,12 @@
         "**/*.key"
       ]
     },
-    "excludedCommands": []
+    "excludedCommands": [
+      "npm run dev",
+      "npm run dev *",
+      "python3 -m http.server",
+      "python3 -m http.server *"
+    ]
   },
   "permissions": {
     "allow": [
@@ -981,9 +996,33 @@
         <p><strong>permissions.deny の限界：</strong> sandbox なしでは Bash コマンドが deny ルールを完全に迂回できます（<span class="inline-code">cat ~/.ssh/id_rsa</span> は素通りします）。<strong>sandbox と deny を両方設定して初めて多層防御</strong>になります。sandbox が有効なとき、OS レベルで同じパスが遮断されるため、どちらか一方がバグで機能しなくても残りが守ります。</p>
       </div>
 
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>strictAllowlist を必ず入れること（2026-08 追記・実測）：</strong> これが無いと <span class="inline-code">allowedDomains</span> は「通してよい先の一覧」ではなく<strong>「いちいち確認しないで済ませる一覧」</strong>として動きます。実測では、許可リストに無い <span class="inline-code">https://example.com</span> に確認もなく接続できてしまいました。<span class="inline-code">strictAllowlist: true</span>（Claude Code 2.1.219 以降）を入れて初めて、リスト外が <strong>403 で遮断</strong>されます。</p>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>allowedDomains の書き方（実測で判明した落とし穴）：</strong><br>
+        <strong>① ドメイン本体とワイルドカードは両方書く。</strong> <span class="inline-code">*.github.com</span> だけにすると <span class="inline-code">github.com</span> 本体にマッチせず <span class="inline-code">git push</span> が壊れる恐れがあります。<span class="inline-code">github.com</span> と <span class="inline-code">*.github.com</span> を併記してください。<br>
+        <strong>② api.github.com は必須。</strong> PR 作成は <span class="inline-code">github.com</span> ではなく <span class="inline-code">api.github.com</span> を使います。ワイルドカードで確実に含めます。<br>
+        <strong>③ 追加する前にリダイレクト先を確認する。</strong> 例えば <span class="inline-code">cdn.playwright.dev</span> は 307 で <span class="inline-code">storage.googleapis.com</span> に転送されるため、CDN だけ許可しても通りません。<span class="inline-code">curl -I &lt;URL&gt;</span> で転送先を調べてから判断してください。</p>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>excludedCommands は「サンドボックスの外で実行する」指定です。</strong> ここに書いたコマンドはファイルもネットワークも制限を受けません。<strong>開発サーバーをここに入れる理由は STEP 9</strong> にあります（ブラウザから開発サーバーへ到達させるために必須）。<strong>登録は最小限に留め、<span class="inline-code">npm *</span> のような広いパターンは絶対に避けてください。</strong></p>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>自律実行を目指す場合の任意設定：</strong> <span class="inline-code">autoAllowBashIfSandboxed</span> を <span class="inline-code">true</span> にすると、サンドボックス内で完結するコマンドが確認なしで実行されます。<strong>OS レベルの壁が守っている範囲でのみ自動化する</strong>という考え方です。上の設定では <span class="inline-code">false</span>（毎回確認）にしてあります。エージェントに長時間走らせたくなった段階で切り替えを検討してください。</p>
+      </div>
+
       <div class="notice success">
         <span class="notice-icon">✅</span>
-        <p>settings.json の作成はここで完了です。STEP 6 で認証を済ませた後、セッション内から動作確認を行います。</p>
+        <p>settings.json の作成はここで完了です。STEP 6 で認証を済ませた後、セッション内から動作確認を行います。<br>
+        なお <strong><span class="inline-code">~/.claude/settings.json</span> の変更は Claude Code の再起動なしで反映されます</strong>（実測確認済み）。MCP の設定とは挙動が異なります（STEP 9 参照）。</p>
       </div>
     </div>
 
@@ -1044,6 +1083,26 @@
       <div class="code-block">
         <div class="code-label"><span class="label-text">インストール状態・設定の総合チェック</span><span class="env-tag wsl">Claude Code セッション内</span></div>
         <pre>/doctor</pre>
+      </div>
+
+      <div class="section-group-label">6-2 ネットワーク遮断が効いているか確認（2026-08 追記）</div>
+
+      <p><strong>「有効になっている」と「実際に遮断されている」は別です。</strong>必ず両方を実測で確認してください。Claude Code に以下を実行させます。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">許可済みドメイン → 200 が返るはず</span><span class="env-tag wsl">Claude Code セッション内</span></div>
+        <pre><span class="cmd">curl</span> -sS -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://api.github.com/zen</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">未許可ドメイン → 遮断されるはず</span><span class="env-tag wsl">Claude Code セッション内</span></div>
+        <pre><span class="cmd">curl</span> -sS -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://example.com</pre>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>期待される結果：</strong> 1つ目は <span class="inline-code">200</span>、2つ目は <span class="inline-code">CONNECT tunnel failed, response 403</span> です。<br>
+        <strong>2つ目が 200 で通ってしまう場合、遮断が機能していません。</strong> <span class="inline-code">strictAllowlist: true</span> が設定されているか確認してください（STEP 5）。これは実際に発生した問題で、設定した気になっていても<strong>穴が空いたまま</strong>ということが起こります。</p>
       </div>
 
       <div class="notice success">
@@ -1166,12 +1225,151 @@
         <p>ブラウザ認証ではなく PAT を直接入力したい場合は、Username に GitHub ユーザー名、Password に PAT を入力してください。GCM が Windows 資格情報マネージャーに保存します。<br>
         保存済みの認証情報は <strong>コントロールパネル → 資格情報マネージャー → Windows 資格情報</strong> から確認・削除できます。</p>
       </div>
+
+      <div class="section-group-label">8-3 PR を作れるようにする（2026-08 追記）</div>
+
+      <p>Claude Code から PR を作ろうとすると失敗する、という現象がよく報告されます。<strong>原因はサンドボックスではありません。</strong>実測で切り分けた結果、通信・認証・書き込み権限はいずれも正常でした。</p>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>真因は <span class="inline-code">gh pr create</span> の対話 UI です。</strong> 引数を省くとタイトル入力・エディタ起動・最終確認を人間に尋ねてきますが、Claude Code の Bash はキーボード入力を受け付けないため、そこで停止します。<strong>フラグをすべて明示すれば解決します。</strong></p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">非対話での PR 作成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">gh</span> pr create \
+  --base main \
+  --head "$(git rev-parse --abbrev-ref HEAD)" \
+  --title "タイトル" \
+  --body-file "$(git rev-parse --git-dir)/PR_BODY.md"</pre>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong><span class="inline-code">git push -u</span> は使わないこと。</strong> <span class="inline-code">-u</span> は <span class="inline-code">.git/config</span> への書き込みを伴いますが、サンドボックスは <span class="inline-code">.git/config.lock</span> に <span class="inline-code">/dev/null</span> をマウントして書き込みを封じています。そのため <strong>push 自体は成功しているのに <span class="inline-code">unable to write upstream branch configuration</span> で異常終了</strong>し、失敗したように見えます。<span class="inline-code">git push origin &lt;branch&gt;</span> を使ってください。</p>
+      </div>
+
+      <div class="section-group-label">8-4 PR 作成手順を skill として固定する</div>
+
+      <p>毎回 AI に正しいフラグを思い出させるのではなく、手順書ファイル（skill）として固定するのが確実です。配置先は <span class="inline-code">~/.claude/skills/create-pr/SKILL.md</span>。内容は本リポジトリの <span class="inline-code">skills/create-pr/SKILL.md</span> にあります。</p>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong><span class="inline-code">cp</span> では設置できません。</strong> <span class="inline-code">~/.claude/skills/</span> はサンドボックスが書き込みを拒否します（<span class="inline-code">Read-only file system</span>）。AI が自分の手順書を書き換えるのを防ぐ保護です。<strong>エディタで開いて保存するか、Claude Code のファイル編集ツールに書かせてください。</strong></p>
+      </div>
     </div>
 
     <!-- STEP 9 -->
     <div class="section" id="s9">
       <div class="section-header">
         <div class="step-badge">STEP 9</div>
+        <h2>ブラウザ確認環境（AI に画面を見せる）</h2>
+        <span class="tag recommend">推奨</span>
+      </div>
+
+      <p>Claude Code が作った画面を、AI 自身に確認させるための設定です。Web 開発をするなら<strong>これが無いと「見た目が正しいか」を人間が毎回目視する</strong>ことになります。</p>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>なぜ実現できるのか：</strong> サンドボックスが制限しているのは <strong>Bash コマンドだけ</strong>です。ブラウザ操作を担当する MCP サーバーは<strong>サンドボックスの外</strong>で動くため、セキュリティ設定を緩めずに追加できます。</p>
+      </div>
+
+      <div class="section-group-label">9-1 MCP サーバーの登録</div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>このコマンドは必ず自分のターミナルで実行してください（Claude Code の中で AI に実行させない）。</strong> サンドボックス内で実行すると、MCP の設定ファイルが <span class="inline-code">/dev/null</span> にマウントされているため、<strong>「追加しました」と表示されるのに何も登録されません</strong>。しかも書き込み先パス自体が変わります（内: <span class="inline-code">~/.claude/.config.json</span> ／ 外: <span class="inline-code">~/.claude.json</span>）。失敗がエラーとして表面化しないため、非常に気付きにくい罠です。</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">Playwright MCP を登録</span><span class="env-tag wsl">WSL Ubuntu（Claude Code の外）</span></div>
+        <pre><span class="cmd">claude</span> mcp add playwright --scope user -- npx @playwright/mcp@latest \
+  --headless --browser=chromium --viewport-size=1280,720 \
+  --allowed-origins <span class="str">"http://localhost:*"</span></pre>
+      </div>
+
+      <p><span class="inline-code">--allowed-origins</span> は、AI が自動運転中に想定外のサイトへ飛ぶのを防ぐ<strong>安全装置</strong>です。必ず指定してください。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">登録できたか確認（✔ Connected になること）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+        <pre><span class="cmd">claude</span> mcp list</pre>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>登録後は Claude Code の再起動が必要です。</strong> MCP は起動時に接続されるため、稼働中のセッションには反映されません。（<span class="inline-code">settings.json</span> の変更は再起動不要という違いがあります）</p>
+      </div>
+
+      <div class="section-group-label">9-2 ブラウザ本体と依存パッケージ</div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>これらも自分のターミナルで実行してください。</strong> ブラウザの実体は <span class="inline-code">storage.googleapis.com</span> にあり、サンドボックス内では遮断されます。ここを許可すると <strong>Google Cloud Storage 全体（任意のバケット）が開いてしまう</strong>ため、一度きりの作業は外で実行する方針としています。</p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">ブラウザ本体・依存ライブラリ・日本語フォント</span><span class="env-tag wsl">WSL Ubuntu（Claude Code の外）</span></div>
+        <pre><span class="cmd">npx</span> @playwright/mcp install-browser chrome-for-testing
+
+<span class="cmt"># ブラウザ動作に必要な共有ライブラリ</span>
+<span class="cmd">sudo apt</span> install -y libnss3 libnspr4 libasound2t64
+
+<span class="cmt"># 日本語フォント（これが無いと文字が全部豆腐になる）</span>
+<span class="cmd">sudo apt</span> install -y fonts-noto-cjk</pre>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>日本語フォントは必須です。</strong> WSL2 の Ubuntu には日本語フォントが入っていません（実測で CJK フォント 0 件）。この状態でスクリーンショットを撮ると<strong>日本語がすべて □ になり、画面確認の意味がなくなります</strong>。</p>
+      </div>
+
+      <div class="section-group-label">9-3 最後の一手：開発サーバーを壁の外に出す</div>
+
+      <p>ここが<strong>最も見落としやすい</strong>ところです。MCP のブラウザは壁の外にいますが、<span class="inline-code">npm run dev</span> で起動する開発サーバーは<strong>壁の中</strong>にいます。このままでは両者は通信できません。</p>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>サンドボックスは Bash コマンド1回ごとに作られては捨てられます。</strong> 実測では、コマンド内のプロセス番号が <span class="inline-code">1, 2, 389</span>、ネットワークインターフェースが <span class="inline-code">lo</span> のみでした。<strong>同じコマンドの中でだけサーバーに接続でき、次のコマンドからも MCP のブラウザからも到達できません。</strong></p>
+      </div>
+
+      <p>解決策は STEP 5 で設定済みです。<span class="inline-code">sandbox.excludedCommands</span> に開発サーバーの起動コマンドを登録すると、<strong>そのプロセスだけがサンドボックスの外</strong>に立ち、ブラウザと同じネットワークで動きます。</p>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>隔離が壊れるわけではありません。</strong> 実測では、外に出したサーバーに対して<strong>サンドボックス内からは依然として接続できません</strong>。外に出たのはそのプロセスだけで、壁自体は残っています。使うフレームワークに合わせて <span class="inline-code">"npx vite *"</span> などを追加してください（広いパターンは避けること）。</p>
+      </div>
+
+      <div class="section-group-label">9-4 動作確認</div>
+
+      <p>Claude Code のセッション内で、開発サーバーを起動してから次のように指示します。</p>
+
+      <div class="code-block">
+        <div class="code-label"><span class="label-text">指示の例</span><span class="env-tag">Claude Code</span></div>
+        <pre>http://localhost:5173 を開いてスクリーンショットを撮って、
+コンソールエラーが出ていないか確認して</pre>
+      </div>
+
+      <div class="notice success">
+        <span class="notice-icon">✅</span>
+        <p>スクリーンショットが取得でき、<strong>日本語が読める状態</strong>で表示されれば成功です。あわせてコンソールエラーの検出、要素を指定した部分スクリーンショット、クリックなどの操作も可能になります。</p>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>WSL2 特有の注意：</strong> ブラウザを複数同時に立ち上げると、GPU メモリの制約で連鎖クラッシュする既知の問題があります。並列実行は避けてください。<br>
+        <strong>ページを更新したのに反映されないとき：</strong> URL の末尾に <span class="inline-code">?v=2</span> のようなパラメータを付けると確実に再読み込みされます（ハッシュだけの変更ではリロードされないため）。</p>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>人間と同じ画面を見せたい場合（任意）：</strong> Windows 側の Chrome を <span class="inline-code">--remote-debugging-port</span> 付きで起動し、<span class="inline-code">.wslconfig</span> に <span class="inline-code">networkingMode=mirrored</span> を設定すると、Chrome DevTools MCP から接続できます。ログイン済みの状態をそのまま使えますが、無人実行には向きません。日常の自動確認は上記の Playwright MCP で十分です。</p>
+      </div>
+    </div>
+
+    <!-- STEP 10 -->
+    <div class="section" id="s10">
+      <div class="section-header">
+        <div class="step-badge">STEP 10</div>
         <h2>Windows Terminal の設定（任意・推奨）</h2>
         <span class="tag recommend">推奨</span>
       </div>
@@ -1192,10 +1390,10 @@
       </div>
     </div>
 
-    <!-- STEP 10 -->
-    <div class="section" id="s10">
+    <!-- STEP 11 -->
+    <div class="section" id="s11">
       <div class="section-header">
-        <div class="step-badge">STEP 10</div>
+        <div class="step-badge">STEP 11</div>
         <h2>Zed / VS Code のターミナルを WSL2 に向ける（任意）</h2>
         <span class="tag recommend">推奨</span>
       </div>
@@ -1340,12 +1538,90 @@
         </tr>
       </table>
 
+      <div class="section-group-label">実行場所の使い分け（2026-08 追記・実測）</div>
+
+      <p>このガイドで最も事故が起きやすいのが<strong>「そのコマンドをどこで実行するか」</strong>です。サンドボックスは Claude Code 自身の設定ファイルを <span class="inline-code">/dev/null</span> にマウントして保護しており、<strong>書き込みがエラーにならず黙って捨てられる</strong>ケースがあります。</p>
+
+      <table>
+        <tr>
+          <th>やりたいこと</th>
+          <th>実行場所</th>
+          <th>理由</th>
+        </tr>
+        <tr>
+          <td class="key-col">settings.json の編集</td>
+          <td>AI に任せてよい</td>
+          <td>ファイル編集ツールはサンドボックスの外で動く。ただし <span class="inline-code">cat</span> や <span class="inline-code">sed</span> など <strong>Bash 経由では書き込めない</strong></td>
+        </tr>
+        <tr>
+          <td class="key-col">MCP サーバーの追加</td>
+          <td>自分のターミナル</td>
+          <td>サンドボックス内だと<strong>成功表示だけで何も登録されない</strong>。書き込み先パスも変わる（内: <span class="inline-code">.claude/.config.json</span> ／外: <span class="inline-code">.claude.json</span>）</td>
+        </tr>
+        <tr>
+          <td class="key-col">skill の設置</td>
+          <td>自分のターミナル<br>または AI の編集ツール</td>
+          <td><span class="inline-code">~/.claude/skills/</span> は読み取り専用。<span class="inline-code">cp</span> は <span class="inline-code">Read-only file system</span> で失敗する</td>
+        </tr>
+        <tr>
+          <td class="key-col">ブラウザ本体の導入</td>
+          <td>自分のターミナル</td>
+          <td>実体が <span class="inline-code">storage.googleapis.com</span> にあり遮断される。許可すると GCS 全体が開く</td>
+        </tr>
+        <tr>
+          <td class="key-col"><span class="inline-code">sudo apt</span> 系</td>
+          <td>自分のターミナル</td>
+          <td><span class="inline-code">sudo</span> は <span class="inline-code">permissions.deny</span> で禁止されている</td>
+        </tr>
+        <tr>
+          <td class="key-col">設定を元に戻す</td>
+          <td>自分のターミナル</td>
+          <td><span class="inline-code">cp ~/.claude/settings.json.bak-YYYYMMDD ~/.claude/settings.json</span></td>
+        </tr>
+      </table>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>設定を変える前に必ずバックアップを取ってください。</strong><br>
+        <span class="inline-code">cp ~/.claude/settings.json ~/.claude/settings.json.bak-$(date +%Y%m%d)</span></p>
+      </div>
+
+      <div class="section-group-label">サンドボックスの性質（誤解しやすい点）</div>
+
+      <table>
+        <tr>
+          <th>性質</th>
+          <th>意味すること</th>
+        </tr>
+        <tr>
+          <td class="key-col">Bash コマンド1回ごとに<br>作られては捨てられる</td>
+          <td>バックグラウンドで起動したサーバーは<strong>次のコマンドから見えません</strong>。プロセス番号が <span class="inline-code">1, 2, 389</span>、インターフェースが <span class="inline-code">lo</span> のみという実測結果から確認しました。開発サーバーは <span class="inline-code">excludedCommands</span> で外に出す必要があります（STEP 9）</td>
+        </tr>
+        <tr>
+          <td class="key-col">MCP は壁の外で動く</td>
+          <td>画面確認を<strong>隔離を緩めずに</strong>追加できる根拠であり、同時に<strong>信頼できる MCP だけを入れるべき</strong>理由でもあります</td>
+        </tr>
+        <tr>
+          <td class="key-col">完全な隔離ではない</td>
+          <td>通信の中身までは検査していないため、<span class="inline-code">*.github.com</span> のような広い許可は情報の持ち出し経路になり得ます（公式ドキュメント記載の既知の限界）</td>
+        </tr>
+        <tr>
+          <td class="key-col">設定変更は即時反映<br>MCP は再起動が必要</td>
+          <td><span class="inline-code">settings.json</span> は保存した時点で効きますが、MCP の登録は<strong>再起動するまで反映されません</strong></td>
+        </tr>
+      </table>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p><strong>より詳しい背景と検証記録：</strong> 各設定を選んだ理由、実測データ、段階的な自律化のロードマップは <a href="./claude-code-2026-setup-proposal.html" style="color: var(--accent);">業務セットアップ改善提案</a> にまとめてあります。</p>
+      </div>
+
     </div>
 
   </main>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
   document.querySelectorAll('.code-block').forEach(block => {
     const pre = block.querySelector('pre');
     if (!pre) return;

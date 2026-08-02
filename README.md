@@ -6,10 +6,13 @@ Claude Code CLI を Windows (WSL2) 環境で活用するためのガイド集。
 
 | ファイル | 内容 | 更新 |
 |---|---|---|
-| [claude-code-wsl2-setup.html](./claude-code-wsl2-setup.html) | WSL2 セットアップガイド — Windows Terminal + WSL2 (Ubuntu) + GitHub 連携の初期構築手順 | 2026-04-07 |
+| [claude-code-wsl2-setup.html](./claude-code-wsl2-setup.html) | **セットアップ手順書（メイン）** — WSL2 + サンドボックス + GitHub 連携 + ブラウザ確認環境の構築手順 (v2.0) | 2026-08-03 |
 | [claude-code-security-settings.html](./claude-code-security-settings.html) | セキュリティ設定ガイド — permissions.deny・hooks・CLAUDE.md による安全な運用設定 (v1.4) | 2026-04-11 |
 | [claude-code-plugin-analysis.html](./claude-code-plugin-analysis.html) | プラグイン比較分析 — superpowers / oh-my-claudecode / everything-claude-code / ralph の採用指針 | 2026-04-12 |
-| [claude-code-2026-setup-proposal.html](./claude-code-2026-setup-proposal.html) | **業務セットアップ改善提案** — サンドボックスの利点を保ったまま「PR が作れない」「画面が見えない」を解消する。図解つき | 2026-08-02 |
+| [claude-code-2026-setup-proposal.html](./claude-code-2026-setup-proposal.html) | 改善提案・検証記録 — 各設定を選んだ理由、実測データ、段階的な自律化のロードマップ。図解つき | 2026-08-03 |
+
+> **実際にセットアップするときは [claude-code-wsl2-setup.html](./claude-code-wsl2-setup.html) を見てください。**
+> 提案書のほうは「なぜその設定にしたのか」の背景資料です。
 
 ## skills
 
