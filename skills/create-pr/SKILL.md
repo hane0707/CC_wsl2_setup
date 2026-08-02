@@ -37,8 +37,15 @@ git checkout -b <type>/<short-description>
 ### 3. push する
 
 ```bash
-git push -u origin <branch>
+git push origin "$(git rev-parse --abbrev-ref HEAD)"
 ```
+
+**`-u` / `--set-upstream` は使わない。** サンドボックスは `.git/config` を保護対象と
+しており、そのロックファイルのパス（`.git/config.lock`）に `/dev/null` をマウントして
+書き込みを封じている。そのため `-u` を付けると push 自体は成功するのに
+`unable to write upstream branch configuration` で異常終了し、失敗したように見える。
+
+upstream 設定が必要な場合は、サンドボックス外（ユーザー自身のターミナル）で実行する。
 
 `--force` は使わない（`permissions.deny` で禁止されている）。
 
@@ -117,9 +124,15 @@ URL が返れば成功。**URL を確認するまで「PR を作成した」と�
 | `No commits between X and Y` | push した差分がない。コミットと push を確認する |
 | `HTTP 403` / `Resource not accessible` | トークンのスコープ不足。`gh auth status` で `repo` を確認する |
 | 接続エラー・タイムアウト | `sandbox.network.allowedDomains` に `*.github.com` があるか確認する |
+| `unable to write upstream branch configuration` | `-u` を付けたことが原因。**push 自体は成功している。** `git ls-remote --heads origin <branch>` で確認し、`-u` を外して再実行する |
+| `could not lock config file .git/config` | 同上。`.git/config.lock` はサンドボックスがマウントした `/dev/null` であり、削除も書き込みもできない（正常な保護動作） |
 
 ## 検証記録
 
-2026-08-02、本環境（Claude Code 2.1.220 / gh 2.91.0 / WSL2 Ubuntu）にて
-`POST /repos/.../pulls` の到達性を実測で確認済み。ネットワーク・認証・
-書き込み権限のいずれにも問題がないことを確認した上で、この手順を定めている。
+2026-08-02、本環境（Claude Code 2.1.220 / gh 2.91.0 / WSL2 Ubuntu）にて実測。
+
+- `POST /repos/.../pulls` の到達性を確認（422 応答＝通信・認証・権限はすべて正常）
+- 本手順に従い **PR #1 の作成に成功**。`gh pr create` が停止する原因が
+  ネットワークやサンドボックスではなく、フラグ省略時の対話 UI であることを確定
+- `git push -u` は `.git/config` 保護により失敗するが、push 自体は成功することを確認
+- `.git/` 直下へのファイル書き込みは可能（`PR_BODY.md` の置き場所として使える）
