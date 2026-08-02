@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code 業務セットアップ改善提案 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0e1117; --surface: #161b27; --surface2: #1e2535; --border: #2a3347;
+    --text: #cdd6f4; --muted: #6c7a96; --accent: #89b4fa; --accent2: #cba6f7;
+    --green: #a6e3a1; --yellow: #f9e2af; --red: #f38ba8; --teal: #94e2d5;
+    --orange: #fab387; --pink: #f5c2e7; --tag-bg: #1e2d45;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans JP', sans-serif; font-weight: 300; line-height: 1.8; font-size: 14px; }
+
+  .header-meta { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; flex-shrink: 0; padding-top: 4px; }
+  .meta-row { display: flex; align-items: center; gap: 8px; }
+  .meta-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; width: 34px; text-align: right; }
+  .meta-val { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text); }
+
+  header { border-bottom: 1px solid var(--border); padding: 40px 48px 32px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .header-left h1 { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; color: var(--accent); letter-spacing: -0.5px; margin-bottom: 6px; }
+  .header-left p { color: var(--muted); font-size: 13px; }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 10px; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); text-decoration: none; }
+  .badge.env { border-color: #89b4fa44; color: var(--accent); background: #89b4fa0d; }
+  .badge.src { border-color: #cba6f744; color: var(--accent2); background: #cba6f70d; }
+  .badge.ver { border-color: #a6e3a144; color: var(--green); background: #a6e3a10d; }
+
+  .layout { display: grid; grid-template-columns: 240px 1fr; }
+
+  nav { border-right: 1px solid var(--border); padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  nav .nav-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); padding: 0 20px 8px; text-transform: uppercase; }
+  nav a { display: flex; align-items: center; gap: 10px; padding: 7px 20px; color: var(--muted); text-decoration: none; font-size: 13px; transition: all 0.15s; border-left: 2px solid transparent; }
+  nav a:hover { color: var(--text); background: var(--surface); }
+  nav .step-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); width: 18px; text-align: right; flex-shrink: 0; }
+  nav .nav-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+
+  main { padding: 36px 48px 100px; max-width: 900px; overflow-x: hidden; }
+
+  .section { margin-bottom: 56px; scroll-margin-top: 20px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .step-badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; padding: 3px 8px; background: var(--tag-bg); border: 1px solid var(--accent); border-radius: 3px; color: var(--accent); flex-shrink: 0; }
+  .step-badge.p2 { border-color: var(--accent2); color: var(--accent2); }
+  .step-badge.p3 { border-color: var(--green); color: var(--green); }
+  .step-badge.p4 { border-color: var(--pink); color: var(--pink); }
+  .step-badge.p5 { border-color: var(--teal); color: var(--teal); }
+  .step-badge.uc { border-color: var(--yellow); color: var(--yellow); }
+  .step-badge.rec { border-color: var(--orange); color: var(--orange); }
+  .step-badge.ref { border-color: var(--muted); color: var(--muted); }
+  .section-header h2 { font-size: 16px; font-weight: 500; color: var(--text); }
+
+  h3 { font-size: 14px; font-weight: 500; color: var(--accent); margin: 30px 0 12px; }
+  h4 { font-size: 13px; font-weight: 500; color: var(--text); margin: 20px 0 8px; }
+  p { margin-bottom: 14px; }
+  ul, ol { margin: 0 0 16px 22px; }
+  li { margin-bottom: 7px; }
+  code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--surface2); padding: 1px 6px; border-radius: 3px; color: var(--teal); }
+  a { color: var(--accent); }
+
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 16px 18px; overflow-x: auto; margin-bottom: 16px; }
+  pre code { background: none; padding: 0; color: var(--text); font-size: 12px; line-height: 1.65; display: block; white-space: pre; }
+
+  .cap { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 10px; letter-spacing: 0.5px; }
+
+  .figure { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 22px 20px 16px; margin: 22px 0 26px; }
+  .figure svg { width: 100%; height: auto; display: block; }
+  .figure .fig-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 1px; margin-bottom: 16px; text-transform: uppercase; }
+  .figure .fig-note { font-size: 12px; color: var(--muted); margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); margin-bottom: 0; }
+
+  .tbl-wrap { overflow-x: auto; margin-bottom: 20px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 520px; }
+  th, td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--surface2); font-weight: 500; color: var(--text); font-size: 12px; }
+  td { color: var(--text); }
+  td.ok { color: var(--green); }
+  td.ng { color: var(--red); }
+  td.warn { color: var(--yellow); }
+
+  .callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 14px 18px; margin: 18px 0; border-radius: 0 5px 5px 0; }
+  .callout.warn { border-left-color: var(--yellow); }
+  .callout.danger { border-left-color: var(--red); }
+  .callout.good { border-left-color: var(--green); }
+  .callout .co-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
+  .callout.warn .co-title { color: var(--yellow); }
+  .callout.danger .co-title { color: var(--red); }
+  .callout.good .co-title { color: var(--green); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .diff { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; overflow-x: auto; margin-bottom: 8px; }
+  .diff table { border-collapse: collapse; width: 100%; min-width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .diff td { border: none; padding: 2px 10px; white-space: pre; line-height: 1.6; }
+  .diff td.gutter { width: 26px; text-align: center; color: var(--muted); user-select: none; padding: 2px 4px; }
+  .diff tr.add { background: #a6e3a112; } .diff tr.add td { color: var(--green); } .diff tr.add td.gutter { color: var(--green); }
+  .diff tr.del { background: #f38ba812; } .diff tr.del td { color: var(--red); } .diff tr.del td.gutter { color: var(--red); }
+  .diff tr.ctx td { color: var(--muted); }
+
+  .why { font-size: 12.5px; color: var(--muted); border-left: 2px solid var(--border); padding-left: 14px; margin: 0 0 26px 0; }
+  .why b { color: var(--text); font-weight: 500; }
+
+  .glossary dt { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--teal); margin-top: 14px; }
+  .glossary dd { margin-left: 0; font-size: 13px; color: var(--text); }
+
+  .src-list { list-style: none; margin-left: 0; }
+  .src-list li { margin-bottom: 9px; font-size: 12.5px; }
+  .src-list a { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 28px 20px 80px; }
+    header { padding: 28px 20px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Claude Code 業務セットアップ改善提案</h1>
+    <p>WSL2 サンドボックス環境の利点を保ったまま「PR が作れない」「画面が見えない」を解消する</p>
+    <div class="badge-row">
+      <span class="badge env">Windows 11 + WSL2 (Ubuntu)</span>
+      <span class="badge ver">Claude Code 2.1.220</span>
+      <span class="badge ver">gh 2.91.0</span>
+      <span class="badge src">Opus 5 + Sonnet 5</span>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-row"><span class="meta-label">DATE</span><span class="meta-val">2026-08-02</span></div>
+    <div class="meta-row"><span class="meta-label">VER</span><span class="meta-val">draft 1.0</span></div>
+    <div class="meta-row"><span class="meta-label">状態</span><span class="meta-val">検討中／未承認</span></div>
+  </div>
+</header>
+
+<div class="layout">
+<nav>
+  <div class="nav-label">Contents</div>
+  <a href="#s0"><span class="step-num">0</span>結論（3行）</a>
+  <a href="#s1"><span class="step-num">1</span>前提：安全のしくみ</a>
+  <a href="#s2"><span class="step-num">2</span>現状の実測結果</a>
+  <div class="nav-divider"></div>
+  <a href="#s3"><span class="step-num">3</span>不満①PRの真因</a>
+  <a href="#s4"><span class="step-num">4</span>不満②画面の真因</a>
+  <a href="#s5"><span class="step-num">5</span>新発見：壁の穴</a>
+  <div class="nav-divider"></div>
+  <a href="#s6"><span class="step-num">6</span>3つの案の比較</a>
+  <a href="#s7"><span class="step-num">7</span>推奨ロードマップ</a>
+  <a href="#s8"><span class="step-num">8</span>設定ファイル差分</a>
+  <a href="#s9"><span class="step-num">9</span>追加する道具</a>
+  <div class="nav-divider"></div>
+  <a href="#s10"><span class="step-num">10</span>リスクと限界</a>
+  <a href="#s11"><span class="step-num">11</span>用語集</a>
+  <a href="#s12"><span class="step-num">12</span>出典</a>
+</nav>
+
+<main>
+
+<!-- ══════════════ 0 ══════════════ -->
+<section class="section" id="s0">
+  <div class="section-header">
+    <span class="step-badge">0</span>
+    <h2>結論（先に3行）</h2>
+  </div>
+
+  <div class="callout good">
+    <div class="co-title">Finding 1 — PR は「作れない」のではなかった</div>
+    <p>実際に環境を叩いて検証した結果、GitHub への PR 作成に必要な通信・認証・書き込み権限は<b>すべて正常に通っています</b>。原因はサンドボックスではなく、<code>gh pr create</code> というコマンドが<b>人間との対話を前提にしている</b>ことでした。設定を変える話ではなく、コマンドの呼び方を決めておく話です。</p>
+  </div>
+
+  <div class="callout good">
+    <div class="co-title">Finding 2 — 画面確認は、壁を緩めずに実現できる</div>
+    <p>サンドボックス（安全の壁）が制限しているのは <b>Bash コマンドだけ</b>です。ブラウザ操作を担当する MCP サーバーは<b>壁の外</b>で動くため、セキュリティ設定を一切ゆるめずに「AI が画面を見る」を追加できます。</p>
+  </div>
+
+  <div class="callout danger">
+    <div class="co-title">Finding 3 — むしろネットワークの壁に穴が空いていた</div>
+    <p>許可リストに入っていない <code>https://example.com</code> に、確認もなく接続できてしまいました。現在の <code>allowedDomains</code> は「通してよい先の一覧」ではなく「<b>いちいち確認しないで済ませる一覧</b>」として動いています。今回の改善で、ここを本当の遮断に切り替えます。</p>
+  </div>
+
+  <p style="margin-top:22px">つまり今回の作業は「セキュリティを削って便利さを買う」のではなく、<b>不満を解消しながら同時に安全性も上げられる</b>という珍しい状況です。以下、根拠と手順を順に説明します。</p>
+</section>
+
+<!-- ══════════════ 1 ══════════════ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <span class="step-badge">1</span>
+    <h2>前提：Claude Code の安全のしくみを3分で</h2>
+  </div>
+
+  <p>この後の議論を正しく理解するために、Claude Code が持っている「安全装置」が <b>2種類あって性質が違う</b>ことだけ押さえてください。ここを混同すると、今回の結論がまるごと誤解されます。</p>
+
+  <div class="figure">
+    <div class="fig-title">図1 — 2種類の安全装置と、その適用範囲</div>
+    <svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans JP, sans-serif">
+      <!-- outer: PC -->
+      <rect x="8" y="8" width="744" height="384" rx="8" fill="#161b27" stroke="#2a3347"/>
+      <text x="24" y="32" fill="#6c7a96" font-size="12" font-family="IBM Plex Mono, monospace">YOUR PC (WSL2 / Ubuntu)</text>
+
+      <!-- layer1: permission -->
+      <rect x="28" y="48" width="704" height="132" rx="6" fill="#1e2535" stroke="#cba6f7" stroke-dasharray="5 4"/>
+      <text x="44" y="72" fill="#cba6f7" font-size="13" font-weight="500">① 許可ルール（permissions）— ソフトの中の関所</text>
+      <text x="44" y="94" fill="#cdd6f4" font-size="12">「このコマンドを実行してよいか？」を、実行する前に文字列で判定する</text>
+      <text x="44" y="114" fill="#6c7a96" font-size="11.5">対象：Bash / ファイル読み書き / WebFetch / MCP … すべての道具</text>
+      <text x="44" y="134" fill="#f9e2af" font-size="11.5">弱点：判定は「コマンドの見た目」頼り。AI が別の書き方をすれば通ってしまう余地がある</text>
+      <rect x="44" y="146" width="180" height="22" rx="3" fill="#cba6f715" stroke="#cba6f744"/>
+      <text x="54" y="161" fill="#cba6f7" font-size="11" font-family="IBM Plex Mono, monospace">settings.json の permissions</text>
+
+      <!-- layer2: sandbox -->
+      <rect x="28" y="196" width="440" height="176" rx="6" fill="#1e2535" stroke="#a6e3a1"/>
+      <text x="44" y="220" fill="#a6e3a1" font-size="13" font-weight="500">② サンドボックス — OS が作る物理的な壁</text>
+      <text x="44" y="242" fill="#cdd6f4" font-size="12">Linux の bubblewrap が、プロセスごと閉じ込める</text>
+      <text x="44" y="262" fill="#6c7a96" font-size="11.5">対象：<tspan fill="#f9e2af">Bash コマンドと、それが起動した子プロセスだけ</tspan></text>
+      <text x="44" y="284" fill="#a6e3a1" font-size="11.5">強み：AI がどう書こうと OS が拒否する。すり抜け不可</text>
+
+      <rect x="44" y="298" width="190" height="58" rx="4" fill="#0e1117" stroke="#2a3347"/>
+      <text x="54" y="318" fill="#94e2d5" font-size="11" font-family="IBM Plex Mono, monospace">書ける場所</text>
+      <text x="54" y="336" fill="#cdd6f4" font-size="11">作業フォルダ ＋ 一時領域のみ</text>
+      <text x="54" y="350" fill="#6c7a96" font-size="10.5">~/.bashrc や /bin は書込禁止</text>
+
+      <rect x="248" y="298" width="200" height="58" rx="4" fill="#0e1117" stroke="#2a3347"/>
+      <text x="258" y="318" fill="#94e2d5" font-size="11" font-family="IBM Plex Mono, monospace">つなげる先</text>
+      <text x="258" y="336" fill="#cdd6f4" font-size="11">許可したドメインのみ（建前）</text>
+      <text x="258" y="350" fill="#f38ba8" font-size="10.5">※ 現状ここが機能していない → 第5章</text>
+
+      <!-- outside sandbox: MCP -->
+      <rect x="492" y="196" width="240" height="176" rx="6" fill="#1e2535" stroke="#fab387"/>
+      <text x="508" y="220" fill="#fab387" font-size="13" font-weight="500">壁の「外」</text>
+      <text x="508" y="244" fill="#cdd6f4" font-size="12">MCP サーバー</text>
+      <text x="508" y="262" fill="#6c7a96" font-size="11.5">（例：ブラウザ操作ツール）</text>
+      <text x="508" y="288" fill="#cdd6f4" font-size="11.5">Claude Code 本体が直接</text>
+      <text x="508" y="306" fill="#cdd6f4" font-size="11.5">起動するため、②の壁の</text>
+      <text x="508" y="324" fill="#cdd6f4" font-size="11.5">内側に入らない</text>
+      <rect x="508" y="336" width="200" height="24" rx="3" fill="#fab38715" stroke="#fab38744"/>
+      <text x="518" y="352" fill="#fab387" font-size="11">→ 画面確認はここを使う（第4章）</text>
+
+      <!-- arrow -->
+      <path d="M468 284 L492 284" stroke="#6c7a96" stroke-width="1.5" stroke-dasharray="3 3"/>
+    </svg>
+    <p class="fig-note"><b>覚えておくべき一点：</b>サンドボックス（②）は Bash コマンドにしか効きません。MCP サーバーは①の許可ルールでは管理されますが、②の壁の中には入りません。これが「画面確認を安全に足せる」根拠であり、同時に「MCP を増やすと壁の外の経路が増える」というリスクの根拠でもあります。</p>
+  </div>
+
+  <h3>なぜ WSL2 + サンドボックスが優秀だったのか</h3>
+  <p>①だけの環境（Windows でそのまま動かす場合など）は、AI が「見た目は無害だが実際は危険なコマンド」を書くと通ってしまう可能性が残ります。②があると、たとえ AI が誤ったコマンドを実行しても <b>OS が物理的に拒否</b>します。この二重構造が現行環境の最大の資産で、今回の提案でも壊しません。</p>
+</section>
+
+<!-- ══════════════ 2 ══════════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <span class="step-badge p3">2</span>
+    <h2>現状の実測結果</h2>
+  </div>
+
+  <p>推測を避けるため、実際に現環境でコマンドを実行して確認しました。以下はすべて<b>実測値</b>です。</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:34%">検証内容</th><th style="width:14%">結果</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td><code>gh auth status</code></td><td class="ok">認証済み</td><td>アカウント hane0707。権限スコープに <code>repo</code> と <code>workflow</code> を保有＝PR 作成の権限はある</td></tr>
+      <tr><td><code>gh api user</code></td><td class="ok">成功</td><td><code>api.github.com</code> に到達できている。ここが通らないと PR は絶対に作れない</td></tr>
+      <tr><td><code>POST /repos/…/pulls</code><br><span style="font-size:11.5px;color:#6c7a96">※ head と base を同じにして GitHub 側に弾かせる無害な試験</span></td><td class="ok">422 応答</td><td><b>決定的証拠。</b>「main と main の間に差分がない」という GitHub 側の検証エラーが返った＝<b>通信・認証・書き込み経路はすべて正常</b>。PR は作成されていない</td></tr>
+      <tr><td><code>curl https://example.com</code></td><td class="warn">200 で通過</td><td>許可リストにない外部サイトに、確認もなく接続できた＝ネットワークの壁が実質機能していない</td></tr>
+      <tr><td><code>/mnt/c/…</code> の Windows アプリ起動</td><td class="ng">不可</td><td>公式仕様。サンドボックス内から Windows 側のブラウザは起動できない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout warn">
+    <div class="co-title">読み方の注意</div>
+    <p>「422 エラーが返った＝失敗」ではありません。422 は <b>GitHub のサーバーが内容を読んで返した返事</b>です。ネットワークが遮断されていれば、そもそもサーバーまで届かず接続エラーになります。届いて、認証され、内容を審査された上で「その内容では作れません」と言われた——つまり<b>経路上の障害はゼロ</b>だと分かります。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 3 ══════════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <span class="step-badge uc">3</span>
+    <h2>不満① 「PR が作れない」の真因</h2>
+  </div>
+
+  <p>第2章の実測から、原因はネットワークでも権限でもないと確定しました。残る最有力候補は <code>gh pr create</code> というコマンド自身の性質です。</p>
+
+  <div class="figure">
+    <div class="fig-title">図2 — なぜ止まるのか：人間向けの作りと、AI の実行環境のズレ</div>
+    <svg viewBox="0 0 760 330" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans JP, sans-serif">
+      <!-- human path -->
+      <text x="20" y="26" fill="#a6e3a1" font-size="12.5" font-weight="500">人間がターミナルで叩いた場合 → 成功する</text>
+      <rect x="20" y="38" width="120" height="44" rx="4" fill="#1e2535" stroke="#2a3347"/>
+      <text x="30" y="58" fill="#cdd6f4" font-size="11">gh pr create</text>
+      <text x="30" y="74" fill="#6c7a96" font-size="10.5">を実行</text>
+      <path d="M140 60 L172 60" stroke="#6c7a96" stroke-width="1.5" marker-end="url(#a1)"/>
+      <rect x="172" y="38" width="150" height="44" rx="4" fill="#1e2535" stroke="#f9e2af"/>
+      <text x="182" y="58" fill="#f9e2af" font-size="11">「タイトルは？」</text>
+      <text x="182" y="74" fill="#6c7a96" font-size="10.5">と画面で質問してくる</text>
+      <path d="M322 60 L354 60" stroke="#6c7a96" stroke-width="1.5" marker-end="url(#a1)"/>
+      <rect x="354" y="38" width="150" height="44" rx="4" fill="#1e2535" stroke="#a6e3a1"/>
+      <text x="364" y="58" fill="#cdd6f4" font-size="11">人間がキーボードで</text>
+      <text x="364" y="74" fill="#a6e3a1" font-size="11">入力して回答</text>
+      <path d="M504 60 L536 60" stroke="#6c7a96" stroke-width="1.5" marker-end="url(#a1)"/>
+      <rect x="536" y="38" width="200" height="44" rx="4" fill="#a6e3a115" stroke="#a6e3a1"/>
+      <text x="546" y="65" fill="#a6e3a1" font-size="12">PR 作成 ✓</text>
+
+      <line x1="20" y1="112" x2="740" y2="112" stroke="#2a3347" stroke-dasharray="4 4"/>
+
+      <!-- ai path -->
+      <text x="20" y="142" fill="#f38ba8" font-size="12.5" font-weight="500">AI が自動実行した場合 → ここで詰まる</text>
+      <rect x="20" y="154" width="120" height="44" rx="4" fill="#1e2535" stroke="#2a3347"/>
+      <text x="30" y="174" fill="#cdd6f4" font-size="11">gh pr create</text>
+      <text x="30" y="190" fill="#6c7a96" font-size="10.5">を実行</text>
+      <path d="M140 176 L172 176" stroke="#6c7a96" stroke-width="1.5" marker-end="url(#a1)"/>
+      <rect x="172" y="154" width="150" height="44" rx="4" fill="#1e2535" stroke="#f9e2af"/>
+      <text x="182" y="174" fill="#f9e2af" font-size="11">「タイトルは？」</text>
+      <text x="182" y="190" fill="#6c7a96" font-size="10.5">と質問してくる</text>
+      <path d="M322 176 L354 176" stroke="#f38ba8" stroke-width="1.5" marker-end="url(#a2)"/>
+      <rect x="354" y="146" width="180" height="60" rx="4" fill="#f38ba815" stroke="#f38ba8"/>
+      <text x="364" y="167" fill="#f38ba8" font-size="11">答える人間がいない</text>
+      <text x="364" y="184" fill="#cdd6f4" font-size="10.5">AI の実行環境はキーボード</text>
+      <text x="364" y="198" fill="#cdd6f4" font-size="10.5">入力を受け付けない</text>
+      <path d="M534 176 L566 176" stroke="#f38ba8" stroke-width="1.5" marker-end="url(#a2)"/>
+      <rect x="566" y="154" width="170" height="44" rx="4" fill="#f38ba815" stroke="#f38ba8"/>
+      <text x="576" y="174" fill="#f38ba8" font-size="12">エラー／固まる ✗</text>
+      <text x="576" y="190" fill="#6c7a96" font-size="10.5">「サンドボックスのせい」に見える</text>
+
+      <line x1="20" y1="232" x2="740" y2="232" stroke="#2a3347" stroke-dasharray="4 4"/>
+
+      <!-- fix -->
+      <text x="20" y="262" fill="#89b4fa" font-size="12.5" font-weight="500">対策：最初から全部を引数で渡し、質問させない</text>
+      <rect x="20" y="274" width="716" height="42" rx="4" fill="#89b4fa10" stroke="#89b4fa"/>
+      <text x="32" y="292" fill="#cdd6f4" font-size="11.5" font-family="IBM Plex Mono, monospace">gh pr create --base main --head &lt;branch&gt; --title "..." --body-file .git/PR_BODY.md</text>
+      <text x="32" y="309" fill="#6c7a96" font-size="11">→ 質問される場面が消えるので、AI が最後まで自走できる</text>
+
+      <defs>
+        <marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#6c7a96"/></marker>
+        <marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#f38ba8"/></marker>
+      </defs>
+    </svg>
+    <p class="fig-note">「ブランチ作成と <code>git push</code> は問題なくできていた」という体験とも整合します。それらは質問してこないコマンドだからです。<code>gh pr create</code> だけが対話を要求します。</p>
+  </div>
+
+  <div class="callout">
+    <div class="co-title">解決策：手順を skill として固定する</div>
+    <p>毎回 AI に正しいフラグを思い出させるのではなく、<b>「PR を作るときはこの手順」を文書化して読ませる</b>のが確実です。Claude Code ではこれを <b>skill</b>（作業手順書ファイル）と呼びます。<code>commit-commands</code> プラグインの <code>/commit-push-pr</code> が既に近いものを持っているので、そこに非対話フラグを固定した自前 skill を用意します。</p>
+  </div>
+
+  <h4>フォールバック（万一 gh が使えない場合）</h4>
+  <pre><code>gh api -X POST /repos/&lt;owner&gt;/&lt;repo&gt;/pulls \
+  -f head=&lt;branch&gt; -f base=main \
+  -f title="タイトル" -f body="本文"</code></pre>
+  <p class="why"><b>なぜこれで確実か：</b><code>gh api</code> は REST API を直接叩くだけのコマンドで、対話 UI を一切持ちません。第2章でこの経路が通ることは実測済みです。</p>
+</section>
+
+<!-- ══════════════ 4 ══════════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <span class="step-badge uc">4</span>
+    <h2>不満② 「AI が画面を直接見られない」の真因と3つの解決ルート</h2>
+  </div>
+
+  <p>これは実在する制約です。WSL2（Linux）と Windows は別の世界で、しかもサンドボックス内からは Windows 側のアプリを起動できません。ただし<b>迂回路が3本あります</b>。</p>
+
+  <div class="figure">
+    <div class="fig-title">図3 — 画面確認の3ルート</div>
+    <svg viewBox="0 0 760 430" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans JP, sans-serif">
+      <!-- windows side -->
+      <rect x="470" y="14" width="276" height="402" rx="8" fill="#161b27" stroke="#2a3347"/>
+      <text x="486" y="38" fill="#6c7a96" font-size="12" font-family="IBM Plex Mono, monospace">WINDOWS 側</text>
+      <rect x="486" y="52" width="244" height="52" rx="5" fill="#1e2535" stroke="#89b4fa"/>
+      <text x="498" y="74" fill="#89b4fa" font-size="12">Chrome（あなたが見る画面）</text>
+      <text x="498" y="92" fill="#6c7a96" font-size="11">人間の目で確認できる</text>
+
+      <!-- wsl side -->
+      <rect x="14" y="14" width="440" height="402" rx="8" fill="#161b27" stroke="#2a3347"/>
+      <text x="30" y="38" fill="#6c7a96" font-size="12" font-family="IBM Plex Mono, monospace">WSL2 (Linux) 側</text>
+
+      <!-- sandbox box -->
+      <rect x="30" y="52" width="408" height="96" rx="6" fill="#1e2535" stroke="#a6e3a1"/>
+      <text x="44" y="74" fill="#a6e3a1" font-size="12">サンドボックスの中（Bash コマンド）</text>
+      <text x="44" y="96" fill="#cdd6f4" font-size="11.5">npm run dev でローカルサーバーを起動 → OK</text>
+      <text x="44" y="118" fill="#f38ba8" font-size="11.5">Windows の Chrome を起動 → 不可（OS が遮断）</text>
+      <text x="44" y="138" fill="#6c7a96" font-size="10.5">※ これが「見た目を確認できない」の直接原因</text>
+
+      <!-- route A -->
+      <rect x="30" y="164" width="408" height="76" rx="6" fill="#fab38710" stroke="#fab387"/>
+      <text x="44" y="186" fill="#fab387" font-size="12" font-weight="500">ルートA：Playwright MCP（推奨）</text>
+      <text x="44" y="206" fill="#cdd6f4" font-size="11.5">Linux 側の画面なしブラウザを MCP が操作し、</text>
+      <text x="44" y="224" fill="#cdd6f4" font-size="11.5">スクリーンショットを AI に渡す</text>
+
+      <!-- route B -->
+      <rect x="30" y="252" width="408" height="86" rx="6" fill="#cba6f710" stroke="#cba6f7"/>
+      <text x="44" y="274" fill="#cba6f7" font-size="12" font-weight="500">ルートB：Chrome DevTools MCP</text>
+      <text x="44" y="294" fill="#cdd6f4" font-size="11.5">Windows の Chrome を「デバッグ用ポート開放」で起動し、</text>
+      <text x="44" y="312" fill="#cdd6f4" font-size="11.5">WSL2 から接続。人間と同じ画面を AI が操作する</text>
+      <text x="44" y="330" fill="#6c7a96" font-size="10.5">要：.wslconfig に networkingMode=mirrored</text>
+
+      <!-- route C -->
+      <rect x="30" y="350" width="408" height="54" rx="6" fill="#94e2d510" stroke="#94e2d5"/>
+      <text x="44" y="372" fill="#94e2d5" font-size="12" font-weight="500">ルートC：スクショを撮って画像ファイルで読む</text>
+      <text x="44" y="392" fill="#cdd6f4" font-size="11.5">最小構成。MCP を増やしたくない場合の代替</text>
+
+      <!-- arrows to windows -->
+      <path d="M438 202 C458 202 458 78 486 78" stroke="#fab387" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+      <text x="446" y="150" fill="#fab387" font-size="10" transform="rotate(-90 446 150)">画像で共有</text>
+      <path d="M438 294 L486 294" stroke="#cba6f7" stroke-width="2" marker-end="url(#a3)"/>
+      <rect x="486" y="270" width="244" height="52" rx="5" fill="#1e2535" stroke="#cba6f7"/>
+      <text x="498" y="292" fill="#cba6f7" font-size="12">同じ Chrome を共有操作</text>
+      <text x="498" y="310" fill="#6c7a96" font-size="11">ポート 9222 で接続</text>
+
+      <defs><marker id="a3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#cba6f7"/></marker></defs>
+    </svg>
+  </div>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:16%">ルート</th><th>できること</th><th style="width:22%">利点</th><th style="width:24%">欠点</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b style="color:#fab387">A. Playwright MCP</b><br><span style="font-size:11px;color:#6c7a96">推奨</span></td>
+        <td>画面のスクショ取得、クリック・入力の自動操作、コンソールエラーの取得、要素構造の把握</td>
+        <td class="ok">設定が簡単。同じ仕組みを自動テスト（CI）でも使い回せる。無人実行に強い</td>
+        <td>実ブラウザの「人間が見ている画面そのもの」ではない。WSL2 では並列実行時にクラッシュしやすく、GPU 無効化フラグが必要</td>
+      </tr>
+      <tr>
+        <td><b style="color:#cba6f7">B. Chrome DevTools MCP</b></td>
+        <td>あなたが今開いている Chrome を AI が直接見る・操作する。ネットワークや表示速度の詳細分析</td>
+        <td class="ok">人間と完全に同じ画面。ログイン済みの状態をそのまま使える</td>
+        <td>Windows 側の設定変更（<code>.wslconfig</code> 編集と WSL 再起動、Chrome の起動方法変更）が必要。無人実行には不向き</td>
+      </tr>
+      <tr>
+        <td><b style="color:#94e2d5">C. スクショのみ</b></td>
+        <td>画像を撮って AI に読ませるだけ</td>
+        <td class="ok">追加の常駐プロセスなし。最も安全</td>
+        <td>操作ができないため、クリック後の画面などは確認不可</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <div class="co-title">提案：A を基本、B を「目で見たいとき用」に併設</div>
+    <p>日常の自動確認と将来の自律実行には A、デザインの最終確認や込み入った不具合調査には B、という使い分けです。両方入れても competing しません（役割が違うため）。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 5 ══════════════ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <span class="step-badge p4">5</span>
+    <h2>新発見：ネットワークの壁に穴が空いていた</h2>
+  </div>
+
+  <p>これは今回の調査で見つかった、<b>不満点とは別の問題</b>です。優先度は高めです。</p>
+
+  <div class="figure">
+    <div class="fig-title">図4 — allowedDomains の実際の意味</div>
+    <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans JP, sans-serif">
+      <text x="20" y="26" fill="#f38ba8" font-size="12.5" font-weight="500">現状：allowedDomains だけを書いた場合</text>
+      <rect x="20" y="38" width="150" height="46" rx="4" fill="#1e2535" stroke="#2a3347"/>
+      <text x="30" y="58" fill="#cdd6f4" font-size="11">許可リストにある</text>
+      <text x="30" y="74" fill="#a6e3a1" font-size="11">github.com へ</text>
+      <path d="M170 61 L214 61" stroke="#a6e3a1" stroke-width="1.5" marker-end="url(#a4)"/>
+      <rect x="214" y="38" width="180" height="46" rx="4" fill="#a6e3a115" stroke="#a6e3a1"/>
+      <text x="224" y="65" fill="#a6e3a1" font-size="11.5">確認なしで通す ✓</text>
+
+      <rect x="20" y="98" width="150" height="46" rx="4" fill="#1e2535" stroke="#2a3347"/>
+      <text x="30" y="118" fill="#cdd6f4" font-size="11">リストにない</text>
+      <text x="30" y="134" fill="#f9e2af" font-size="11">example.com へ</text>
+      <path d="M170 121 L214 121" stroke="#f9e2af" stroke-width="1.5" marker-end="url(#a5)"/>
+      <rect x="214" y="98" width="180" height="46" rx="4" fill="#f9e2af15" stroke="#f9e2af"/>
+      <text x="224" y="118" fill="#f9e2af" font-size="11.5">本来は「確認する」</text>
+      <text x="224" y="135" fill="#6c7a96" font-size="10.5">＝拒否ではない</text>
+      <path d="M394 121 L438 121" stroke="#f38ba8" stroke-width="1.5" marker-end="url(#a6)"/>
+      <rect x="438" y="98" width="290" height="46" rx="4" fill="#f38ba815" stroke="#f38ba8"/>
+      <text x="448" y="118" fill="#f38ba8" font-size="11.5">実測では確認すら出ず通過した ✗</text>
+      <text x="448" y="135" fill="#6c7a96" font-size="10.5">＝情報の持ち出し経路が開いている</text>
+
+      <line x1="20" y1="164" x2="740" y2="164" stroke="#2a3347" stroke-dasharray="4 4"/>
+
+      <text x="20" y="192" fill="#a6e3a1" font-size="12.5" font-weight="500">対策：strictAllowlist: true を足す（Claude Code 2.1.219 以降）</text>
+      <rect x="20" y="204" width="708" height="34" rx="4" fill="#a6e3a110" stroke="#a6e3a1"/>
+      <text x="32" y="226" fill="#cdd6f4" font-size="11.5">リストにないドメインは「確認」ではなく<tspan fill="#a6e3a1" font-weight="500">即座に遮断</tspan>される。これで初めて本当のホワイトリストになる</text>
+
+      <defs>
+        <marker id="a4" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#a6e3a1"/></marker>
+        <marker id="a5" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#f9e2af"/></marker>
+        <marker id="a6" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#f38ba8"/></marker>
+      </defs>
+    </svg>
+    <p class="fig-note">なお、実測で確認なく通過した理由は複数考えられます（過去セッションでの許可の蓄積、権限モードの影響など）。いずれにせよ <code>strictAllowlist</code> を入れれば、理由に関係なく遮断されます。</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="co-title">導入時の注意</div>
+    <p>これを有効にすると、リストに書き忘れたドメインへの通信が<b>すべて止まります</b>。<code>npm install</code> が急に失敗する、といったことが起こり得ます。第8章の差分では、現在実際に使われているドメインを洗い出して初期リストに含めています。導入直後は「エラーが出たら、そのドメインを追記する」運用を数日続けてください。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 6 ══════════════ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <span class="step-badge p2">6</span>
+    <h2>3つの案の比較</h2>
+  </div>
+
+  <div class="figure">
+    <div class="fig-title">図5 — 隔離の強さ と 導入コスト の位置づけ</div>
+    <svg viewBox="0 0 760 340" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans JP, sans-serif">
+      <line x1="70" y1="290" x2="720" y2="290" stroke="#2a3347" stroke-width="1.5"/>
+      <line x1="70" y1="290" x2="70" y2="30" stroke="#2a3347" stroke-width="1.5"/>
+      <text x="400" y="318" fill="#6c7a96" font-size="11.5" text-anchor="middle">導入コスト・運用の重さ →</text>
+      <text x="30" y="160" fill="#6c7a96" font-size="11.5" text-anchor="middle" transform="rotate(-90 30 160)">隔離の強さ →</text>
+
+      <!-- current -->
+      <circle cx="180" cy="200" r="9" fill="#6c7a96"/>
+      <text x="196" y="196" fill="#6c7a96" font-size="12">現状</text>
+      <text x="196" y="212" fill="#6c7a96" font-size="10.5">壁はあるが穴あり／不満2点</text>
+
+      <!-- plan1 -->
+      <circle cx="270" cy="120" r="11" fill="#a6e3a1"/>
+      <text x="290" y="112" fill="#a6e3a1" font-size="12.5" font-weight="500">案1 サンドボックス強化</text>
+      <text x="290" y="130" fill="#cdd6f4" font-size="11">設定＋MCP追加のみ。穴を塞ぎつつ不満を解消</text>
+      <text x="290" y="147" fill="#6c7a96" font-size="10.5">変更ファイル：settings.json と MCP 設定</text>
+      <path d="M192 194 C220 180 240 150 260 128" stroke="#a6e3a1" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#a7)"/>
+
+      <!-- plan3 -->
+      <circle cx="450" cy="230" r="11" fill="#fab387"/>
+      <text x="470" y="224" fill="#fab387" font-size="12.5" font-weight="500">案3 ローカル緩和＋CI厳格</text>
+      <text x="470" y="242" fill="#cdd6f4" font-size="11">手元は自由に、危険な操作は GitHub 側で最小権限実行</text>
+      <text x="470" y="259" fill="#6c7a96" font-size="10.5">自律化（時間ベース）の本命</text>
+
+      <!-- plan2 -->
+      <circle cx="620" cy="70" r="11" fill="#cba6f7"/>
+      <text x="470" y="52" fill="#cba6f7" font-size="12.5" font-weight="500" text-anchor="start">案2 devcontainer 隔離</text>
+      <text x="470" y="70" fill="#cdd6f4" font-size="11" text-anchor="start">環境まるごとコンテナ化。チーム配布に最強</text>
+      <text x="470" y="87" fill="#6c7a96" font-size="10.5" text-anchor="start">ただし WSL2 の上に Docker で重い</text>
+      <path d="M600 74 L604 70" stroke="#cba6f7" stroke-width="1"/>
+
+      <defs><marker id="a7" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#a6e3a1"/></marker></defs>
+    </svg>
+  </div>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:13%">観点</th><th style="width:29%">案1 サンドボックス強化</th><th style="width:29%">案2 devcontainer</th><th>案3 ローカル緩和＋CI</th></tr></thead>
+    <tbody>
+      <tr><td>不満①PR</td><td class="ok">skill で解決</td><td class="ok">skill で解決</td><td class="ok">そもそも CI が PR を作る</td></tr>
+      <tr><td>不満②画面</td><td class="ok">Playwright MCP</td><td class="warn">コンテナ内 Playwright。Windows Chrome 連携は更に困難</td><td class="ok">CI 側でも画面検証可能</td></tr>
+      <tr><td>安全性</td><td class="ok">現状より向上</td><td class="ok">最も強い</td><td class="warn">手元は弱まる／CI は強い</td></tr>
+      <tr><td>既存資産</td><td class="ok">ほぼそのまま流用</td><td class="ng">作り直しが大きい</td><td class="ok">案1 の上に積める</td></tr>
+      <tr><td>自律化への適合</td><td class="warn">ゴールベースまで</td><td class="ok">無人実行に最適</td><td class="ok">時間ベースの本命</td></tr>
+      <tr><td>チーム配布</td><td class="warn">手順書での再現</td><td class="ok">環境が完全に揃う</td><td class="ok">CI 設定はリポジトリで共有</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ══════════════ 7 ══════════════ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <span class="step-badge rec">7</span>
+    <h2>推奨：案1 を土台に、案3 を段階的に重ねる</h2>
+  </div>
+
+  <div class="figure">
+    <div class="fig-title">図6 — 3段階ロードマップ</div>
+    <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans JP, sans-serif">
+      <!-- step1 -->
+      <rect x="14" y="20" width="232" height="278" rx="7" fill="#161b27" stroke="#a6e3a1"/>
+      <rect x="14" y="20" width="232" height="34" rx="7" fill="#a6e3a115"/>
+      <text x="30" y="43" fill="#a6e3a1" font-size="13" font-weight="500">STEP 1 — 手元を整える</text>
+      <text x="30" y="76" fill="#cdd6f4" font-size="11.5">・穴を塞ぐ（strictAllowlist）</text>
+      <text x="30" y="96" fill="#cdd6f4" font-size="11.5">・api.github.com を明示許可</text>
+      <text x="30" y="116" fill="#cdd6f4" font-size="11.5">・PR 手順を skill 化</text>
+      <text x="30" y="136" fill="#cdd6f4" font-size="11.5">・Playwright MCP を追加</text>
+      <text x="30" y="156" fill="#cdd6f4" font-size="11.5">・プラグインを 5 個に整理</text>
+      <rect x="26" y="166" width="204" height="24" rx="3" fill="#a6e3a115" stroke="#a6e3a166"/>
+      <text x="34" y="182" fill="#a6e3a1" font-size="11">・この変更自体を PR にして検証</text>
+      <text x="30" y="212" fill="#a6e3a1" font-size="11.5">到達：/goal で「テストが通るまで</text>
+      <text x="30" y="229" fill="#a6e3a1" font-size="11.5">自走」が可能になる</text>
+      <rect x="30" y="244" width="196" height="32" rx="4" fill="#0e1117" stroke="#2a3347"/>
+      <text x="40" y="264" fill="#6c7a96" font-size="10.5">想定：半日〜1日</text>
+
+      <path d="M246 158 L276 158" stroke="#6c7a96" stroke-width="2" marker-end="url(#a8)"/>
+
+      <!-- step2 -->
+      <rect x="276" y="20" width="232" height="278" rx="7" fill="#161b27" stroke="#fab387"/>
+      <rect x="276" y="20" width="232" height="34" rx="7" fill="#fab38715"/>
+      <text x="292" y="43" fill="#fab387" font-size="13" font-weight="500">STEP 2 — 自律化</text>
+      <text x="292" y="76" fill="#cdd6f4" font-size="11.5">・検証 skill（テスト＋画面）</text>
+      <text x="292" y="96" fill="#cdd6f4" font-size="11.5">・/goal の停止条件を型化</text>
+      <text x="292" y="116" fill="#cdd6f4" font-size="11.5">・/schedule で定期実行</text>
+      <text x="292" y="136" fill="#cdd6f4" font-size="11.5">・実行回数と時間の上限設定</text>
+      <rect x="288" y="148" width="208" height="42" rx="3" fill="#6c7a9615" stroke="#6c7a96" stroke-dasharray="4 3"/>
+      <text x="296" y="164" fill="#6c7a96" font-size="10.5">［運用未確定・任意］</text>
+      <text x="296" y="181" fill="#6c7a96" font-size="10.5">claude-code-action ＋ Issue 発火</text>
+      <text x="292" y="212" fill="#fab387" font-size="11.5">到達：人間が指示 → 検証まで</text>
+      <text x="292" y="229" fill="#fab387" font-size="11.5">自走。レビューは人間が実施</text>
+      <rect x="292" y="244" width="196" height="32" rx="4" fill="#0e1117" stroke="#2a3347"/>
+      <text x="302" y="264" fill="#6c7a96" font-size="10.5">想定：1〜2日＋試験運用</text>
+
+      <path d="M508 158 L538 158" stroke="#6c7a96" stroke-width="2" marker-end="url(#a8)"/>
+
+      <!-- step3 -->
+      <rect x="538" y="20" width="208" height="278" rx="7" fill="#161b27" stroke="#cba6f7"/>
+      <rect x="538" y="20" width="208" height="34" rx="7" fill="#cba6f715"/>
+      <text x="554" y="43" fill="#cba6f7" font-size="13" font-weight="500">STEP 3 — チーム展開</text>
+      <text x="554" y="76" fill="#cdd6f4" font-size="11.5">・managed-settings で</text>
+      <text x="554" y="93" fill="#cdd6f4" font-size="11.5">　組織ルールを強制</text>
+      <text x="554" y="115" fill="#cdd6f4" font-size="11.5">・GH_TOKEN の mask 化</text>
+      <text x="554" y="135" fill="#cdd6f4" font-size="11.5">・devcontainer で環境固定</text>
+      <text x="554" y="155" fill="#cdd6f4" font-size="11.5">・監査ログの方針決め</text>
+      <text x="554" y="212" fill="#cba6f7" font-size="11.5">到達：同僚が同じ環境を</text>
+      <text x="554" y="229" fill="#cba6f7" font-size="11.5">再現でき、逸脱を防げる</text>
+      <rect x="554" y="244" width="176" height="32" rx="4" fill="#0e1117" stroke="#2a3347"/>
+      <text x="564" y="264" fill="#6c7a96" font-size="10.5">想定：展開判断後に着手</text>
+
+      <defs><marker id="a8" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6c7a96"/></marker></defs>
+    </svg>
+  </div>
+
+  <h3>なぜこの順番か</h3>
+  <ul>
+    <li><b>不満①はアーキテクチャの問題ではなかった</b>ため、環境を作り直す必要がありません。作り直しは最もコストが高く、最も失敗しやすい選択です</li>
+    <li><b>不満②は壁を緩めずに解決できる</b>ため、セキュリティを差し出す取引が発生しません</li>
+    <li>目標である<b>時間ベースの自律化には GitHub Actions が事実上必須</b>で、これは STEP 1 の上にそのまま積めます（排他ではない）</li>
+  </ul>
+
+  <h3>STEP 1 の完了判定：実際に PR を作って確かめる</h3>
+  <p>第3章の結論は「経路は正常、原因は対話性」という<b>推定</b>です。机上で終わらせず、<b>この設定変更そのものを題材にして実際に PR を1本通します</b>。設定変更の成果物（<code>settings.json</code> の差分・新規 skill・本提案書）は、ちょうど PR にするのに手頃な粒度です。</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:8%">手順</th><th style="width:46%">やること</th><th>確認したいこと</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>作業ブランチを切る</td><td>従来どおり成功するはず（既に実績あり）</td></tr>
+      <tr><td>2</td><td>設定変更・skill・提案書をコミット</td><td>同上</td></tr>
+      <tr><td>3</td><td><code>git push -u origin &lt;branch&gt;</code></td><td>同上。ここまでは元々問題がなかった箇所</td></tr>
+      <tr><td>4</td><td class="ok"><b><code>gh pr create</code> を非対話フラグ付きで実行</b></td><td class="ok"><b>ここが本番。</b>成功すれば「対話性が真因」が確定し、skill の型も同時に検証できる</td></tr>
+      <tr><td>5</td><td>失敗した場合：エラー全文を記録し <code>gh api -X POST</code> で再試行</td><td>それでも失敗するなら真因は別にある。エラー内容から切り分け、本書を改訂する</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout good">
+    <div class="co-title">この検証が STEP 2 の前提になる理由</div>
+    <p>自律実行では「PR 作成」が<b>人間の目に触れる最初の成果物</b>になります。ここが不安定なままループを回すと、AI が最後の一歩で毎回詰まり、原因究明に時間を取られます。<b>手で1回通してから自動化する</b>——この順序を守ってください。</p>
+  </div>
+
+  <h3>自律化の4段階（今回の目標地点）</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:20%">段階</th><th style="width:26%">誰が終わりを決めるか</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td>1. ターンベース</td><td>人間が毎回確認</td><td>現状。指示するたびに結果を見る</td></tr>
+      <tr><td>2. ゴールベース <code>/goal</code></td><td>検証可能な条件</td><td class="ok"><b>STEP 1 の到達点。</b>「テストが全部通るまで」等を条件にすると、AI が自分で直し続ける</td></tr>
+      <tr><td>3. 時間ベース <code>/schedule</code>・Actions</td><td>スケジュールやイベント</td><td class="ok"><b>STEP 2 の到達点。</b>ただし「Issue に書けば AI が着手する」形の運用を採るかは<b>未確定</b>。当面は人間が手動で指示を出す前提とし、Actions と Issue 発火は<b>任意の選択肢</b>として保留する</td></tr>
+      <tr><td>4. プロアクティブ</td><td>AI 自身が仕事を探す</td><td class="warn">今回は対象外。コストと暴走管理が別途必要</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout warn">
+    <div class="co-title">自律化で最も重要な原則</div>
+    <p>Anthropic のハーネス設計に関する公式記事は、<b>「AI に自分の成果物を評価させてはいけない」</b>と明言しています。自己評価は実際の品質より高く出るためです。したがって STEP 2 では、<b>作る役と検証する役を分離</b>し、検証は「テストが通ったか」「画面にエラーが出ていないか」といった<b>機械的に判定できる条件</b>に落とし込みます。不満②の解消（画面確認）は、実はこの検証役を成立させるための必須部品でもあります。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 8 ══════════════ -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <span class="step-badge p5">8</span>
+    <h2>既存設定ファイルとの差分</h2>
+  </div>
+
+  <p>現在の <code>~/.claude/settings.json</code> を基準に、STEP 1 で加える変更を一つずつ説明します。<span style="color:#a6e3a1">緑が追加</span>、<span style="color:#f38ba8">赤が削除</span>、灰色は変更なしの前後行です。</p>
+
+  <h3>8-1. ネットワーク設定：穴を塞ぎ、GitHub API を明示許可</h3>
+  <div class="diff">
+    <table>
+      <tr class="ctx"><td class="gutter"> </td><td>  "sandbox": {</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>    "enabled": true,</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>    "network": {</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>      "allowedDomains": [</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>        "api.anthropic.com",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        "*.anthropic.com",</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>        "github.com",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        "*.github.com",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        "*.githubusercontent.com",</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>        "registry.npmjs.org",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        "*.npmjs.org",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        "nodejs.org",</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>        "pypi.org"</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        , "files.pythonhosted.org"</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>      ],</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      "strictAllowlist": true,   ← ★ 第2段階で適用</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>      "allowUnixSockets": [],</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>      "allowLocalBinding": true</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>    },</td></tr>
+    </table>
+  </div>
+  <p class="why">
+    <b>なぜ <code>*.github.com</code> を足すか：</b>PR 作成は <code>api.github.com</code> という別のホストを使います。現状これが明示されていません（実測では通っていますが、それは第5章の「穴」のおかげであり、穴を塞ぐと同時に止まります）。<br><br>
+    <b class="ok" style="color:#a6e3a1">重要：<code>github.com</code> は消さずに残すこと。</b>ワイルドカードの <code>*.github.com</code> がドメイン本体にマッチする保証がないためです。消すと <code>git push</code> が壊れる可能性があります。<b>本体とワイルドカードは併記</b>してください（<code>registry.npmjs.org</code> と <code>*.npmjs.org</code> も同様）。<br><br>
+    <b>なぜ <code>strictAllowlist</code> が必須か：</b>これを入れないと、上のリストは「確認を省く一覧」にすぎません。入れて初めて「これ以外は遮断」になります。<br><br>
+    <b>なぜ他のドメインも足すか：</b>遮断を有効にした瞬間、書き忘れたドメインへの通信が止まります。<code>npm</code>／<code>pip</code>／Node 本体の取得先など、実際に使われているものを事前に入れています。<b>この一覧は各自の業務内容に合わせて追記が必要</b>です（例：社内 npm レジストリ、Cloudflare、AWS など）。
+  </p>
+
+  <h3>8-2. 認証情報の保護：トークンを AI から隠す<span style="color:#f9e2af;font-size:12px;font-weight:400;margin-left:10px">［今回は見送り／チーム配布時に採用］</span></h3>
+
+  <div class="callout warn">
+    <div class="co-title">決定：STEP 1 では採用しない</div>
+    <p>後述のとおり運用変更を伴うため、<b>個人利用の段階では見送り</b>ます。以下は<b>チーム配布（STEP 3）に進む際の推奨設定</b>として記録しておくものです。設定内容と前提条件を先に把握しておくことに意味があるため、削除せず残します。</p>
+  </div>
+
+  <div class="diff">
+    <table>
+      <tr class="ctx"><td class="gutter"> </td><td>    "filesystem": {</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>      "denyRead": ["~/.ssh", "~/.aws", "~/.gnupg", ...]</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>    },</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>    "credentials": {</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      "files": [</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        { "path": "~/.ssh", "mode": "deny" },</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        { "path": "~/.aws/credentials", "mode": "deny" }</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      ],</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      "envVars": [</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>        { "name": "GH_TOKEN", "mode": "mask",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>          "injectHosts": ["api.github.com"] }</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      ]</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>    },</td></tr>
+    </table>
+  </div>
+  <p class="why">
+    <b><code>mask</code> とは：</b>AI が実行するコマンドには<b>ニセの値</b>を渡し、通信が <code>api.github.com</code> に出ていく瞬間だけ本物のトークンに差し替える仕組みです。AI はトークンの実体を一度も見ず、ログにも残りません。それでも認証は成功します。<br><br>
+    <b class="warn" style="color:#f9e2af">重要な前提条件：</b>この機能を使うには、<b>①トークンが環境変数 <code>GH_TOKEN</code> に入っていること</b>と、<b>②<code>network.tlsTerminate</code> を有効にすること</b>の両方が必要です。現在の環境ではトークンは <code>~/.config/gh/hosts.yml</code> というファイルに保存されており、環境変数は未設定です（実測確認済み）。つまり<b>この設定は運用の変更を伴います</b>。<br><br>
+    <b>見送った場合に残るリスク：</b>トークンはファイル保存のままでも問題なく動作します。その状態で残る差分は「<b>AI がトークンファイルを読める状態にある</b>」という一点です。個人が自分の権限で自分のリポジトリを触る限り、これは許容範囲と判断しました。
+  </p>
+
+  <div class="callout">
+    <div class="co-title">チーム配布時には採用を推奨（申し送り事項）</div>
+    <p>複数人の環境で運用する場合、判断の前提が変わります。<b>①権限の大きい共用トークンを扱う可能性がある</b>、<b>②誰か1人の環境で流出すると影響が全員に及ぶ</b>、<b>③個々人がトークンの取り扱いを正しく運用しているか管理者が確認できない</b>——この3点により、リスクの重さが個人利用時と同じではなくなります。</p>
+    <p>そのため <b>STEP 3（チーム展開）に進む判断をした時点で、この <code>mask</code> 設定を managed-settings 側に入れることを推奨</b>します。<code>mask</code> は個人が上書きできる設定から指定しても無視される仕様（管理者と本人の設定でのみ有効）なので、組織強制と相性が良い機能です。前提として <code>GH_TOKEN</code> を環境変数に置く運用へ統一しておく必要があります。</p>
+  </div>
+
+  <div class="diff">
+    <table>
+      <tr class="ctx"><td class="gutter"> </td><td>    "network": {</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      "tlsTerminate": {},</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>      "allowedDomains": [ ... ]</td></tr>
+    </table>
+  </div>
+  <p class="why"><b>これは <code>mask</code> を使う場合のみ必要です。</b>通信の中身を書き換えるため、いったん暗号化を解く必要があるためです。<code>mask</code> を採用しないなら追加不要です。<b>実験的機能</b>である点にも留意してください。</p>
+
+  <h3>8-3. プラグイン構成：11個 → 4個へ絞る（＋ユーザースキル 1個）</h3>
+  <div class="diff">
+    <table>
+      <tr class="ctx"><td class="gutter"> </td><td>  "enabledPlugins": {</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>    "superpowers@claude-plugins-official": true,</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>    "frontend-design@claude-plugins-official": true,</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>    "code-review@claude-plugins-official": true,</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>    "context7@claude-plugins-official": true,</td></tr>
+      <tr class="del"><td class="gutter">-</td><td>    "code-simplifier@claude-plugins-official": true,</td></tr>
+      <tr class="del"><td class="gutter">-</td><td>    "feature-dev@claude-plugins-official": true,</td></tr>
+      <tr class="del"><td class="gutter">-</td><td>    "github@claude-plugins-official": true,</td></tr>
+      <tr class="del"><td class="gutter">-</td><td>    "skill-creator@claude-plugins-official": true,</td></tr>
+      <tr class="del"><td class="gutter">-</td><td>    "security-guidance@claude-plugins-official": true,</td></tr>
+      <tr class="del"><td class="gutter">-</td><td>    "claude-md-management@claude-plugins-official": true,</td></tr>
+      <tr class="del"><td class="gutter">-</td><td>    "commit-commands@claude-plugins-official": true</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>  },</td></tr>
+    </table>
+  </div>
+  <p class="why">
+    <b>なぜ減らすのか：</b>プラグインは skill（作業手順書）を大量に持ち込みます。手順書が増えるほど AI が読む情報が増え、判断がぶれやすくなり、費用も増えます。ただし<b>「使う予定のものまで削る」必要はありません</b>。以下の5つを残します。
+  </p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:24%">残すもの</th><th>役割と、残す理由</th></tr></thead>
+    <tbody>
+      <tr><td><code>superpowers</code></td><td>作業プロセスの土台。設計→計画→実装→検証の型を持ち込む。自律化の基盤になるため必須</td></tr>
+      <tr><td><code>grill-me</code><br><span style="font-size:11px;color:#6c7a96">プラグインではない</span></td><td>計画を問い詰めて穴を潰す。<b>人間が指示を出す運用</b>では特に効く。指示の曖昧さは自律実行の最大の失敗要因なので、入口で潰す価値が大きい。<br><b class="warn" style="color:#f9e2af">注意：</b>これは <code>enabledPlugins</code> ではなく <code>~/.claude/skills/grill-me/</code> に直接置かれた<b>ユーザースキル</b>です（実機確認済み）。プラグイン整理の対象外なので、<code>enabledPlugins</code> をどう削っても影響を受けません</td></tr>
+      <tr><td><code>code-review</code></td><td class="ok"><b>手動運用のため残す。</b>当面は人間が修正指示を出す運用のため、手元でレビューを回せる状態を維持する。CI 側への移管は Issue 発火運用を採用する場合の将来検討事項とする</td></tr>
+      <tr><td><code>context7</code></td><td class="ok"><b>残す。</b>ライブラリの最新ドキュメントを取得する。AI の知識は学習時点で止まるため、バージョン差異による誤りを防ぐ効果が大きい。MCP サーバーが1つ常駐する点だけ留意</td></tr>
+      <tr><td><code>frontend-design</code></td><td>公式ディレクトリで最多導入（2026年半ばで約27.7万）の事実上の標準。画面の見た目を扱う以上、不満②の解消と直接噛み合う</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="why">
+    <b>削るものの扱い：</b><code>commit-commands</code> の PR 手順は、非対話フラグを固定した<b>自前 skill に置き換える</b>ため不要になります（第9章 9-2）。<code>feature-dev</code> と <code>code-simplifier</code> は <code>superpowers</code> と役割が重なります。<code>github</code>・<code>skill-creator</code>・<code>security-guidance</code>・<code>claude-md-management</code> は、必要になった時点で個別に戻す判断で構いません。<b>削除は不可逆ではない</b>ので、迷うものは残したままでも構いません。
+  </p>
+
+  <h3>8-4. 変更しないもの（重要）</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:34%">項目</th><th>据え置く理由</th></tr></thead>
+    <tbody>
+      <tr><td><code>permissions.deny</code> の一覧</td><td>秘密ファイルや破壊的コマンドの拒否リストは現状のままで適切。サンドボックスと二重に効かせる価値がある</td></tr>
+      <tr><td><code>allowUnsandboxedCommands: false</code></td><td>「サンドボックス外での再実行」を禁じる設定。ここを緩めると壁の意味が薄れる。<b>維持を強く推奨</b></td></tr>
+      <tr><td><code>dangerouslySkipPermissions: "disable"</code></td><td>全確認スキップの封印。無人実行は STEP 2 で CI 側に持っていくので、手元では封印したままでよい</td></tr>
+      <tr><td><code>filesystem.disabled</code></td><td>案3 の要素だが <b>STEP 1 では入れない</b>。ファイル隔離を切ると、AI が自分の設定を書き換えて権限を広げる経路が生まれる</td></tr>
+      <tr><td><code>model: "opus"</code></td><td>Opus 5 + Sonnet 5 の運用方針どおり。重い設計は Opus、定型作業はサブエージェントで Sonnet に振る使い分けが費用対効果に優れる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout danger">
+    <div class="co-title">導入手順の注意</div>
+    <p>設定変更は<b>一度に全部やらないでください</b>。①まず <code>*.github.com</code> の追加だけ入れて PR 作成を試す → ②動いたら <code>strictAllowlist</code> を入れて数日運用しドメインを追記する → ③安定してから <code>mask</code> を検討、の順が安全です。<code>strictAllowlist</code> と <code>mask</code> を同時に入れると、失敗したときにどちらが原因か切り分けられなくなります。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 9 ══════════════ -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <span class="step-badge p5">9</span>
+    <h2>追加する道具（設定ファイル以外）</h2>
+  </div>
+
+  <h3>9-1. Playwright MCP（画面確認）</h3>
+  <pre><code>claude mcp add playwright npx @playwright/mcp@latest -- --headless \
+  --browser=chromium --viewport-size=1280,720 \
+  --allowed-origins "http://localhost:*"</code></pre>
+  <p class="why">
+    <b><code>--headless</code>：</b>画面を表示せずに動かす。無人実行に必須。<br>
+    <b><code>--allowed-origins</code>：</b>AI が自動運転中に想定外のサイトへ飛ぶのを防ぐ<b>安全装置</b>。自律化を進めるなら必ず指定してください。<br>
+    <b>WSL2 特有の注意：</b>ブラウザを複数同時に立ち上げると、WSL2 の GPU メモリ制約で連鎖クラッシュする既知の問題があります。並列実行を避けるか、GPU 無効化フラグを付けてください。
+  </p>
+
+  <h3>9-2. PR 作成 skill</h3>
+  <p>「ブランチを切る → コミット → push → 非対話フラグ付きで PR 作成 → 失敗時は <code>gh api</code> で再試行」を1つの手順書ファイルにまとめます。AI が毎回同じ手順を踏むようになり、第3章の詰まりが再発しません。</p>
+  <p>配置先は <code>~/.claude/skills/create-pr/SKILL.md</code>。<b>チーム配布を見据え、本リポジトリの <code>skills/</code> 配下でも同じものを管理</b>し、そこから配置する運用にします。</p>
+
+  <div class="callout warn">
+    <div class="co-title">実装時に判明した挙動：skill は Bash でコピーできない</div>
+    <p>サンドボックスは <code>~/.claude/skills/</code> への<b>書き込みを OS レベルで拒否</b>します（<code>Read-only file system</code> エラー）。AI が自分の手順書を勝手に書き換えるのを防ぐための保護です。</p>
+    <p>そのため <code>cp</code> や <code>mkdir</code> では設置できません。<b>ファイル書き込みツール経由</b>（サンドボックスの対象外）か、ユーザー自身の手でコピーする必要があります。第1章の「サンドボックスは Bash にしか効かない」の実例です。</p>
+  </div>
+
+  <h3>9-3. 検証 skill（STEP 2 の中核）</h3>
+  <p>公式のループ設計ガイドが推奨する形です。「完了」を AI の主観ではなく<b>機械判定</b>にします。</p>
+  <ul>
+    <li>開発サーバーを起動する</li>
+    <li>Playwright で対象ページを開き、実際に操作する</li>
+    <li>ブラウザのコンソールにエラーが出ていないか確認する</li>
+    <li>スクリーンショットを操作前後で比較する</li>
+    <li><b>1つでも失敗したら、途中結果を返さず最初からやり直す</b></li>
+  </ul>
+
+  <h3>9-4. GitHub Actions<span style="color:#6c7a96;font-size:12px;font-weight:400;margin-left:10px">［運用未確定・任意／STEP 2 の選択肢］</span></h3>
+  <div class="callout">
+    <div class="co-title">現時点では採用を保留</div>
+    <p>「Issue に書けば AI が着手する」形の運用を採るかは<b>未確定</b>です。当面は<b>人間が手動で修正指示を出す運用</b>を前提とするため、STEP 2 では検証 skill と <code>/goal</code> の型化を先に行い、Actions の導入は<b>その必要性を感じた時点で判断</b>します。<br>以下は、採用を決めた場合の要点として記録しておくものです。</p>
+  </div>
+  <p><code>/install-github-app</code> を実行すると、GitHub App と必要な秘密情報の設定が対話で完了します。導入後は Issue や PR に <code>@claude</code> と書くだけで着手します。手動運用と併存できるため、<b>後から足す形で問題ありません</b>。</p>
+  <div class="callout warn">
+    <div class="co-title">必ず設定する安全弁</div>
+    <p>実行の<b>ターン数と実行時間の上限</b>を必ず設定してください。無限ループはコストに直結します。また、既定では書き込み権限を持つメンバーしか起動できませんが、権限は<b>作業に必要な最小限</b>に絞ってください。参考事例では週10〜15 PR の処理で月 $15〜25 程度とされています。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 10 ══════════════ -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <span class="step-badge p4">10</span>
+    <h2>リスクと限界（誤解を避けるために）</h2>
+  </div>
+
+  <div class="callout danger">
+    <div class="co-title">サンドボックスは「完全な隔離」ではない</div>
+    <p>公式ドキュメントが明記している限界です。通信の中身までは検査していないため、<code>*.github.com</code> のような広い許可は<b>情報の持ち出し経路になり得ます</b>（例：秘密情報を書いた Gist を作られる等）。本当に強い保証が要る場合は、通信を検査する専用プロキシか、案2 のコンテナ隔離が必要です。</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="co-title">MCP を足すと壁の外の経路が増える</div>
+    <p>第1章のとおり MCP はサンドボックスの外で動きます。「隔離を緩めずに画面確認を足せる」のは事実ですが、<b>MCP サーバー自体は信頼できるものだけを入れる</b>必要があります。公式・準公式のものに限る、という原則を推奨します。</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="co-title">自律化はコストが跳ねる</div>
+    <p>ループは「止まらないと止まらない」仕組みです。<b>停止条件を明確にする</b>ことが最大のコスト対策であり、同時に最大の安全対策です。<code>/usage</code> で skill・サブエージェント・MCP 単位の消費を定期的に確認してください。</p>
+  </div>
+
+  <div class="callout">
+    <div class="co-title">この提案が前提としている未検証事項</div>
+    <p>第3章の「対話性が真因」は、<b>状況証拠から導いた最有力の推定</b>です（ネットワーク・認証・権限がすべて正常であることは実測済み、記憶が曖昧なため当時の症状は未確定）。<b>第7章「STEP 1 の完了判定」で、この設定変更そのものを PR にして実地検証します。</b>失敗した場合はエラー内容から切り分け、本書を改訂します。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 11 ══════════════ -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <span class="step-badge ref">11</span>
+    <h2>用語集</h2>
+  </div>
+  <dl class="glossary">
+    <dt>サンドボックス（sandbox）</dt>
+    <dd>OS の機能を使って、コマンドが触れるファイルと通信先を強制的に制限するしくみ。AI がどんなコマンドを書いても OS が拒否するため、すり抜けられない。</dd>
+
+    <dt>permissions（許可ルール）</dt>
+    <dd>コマンドを実行してよいかを、実行前に文字列で判定するしくみ。サンドボックスと違い、書き方を変えられると通ってしまう余地がある。両方を併用する。</dd>
+
+    <dt>MCP（Model Context Protocol）</dt>
+    <dd>AI に外部の道具を持たせる共通規格。ブラウザ操作やドキュメント取得などを担当する小さなプログラムを常駐させる。<b>サンドボックスの外で動く</b>点が重要。</dd>
+
+    <dt>skill</dt>
+    <dd>AI に読ませる作業手順書のファイル。「PR を作るときはこの順番でこのフラグを使う」といった型を固定でき、毎回の指示が不要になる。</dd>
+
+    <dt>ハーネス（harness）</dt>
+    <dd>AI を長時間まともに走らせるための足場全体。手順書・検証・停止条件・役割分担などの総称。「AI に良い指示を出す」ではなく「AI が失敗しにくい仕組みを組む」という発想。</dd>
+
+    <dt>ループエンジニアリング</dt>
+    <dd>AI に同じ作業サイクルを繰り返させ、停止条件を満たすまで自走させる設計手法。<code>/goal</code>（条件で止まる）と <code>/schedule</code>（時間で始まる）が代表。</dd>
+
+    <dt>headless（ヘッドレス）</dt>
+    <dd>画面を表示せずにブラウザを動かすこと。人間には見えないが、スクリーンショットは撮れる。自動実行に向く。</dd>
+
+    <dt>managed-settings</dt>
+    <dd>組織の管理者が配布する、個人が上書きできない設定。チーム展開時に「全員がサンドボックスを有効にする」等を強制するために使う。</dd>
+  </dl>
+</section>
+
+<!-- ══════════════ 12 ══════════════ -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <span class="step-badge ref">12</span>
+    <h2>出典</h2>
+  </div>
+  <p style="font-size:12.5px;color:#6c7a96">調査日：2026-08-02。Claude Code はバージョン更新が速いため、導入時に公式ドキュメントの再確認を推奨します。</p>
+  <ul class="src-list">
+    <li>公式 — サンドボックス設定の全リファレンス<br><a href="https://code.claude.com/docs/en/sandboxing">https://code.claude.com/docs/en/sandboxing</a></li>
+    <li>公式 — 隔離方式の比較（サンドボックス／devcontainer／VM）<br><a href="https://code.claude.com/docs/en/sandbox-environments">https://code.claude.com/docs/en/sandbox-environments</a></li>
+    <li>公式 — ループ入門（<code>/goal</code>・<code>/loop</code>・<code>/schedule</code>、委任の4段階）<br><a href="https://claude.com/blog/getting-started-with-loops">https://claude.com/blog/getting-started-with-loops</a></li>
+    <li>公式 — 長時間稼働アプリのハーネス設計（生成役と評価役の分離）<br><a href="https://www.anthropic.com/engineering/harness-design-long-running-apps">https://www.anthropic.com/engineering/harness-design-long-running-apps</a></li>
+    <li>公式 — GitHub Actions 連携<br><a href="https://code.claude.com/docs/en/github-actions">https://code.claude.com/docs/en/github-actions</a> / <a href="https://github.com/anthropics/claude-code-action">https://github.com/anthropics/claude-code-action</a></li>
+    <li>公式 — dev container 構成<br><a href="https://docs.anthropic.com/en/docs/claude-code/devcontainer">https://docs.anthropic.com/en/docs/claude-code/devcontainer</a></li>
+    <li>WSL2 から Windows Chrome へ接続する手順<br><a href="https://github.com/jeremywtp/mcp-chrome-wsl">https://github.com/jeremywtp/mcp-chrome-wsl</a></li>
+    <li>Playwright MCP と Claude Code のセットアップ<br><a href="https://qaskills.sh/blog/playwright-mcp-claude-code-setup-2026">https://qaskills.sh/blog/playwright-mcp-claude-code-setup-2026</a></li>
+    <li>ブラウザ操作ツールの比較（driving と debugging の違い）<br><a href="https://stevekinney.com/writing/driving-vs-debugging-the-browser">https://stevekinney.com/writing/driving-vs-debugging-the-browser</a></li>
+    <li>プラグイン市場の動向（2026年）<br><a href="https://buildtolaunch.substack.com/p/best-claude-code-plugins-tested-review">https://buildtolaunch.substack.com/p/best-claude-code-plugins-tested-review</a></li>
+    <li>Ralph ループ（ループ手法の原型）<br><a href="https://github.com/yoshpy-dev/ralph">https://github.com/yoshpy-dev/ralph</a></li>
+  </ul>
+
+  <p style="margin-top:26px;font-size:12.5px;color:#6c7a96">実測検証はすべて 2026-08-02 に本環境（Claude Code 2.1.220 / gh 2.91.0 / WSL2 Ubuntu）で実施。PR 作成経路の検証は GitHub 側で意図的に弾かれる無害な要求を用い、実際の PR は作成していません。</p>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>
