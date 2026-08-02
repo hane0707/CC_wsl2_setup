@@ -156,6 +156,7 @@
   <a href="#s9"><span class="step-num">9</span>追加する道具</a>
   <div class="nav-divider"></div>
   <a href="#s10"><span class="step-num">10</span>リスクと限界</a>
+  <a href="#sA"><span class="step-num">A</span>セットアップ手順</a>
   <a href="#s11"><span class="step-num">11</span>用語集</a>
   <a href="#s12"><span class="step-num">12</span>出典</a>
 </nav>
@@ -919,7 +920,40 @@
     <li><b>1つでも失敗したら、途中結果を返さず最初からやり直す</b></li>
   </ul>
 
-  <h3>9-4. GitHub Actions<span style="color:#6c7a96;font-size:12px;font-weight:400;margin-left:10px">［運用未確定・任意／STEP 2 の選択肢］</span></h3>
+  <h3>9-4. 画面確認を成立させる最後の一手：dev サーバーを壁の外に出す</h3>
+  <p>ここが本書で<b>最も見落としやすい</b>部分です。ブラウザ（MCP）は壁の外、開発サーバーは壁の中——このままでは両者は通信できません（第10章）。</p>
+  <p><code>excludedCommands</code> に登録したコマンドは<b>サンドボックスの外で実行</b>されるため、ブラウザと同じネットワークに立ちます。</p>
+
+  <div class="diff">
+    <table>
+      <tr class="ctx"><td class="gutter"> </td><td>  "sandbox": {</td></tr>
+      <tr class="del"><td class="gutter">-</td><td>    "excludedCommands": []</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>    "excludedCommands": [</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      "npm run dev",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      "npm run dev *",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      "python3 -m http.server",</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>      "python3 -m http.server *"</td></tr>
+      <tr class="add"><td class="gutter">+</td><td>    ]</td></tr>
+      <tr class="ctx"><td class="gutter"> </td><td>  }</td></tr>
+    </table>
+  </div>
+  <p class="why">
+    <b>引数ありと引数なしの両方を書く理由：</b>パターンは前方一致で判定されるため、<code>npm run dev *</code> だけだと引数なしの <code>npm run dev</code> にマッチしない可能性があります。両方書けば確実です。<br><br>
+    <b>トレードオフ：</b>ここに書いたコマンドは<b>ファイルもネットワークも制限を受けません</b>。とはいえ対象は自分のプロジェクトの開発サーバーなので、リスクは限定的と判断しています。<b>登録は必要最小限に留め、広いパターン（<code>npm *</code> など）は避けてください。</b><br><br>
+    <b>隔離が壊れるわけではない：</b>実測では、外に出したサーバーに対して<b>サンドボックス内からは依然として接続できません</b>。外に出たのはそのプロセスだけで、壁自体は残っています。
+  </p>
+
+  <div class="callout good">
+    <div class="co-title">実証済み：この構成で画面確認が成立した</div>
+    <p>2026-08-03、本提案書 HTML をローカルサーバーで配信し、Playwright MCP 経由で<b>スクリーンショットの取得・コンソールエラーの検出・ページ構造の把握に成功</b>しました。日本語も正しく描画されています（下記フォント導入後）。<b>不満②は解消</b>です。</p>
+  </div>
+
+  <h3>9-5. 日本語フォントの導入</h3>
+  <p>WSL2 の Ubuntu には<b>日本語フォントが入っていません</b>（実測で CJK フォント 0 件）。この状態でスクリーンショットを撮ると、<b>日本語がすべて豆腐（□）になり、画面の確認になりません</b>。</p>
+  <pre><code>sudo apt-get install -y fonts-noto-cjk</code></pre>
+  <p class="why">導入後はブラウザを再起動してください（起動時にフォント一覧を読むため）。MCP なら <code>browser_close</code> の後に再度ページを開けば反映されます。</p>
+
+  <h3>9-7. GitHub Actions<span style="color:#6c7a96;font-size:12px;font-weight:400;margin-left:10px">［運用未確定・任意／STEP 2 の選択肢］</span></h3>
   <div class="callout">
     <div class="co-title">現時点では採用を保留</div>
     <p>「Issue に書けば AI が着手する」形の運用を採るかは<b>未確定</b>です。当面は<b>人間が手動で修正指示を出す運用</b>を前提とするため、STEP 2 では検証 skill と <code>/goal</code> の型化を先に行い、Actions の導入は<b>その必要性を感じた時点で判断</b>します。<br>以下は、採用を決めた場合の要点として記録しておくものです。</p>
@@ -970,13 +1004,30 @@
     <p><b>原則：Claude Code の設定を変える操作は、AI の Bash に任せず、自分のターミナルで実行する。</b>実行後は必ず結果を確認してください（MCP なら <code>claude mcp list</code>）。なお <code>~/.claude/settings.json</code> は AI のファイル編集ツール経由なら書き換えられます（サンドボックスは Bash にしか効かないため）。</p>
   </div>
 
+  <div class="callout danger">
+    <div class="co-title">サンドボックスは「コマンドごとに」作られる — dev サーバーが繋がらない理由</div>
+    <p>第1章では「サンドボックスは Bash コマンドに効く」と説明しましたが、実測でさらに厳しいことが分かりました。<b>Bash コマンド1回ごとに、独立した隔離環境が作られては捨てられます。</b></p>
+    <p>根拠として、コマンド内で観測されたプロセス番号は <code>1</code>, <code>2</code>, <code>389</code> という極めて小さい値で、ネットワークインターフェースも <code>lo</code>（自分自身）しかありませんでした。つまり<b>コマンドごとにプロセス空間もネットワークも作り直されている</b>ということです。</p>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th style="width:52%">やろうとしたこと</th><th>結果</th></tr></thead>
+      <tbody>
+        <tr><td>同じコマンドの中でサーバーを起動して接続</td><td class="ok">つながる</td></tr>
+        <tr><td>次のコマンドから、さっき起動したサーバーへ接続</td><td class="ng"><b>つながらない</b>（サーバーごと消えている）</td></tr>
+        <tr><td>MCP のブラウザから、そのサーバーへ接続</td><td class="ng"><b>つながらない</b></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p><b>これは「MCP が壁の外だから画面確認できる」という説明の重大な補足です。</b>ブラウザは確かに壁の外にいますが、<b>開発サーバーが壁の中にいる限り、両者は出会えません</b>。画面確認を成立させるには、<b>サーバーも壁の外に出す</b>必要があります（第9章 9-4、<code>excludedCommands</code>）。</p>
+  </div>
+
   <div class="callout">
     <div class="co-title">まだ検証していない事項</div>
     <p>以下は本書時点で<b>未検証</b>です。</p>
     <ul style="margin-bottom:0">
-      <li><b>Playwright MCP の実動作</b> — 手動での再登録により <code>✔ Connected</code> を確認済み。ただし<b>画面取得の実行確認は Claude Code 再起動後</b>に持ち越し（Chromium 本体の初回ダウンロードが走る想定）</li>
       <li><b>Chrome DevTools MCP（ルートB）</b> — Windows 側の設定変更を伴うため未着手</li>
       <li><b><code>strictAllowlist</code> の長期運用</b> — 遮断が正しく効くことは実測済み（下記）。ただし業務で使う全ドメインを洗い出せたかは、数日運用してみないと分からない</li>
+      <li><b>実プロジェクトでの画面確認</b> — 静的 HTML では成功（第9章 9-4）。<code>npm run dev</code> を使う実際の開発サーバーでの動作は、次の開発時に確認する</li>
     </ul>
   </div>
 
@@ -988,6 +1039,101 @@
       <li>未許可（<code>example.com</code> / <code>cdn.playwright.dev</code>）→ <b><code>CONNECT tunnel failed, response 403</code> で遮断</b></li>
     </ul>
     <p style="margin-top:10px;margin-bottom:0">第5章で指摘した「穴」は塞がりました。適用前は <code>example.com</code> に 200 で到達できていたため、<b>この設定は実効性のある改善</b>だったことが裏付けられています。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 付録A ══════════════ -->
+<section class="section" id="sA">
+  <div class="section-header">
+    <span class="step-badge p3">付録A</span>
+    <h2>セットアップ手順（コマンド一覧）</h2>
+  </div>
+
+  <p>STEP 1 を実施するための全コマンドです。<b>実行場所が結果を左右します</b>。「AI に任せてよいもの」と「自分のターミナルで実行すべきもの」を必ず区別してください。理由は各項に記載しています。</p>
+
+  <div class="callout danger">
+    <div class="co-title">実行場所を間違えると、黙って失敗します</div>
+    <p>Claude Code の設定を変えるコマンドをサンドボックス内で実行すると、<b>成功したと表示されるのに何も起きません</b>（第10章）。下の表で「自分のターミナル」となっているものは、必ず Claude Code の外で実行してください。</p>
+  </div>
+
+  <h3>A-1. 前提パッケージ（サンドボックス本体）</h3>
+  <pre><code># 自分のターミナルで実行（sudo が必要）
+sudo apt-get install -y bubblewrap socat
+
+# 任意：Unix ソケット遮断を有効にする追加フィルタ
+npm install -g @anthropic-ai/sandbox-runtime</code></pre>
+  <p class="why">サンドボックスは <code>bubblewrap</code>（隔離）と <code>socat</code>（通信の中継）に依存します。不足していると <code>/sandbox</code> の画面に警告が出ます。<b>導入済みなら不要です。</b></p>
+
+  <h3>A-2. ブラウザ操作環境</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:26%">コマンド</th><th style="width:20%">実行場所</th><th>なぜそこで実行するのか</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>claude mcp add playwright …</code></td>
+        <td class="warn"><b>自分のターミナル</b></td>
+        <td>サンドボックス内だと設定ファイルが <code>/dev/null</code> のため<b>黙って消えます</b>。しかも書き込み先パス自体が変わります（第9章 9-1）</td>
+      </tr>
+      <tr>
+        <td><code>npx @playwright/mcp install-browser chrome-for-testing</code></td>
+        <td class="warn"><b>自分のターミナル</b></td>
+        <td>実体は <code>storage.googleapis.com</code> にあり、サンドボックス内では遮断されます。許可すると GCS 全体が開くため、外で実行する方針としました</td>
+      </tr>
+      <tr>
+        <td><code>sudo apt-get install -y libnss3 libnspr4 libasound2t64</code></td>
+        <td class="warn"><b>自分のターミナル</b></td>
+        <td>ブラウザ動作に必要な共有ライブラリ。<code>sudo</code> は <code>permissions.deny</code> で禁止されています</td>
+      </tr>
+      <tr>
+        <td><code>sudo apt-get install -y fonts-noto-cjk</code></td>
+        <td class="warn"><b>自分のターミナル</b></td>
+        <td>これが無いと<b>日本語がすべて豆腐になり、画面確認の意味がなくなります</b></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <pre><code># MCP の登録（自分のターミナルで実行）
+claude mcp add playwright --scope user -- npx @playwright/mcp@latest \
+  --headless --browser=chromium --viewport-size=1280,720 \
+  --allowed-origins "http://localhost:*"
+
+# 登録できたか必ず確認する（playwright が ✔ Connected になること）
+claude mcp list</code></pre>
+
+  <div class="callout warn">
+    <div class="co-title">登録後は Claude Code の再起動が必要</div>
+    <p>MCP は<b>起動時に接続</b>されるため、稼働中のセッションには反映されません。一方、<code>~/.claude/settings.json</code> の変更は<b>再起動なしで反映</b>されます（実測で確認）。この違いは覚えておくと無駄な再起動を避けられます。</p>
+  </div>
+
+  <h3>A-3. 設定ファイルの変更</h3>
+  <p><code>~/.claude/settings.json</code> を編集します。<b>変更前に必ずバックアップを取ってください。</b></p>
+  <pre><code>cp ~/.claude/settings.json ~/.claude/settings.json.bak-$(date +%Y%m%d)</code></pre>
+  <p>変更内容は第8章（ネットワーク・プラグイン）と第9章 9-4（<code>excludedCommands</code>）を参照してください。<b>この編集は AI に任せられます</b>——ファイル編集ツールはサンドボックスの外で動くためです。ただし <b>Bash 経由（<code>cat</code> や <code>sed</code>）では書き込めません</b>。</p>
+
+  <h3>A-4. skill の設置</h3>
+  <pre><code># リポジトリの skills/ から ~/.claude/skills/ へ配置する
+# 注意：cp では設置できない（サンドボックスが書き込みを拒否する）
+#      エディタか、AI のファイル編集ツールを使うこと</code></pre>
+  <p class="why"><code>~/.claude/skills/</code> は<b>読み取り専用</b>として保護されています。AI が自分の手順書を書き換えるのを防ぐためです。<code>cp</code> は <code>Read-only file system</code> で失敗します。</p>
+
+  <h3>A-5. 動作確認</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:6%">#</th><th style="width:38%">確認すること</th><th>期待される結果</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>許可済みドメインへの通信</td><td class="ok"><code>curl https://api.github.com/zen</code> が 200</td></tr>
+      <tr><td>2</td><td>未許可ドメインへの通信</td><td class="ok"><code>curl https://example.com</code> が <b>403 で遮断</b>される</td></tr>
+      <tr><td>3</td><td>PR 作成</td><td class="ok">非対話フラグ付きの <code>gh pr create</code> が URL を返す</td></tr>
+      <tr><td>4</td><td>画面確認</td><td class="ok">dev サーバーを起動し、MCP でスクリーンショットが撮れる。<b>日本語が読める</b>こと</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <div class="co-title">問題が起きたときの戻し方</div>
+    <pre style="margin:8px 0 0"><code>cp ~/.claude/settings.json.bak-YYYYMMDD ~/.claude/settings.json</code></pre>
+    <p style="margin-top:10px;margin-bottom:0"><b>自分のターミナルで実行してください。</b>サンドボックス内からは設定ファイルに書き込めません。</p>
   </div>
 </section>
 
