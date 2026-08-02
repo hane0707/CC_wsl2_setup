@@ -861,8 +861,18 @@
   <div class="callout danger">
     <div class="co-title">最重要の落とし穴：このコマンドは AI に実行させてはいけない</div>
     <p><b>実測で判明（2026-08-02〜03）。</b>AI が Bash からこのコマンドを実行すると、<b>「追加しました」と成功報告が返るのに、実際には何も登録されません</b>。</p>
-    <p>原因は、サンドボックスが MCP の設定ファイル（<code>~/.claude/.config.json</code>）に <b><code>/dev/null</code> をマウント</b>しているためです。書き込みは<b>エラーを出さずに捨てられます</b>。<code>.git/config</code> の保護と同じ仕組みですが、<b>失敗が一切表面化しない</b>点でより厄介です。</p>
-    <p><b>対処：MCP の追加は、あなた自身のターミナル（サンドボックスの外）で実行してください。</b>実行後は <code>claude mcp list</code> に <code>playwright</code> が現れることを必ず確認します。</p>
+    <p>原因は、サンドボックスが MCP の設定ファイルに <b><code>/dev/null</code> をマウント</b>しているためです。書き込みは<b>エラーを出さずに捨てられます</b>。<code>.git/config</code> の保護と同じ仕組みですが、<b>失敗が一切表面化しない</b>点でより厄介です。</p>
+    <p><b>さらに紛らわしいのが、保存先そのものが変わる点です。</b>同じコマンドが報告した書き込み先を比べると違いは明白でした。</p>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th style="width:30%">実行場所</th><th style="width:34%">書き込み先の報告</th><th>結果</th></tr></thead>
+      <tbody>
+        <tr><td>AI の Bash（サンドボックス内）</td><td><code>~/.claude/.config.json</code></td><td class="ng"><b>/dev/null にマウント済み</b>。成功報告のみで実体なし</td></tr>
+        <tr><td>自分のターミナル（外）</td><td><code>~/.claude.json</code></td><td class="ok"><b>正常に保存され接続成功</b></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p><b>対処：MCP の追加は、あなた自身のターミナル（サンドボックスの外）で実行してください。</b>実行後は <code>claude mcp list</code> に <code>playwright</code> が <code>✔ Connected</code> として現れることを必ず確認します。<b>登録後は Claude Code の再起動が必要</b>です（MCP は起動時に接続されるため、稼働中のセッションには反映されません）。</p>
   </div>
 
   <h4>Chromium 本体のダウンロードについて</h4>
@@ -953,7 +963,7 @@
     <div class="co-title">まだ検証していない事項</div>
     <p>以下は本書時点で<b>未検証</b>です。</p>
     <ul style="margin-bottom:0">
-      <li><b>Playwright MCP の実動作</b> — 上記のとおり登録自体が失敗していたため、画面取得の確認は<b>手動での再登録後</b>に持ち越し</li>
+      <li><b>Playwright MCP の実動作</b> — 手動での再登録により <code>✔ Connected</code> を確認済み。ただし<b>画面取得の実行確認は Claude Code 再起動後</b>に持ち越し（Chromium 本体の初回ダウンロードが走る想定）</li>
       <li><b>Chrome DevTools MCP（ルートB）</b> — Windows 側の設定変更を伴うため未着手</li>
       <li><b><code>strictAllowlist</code> の長期運用</b> — 遮断が正しく効くことは実測済み（下記）。ただし業務で使う全ドメインを洗い出せたかは、数日運用してみないと分からない</li>
     </ul>
