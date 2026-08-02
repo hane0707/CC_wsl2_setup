@@ -875,18 +875,29 @@
     <p><b>対処：MCP の追加は、あなた自身のターミナル（サンドボックスの外）で実行してください。</b>実行後は <code>claude mcp list</code> に <code>playwright</code> が <code>✔ Connected</code> として現れることを必ず確認します。<b>登録後は Claude Code の再起動が必要</b>です（MCP は起動時に接続されるため、稼働中のセッションには反映されません）。</p>
   </div>
 
-  <h4>Chromium 本体のダウンロードについて</h4>
-  <p><code>strictAllowlist</code> を有効にすると、Playwright の配布元（<code>cdn.playwright.dev</code>）は<b>遮断されます</b>（実測で 403 を確認）。ただし影響範囲は限定的です。</p>
+  <h4>Chromium 本体の導入は、サンドボックスの外で行う</h4>
+  <p>MCP を登録しただけでは画面確認はできません。<b>ブラウザ本体が別途必要</b>です。ここに許可リスト運用の教訓が詰まっていたので、実測の経過をそのまま記録します。</p>
+
   <div class="tbl-wrap">
   <table>
-    <thead><tr><th style="width:34%">実行経路</th><th style="width:16%">ダウンロード</th><th>理由</th></tr></thead>
+    <thead><tr><th style="width:6%">#</th><th style="width:36%">試したこと</th><th>結果</th></tr></thead>
     <tbody>
-      <tr><td>MCP サーバー経由（画面確認）</td><td class="ok">可能</td><td>MCP はサンドボックスの外で動くため、ネットワーク制限を受けない（第1章）</td></tr>
-      <tr><td>Bash から <code>npx playwright install</code></td><td class="ng">遮断される</td><td>サンドボックス内のため。E2E テストを Bash で回す構成にする場合は <code>cdn.playwright.dev</code> の許可追加が必要</td></tr>
+      <tr><td>1</td><td>MCP でページを開かせる</td><td class="ng"><code>Browser "chrome-for-testing" is not installed</code>。<b>MCP はブラウザを自動取得しない</b>。CLI での導入を促すだけ</td></tr>
+      <tr><td>2</td><td>Bash から <code>install-browser</code></td><td class="ng"><code>403 'Connection blocked by network allowlist'</code>。<code>strictAllowlist</code> が正しく遮断</td></tr>
+      <tr><td>3</td><td><code>cdn.playwright.dev</code> を許可して再試行</td><td class="ng"><b>まだ 403。</b>ただし <code>curl</code> では <code>400</code> が返り、<b>設定が再起動なしで反映されている</b>ことは確認できた</td></tr>
+      <tr><td>4</td><td>リダイレクト先を調査</td><td class="warn"><b>原因判明。</b><code>cdn.playwright.dev</code> は <b>307 で <code>storage.googleapis.com</code> に転送</b>しており、実体は Google Cloud Storage にあった</td></tr>
     </tbody>
   </table>
   </div>
-  <p class="why"><b>先回りして許可を足さないこと。</b>MCP 経由だけで足りるなら、遮断されたままで問題ありません。実際に必要になった時点で追加する——これが許可リスト運用の基本です。</p>
+
+  <div class="callout danger">
+    <div class="co-title">教訓：許可リストは「リダイレクト先」まで見ないと判断を誤る</div>
+    <p>「CDN を1つ許可すれば済む」という当初の見立ては<b>誤り</b>でした。実際に必要なのは <code>storage.googleapis.com</code>——<b>Google Cloud Storage 全体、つまり任意のバケット</b>です。これを開けると、サンドボックスのネットワーク隔離は<b>データ持ち出し経路として相当弱まります</b>。</p>
+    <p><b>結論：ブラウザ本体の導入は、自分のターミナル（サンドボックス外）で実行する。</b>一度きりの作業のために恒久的な穴を開けるのは割に合いません。</p>
+    <pre style="margin-top:12px;margin-bottom:0"><code>npx @playwright/mcp install-browser chrome-for-testing</code></pre>
+  </div>
+
+  <p class="why"><b>この事例が示すこと：</b>許可を追加する判断は、<b>ドメイン名だけを見ても下せません</b>。実際の通信がどこへ流れるかを <code>curl -I</code> などで確認してから決めてください。「必要になった時点で追加する」という原則に加えて、<b>「追加する前にリダイレクト先を確認する」</b>を運用に加えます。</p>
 
   <h3>9-2. PR 作成 skill</h3>
   <p>「ブランチを切る → コミット → push → 非対話フラグ付きで PR 作成 → 失敗時は <code>gh api</code> で再試行」を1つの手順書ファイルにまとめます。AI が毎回同じ手順を踏むようになり、第3章の詰まりが再発しません。</p>
