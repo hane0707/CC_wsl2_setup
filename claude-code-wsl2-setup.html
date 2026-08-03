@@ -273,6 +273,8 @@
   .copy-btn.copied { border-color: var(--green); color: var(--green); }
 
   /* 注意ボックス */
+  /* 左端の色バーは code-block（実行場所）専用の語彙にする。
+     notice はアイコンと薄い全周の枠で種別を示し、縦に並んでも混同しないようにする */
   .notice {
     border-radius: 4px;
     padding: 14px 16px;
@@ -280,12 +282,13 @@
     font-size: 13px;
     display: flex;
     gap: 12px;
+    border: 1px solid var(--border);
   }
 
-  .notice.info { background: #5C7CDB0d; border-left: 3px solid var(--accent); }
-  .notice.warn { background: #F0B8490d; border-left: 3px solid var(--yellow); }
-  .notice.danger { background: #E5636D0d; border-left: 3px solid var(--red); }
-  .notice.success { background: #57C98A0d; border-left: 3px solid var(--green); }
+  .notice.info { background: #5C7CDB0d; border-color: #5C7CDB33; }
+  .notice.warn { background: #F0B8490d; border-color: #F0B84940; }
+  .notice.danger { background: #E5636D14; border-color: #E5636D4d; }
+  .notice.success { background: #57C98A0d; border-color: #57C98A33; }
 
   .notice-icon { flex-shrink: 0; font-size: 14px; line-height: 1.7; }
   .notice p { color: var(--text); }
