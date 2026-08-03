@@ -774,7 +774,7 @@
       <details open>
         <summary>▶ アーキテクチャ概要図</summary>
         <div class="details-body">
-<svg width="100%" viewBox="0 0 900 625" style="display:block; max-width:100%; height:auto;">
+<svg width="100%" viewBox="0 0 900 640" style="display:block; max-width:100%; height:auto;">
 <style>
   .t  { font-family:'IBM Plex Sans JP',sans-serif; }
   .lg { font-size:15px; font-weight:600; }
@@ -836,30 +836,31 @@
 <text x="498" y="331" class="t xs" fill="#f9e2af">MCP は信頼できるものだけを入れる。開発サーバーを</text>
 <text x="498" y="345" class="t xs" fill="#f9e2af">ここに出すときは対象を最小限にする。</text>
 
-<!-- 左の経路: 許可リスト（ドメインの一覧）による検問 -->
-<line x1="252" y1="366" x2="252" y2="500" stroke="#a6e3a1" stroke-width="2" marker-end="url(#ah-g)"/>
-<rect x="192" y="396" width="120" height="22" rx="4" fill="#0e1117" stroke="#a6e3a1" stroke-width="1.5"/>
-<text x="252" y="411" class="t xs" fill="#a6e3a1" text-anchor="middle">許可リストの検問</text>
-<text x="322" y="405" class="t xs" fill="#5ab055">許可リスト = つないでよい</text>
-<text x="322" y="418" class="t xs" fill="#5ab055">ドメインの一覧</text>
-<text x="272" y="442" class="t mono" fill="#a6e3a1">OK  github.com</text>
-<text x="272" y="458" class="t mono" fill="#f38ba8">NG  example.com  →  403 で遮断</text>
+<!-- 左の経路: 許可リスト（ドメインの一覧）で検問する -->
+<line x1="252" y1="366" x2="252" y2="512" stroke="#a6e3a1" stroke-width="2" marker-end="url(#ah-g)"/>
+<rect x="192" y="422" width="120" height="22" rx="4" fill="#0e1117" stroke="#a6e3a1" stroke-width="1.5"/>
+<text x="252" y="437" class="t xs" fill="#a6e3a1" text-anchor="middle">許可リストの検問</text>
+<text x="322" y="437" class="t xs" fill="#5ab055">許可リスト = つないでよいドメインの一覧</text>
+<text x="272" y="466" class="t mono" fill="#a6e3a1">OK  github.com    リストにあるので通る</text>
+<text x="272" y="482" class="t mono" fill="#f38ba8">NG  example.com   リストにないので 403</text>
 
-<!-- 右の経路: 許可ルール（ツールと対象の可否）のみ -->
-<line x1="664" y1="366" x2="664" y2="500" stroke="#f9e2af" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#ah-y)"/>
-<text x="682" y="405" class="t xs" fill="#f9e2af">検問なし。許可ルールだけ</text>
-<text x="682" y="418" class="t xs" fill="#c9a85a">許可ルール = ツールと対象の可否</text>
-<text x="682" y="442" class="t mono" fill="#a6e3a1">OK  WebFetch(github.com)</text>
-<text x="682" y="458" class="t mono" fill="#f38ba8">NG  Read(~/.ssh/**)</text>
+<!-- 右の経路: 許可ルール（ツールと対象の可否）だけ -->
+<line x1="664" y1="366" x2="664" y2="512" stroke="#f9e2af" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#ah-y)"/>
+<text x="682" y="430" class="t xs" fill="#f9e2af">検問なし。許可ルールだけで判定する</text>
+<text x="682" y="444" class="t xs" fill="#c9a85a">許可ルール = ツールと対象ごとの可否</text>
+<text x="682" y="470" class="t mono" fill="#a6e3a1">OK  WebFetch(github.com)</text>
+<text x="700" y="483" class="t xs" fill="#5ab055">ルールで許可しているので通る</text>
+<text x="682" y="500" class="t mono" fill="#f38ba8">NG  Read(~/.ssh/**)</text>
+<text x="700" y="513" class="t xs" fill="#c07060">ルールで拒否しているので止まる</text>
 
 <!-- インターネット -->
-<rect x="8" y="506" width="884" height="52" rx="10" fill="#242c3e" stroke="#9aa5bd" stroke-width="1.5" stroke-dasharray="6 4"/>
-<text x="26" y="530" class="t md" fill="#e4ebfb">インターネット / 外部サービス</text>
-<text x="26" y="547" class="t xs" fill="#9aa5bd">GitHub・npm レジストリ・各種 API・そして攻撃者が用意したかもしれない場所</text>
+<rect x="8" y="526" width="884" height="52" rx="10" fill="#242c3e" stroke="#9aa5bd" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="26" y="550" class="t md" fill="#e4ebfb">インターネット / 外部サービス</text>
+<text x="26" y="567" class="t xs" fill="#9aa5bd">GitHub・npm レジストリ・各種 API・そして攻撃者が用意したかもしれない場所</text>
 
 <!-- 結論 -->
-<text x="8" y="590" class="t md" fill="#cdd6f4">どちらも外部と通信する。違うのは通信の有無ではなく、止め方である。</text>
-<text x="8" y="607" class="t sm" fill="#6c7a96">層が分かれているのはファイルの置き場所の話ではない。OS で止められる領域とルールでしか止められない領域の違いによる。だから両方に設定が要る。</text>
+<text x="8" y="606" class="t md" fill="#cdd6f4">どちらも外部と通信する。違うのは通信の有無ではなく、止め方である。</text>
+<text x="8" y="623" class="t sm" fill="#6c7a96">層が分かれているのはファイルの置き場所の話ではない。OS で止められる領域とルールでしか止められない領域の違いによる。だから両方に設定が要る。</text>
 </svg>
         </div>
       </details>
