@@ -1027,14 +1027,12 @@
       <p>プロンプトの見た目で今どちらにいるかが分かります。</p>
       <div class="code-block env-wsl">
         <div class="code-label">
-          <label class="task-check"><input type="checkbox" data-task="s1-2"></label>
           <span class="label-text">Ubuntu 内（WSL）のプロンプト — Linux コマンドのみ有効</span><span class="env-tag wsl">WSL Ubuntu</span>
         </div>
         <pre>yourname@hostname:~$</pre>
       </div>
       <div class="code-block env-win">
         <div class="code-label">
-          <label class="task-check"><input type="checkbox" data-task="s1-3"></label>
           <span class="label-text">PowerShell のプロンプト — ここで wsl --shutdown を実行する</span><span class="env-tag win">Windows</span>
         </div>
         <pre>PS C:\Users\yourname></pre>
@@ -1179,7 +1177,13 @@
               <label class="task-check"><input type="checkbox" data-task="s4-1"></label>
               <span class="label-text">nvm インストールスクリプトを実行</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
-            <pre><span class="cmd">curl</span> -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash</pre>
+            <pre><span class="cmd">curl</span> -4 -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.6/install.sh | bash</pre>
+          </div>
+
+          <div class="notice warn">
+            <span class="notice-icon">⚠️</span>
+            <p><strong>タイムアウトする場合は <span class="inline-code">-4</span> を付けてください（上のコマンドには付けてあります）。</strong> WSL2 では <span class="inline-code">raw.githubusercontent.com</span> が IPv6 で解決されると、応答がないまま数分待たされて <span class="inline-code">curl: (28) ... Timeout was reached</span> になることがあります。<span class="inline-code">-4</span> は IPv4 を強制するオプションです。<br>
+            バージョン番号は変わります。最新版は <span class="inline-code">github.com/nvm-sh/nvm</span> の Releases で確認してください。</p>
           </div>
 
           <p>インストール後、シェルに読み込みます（新しいタブを開き直しても構いません）。</p>
@@ -2570,6 +2574,11 @@
           <td class="key-col">git push で認証エラー</td>
           <td>PAT未設定または期限切れ</td>
           <td>PAT を再発行し <span class="inline-code">~/.git-credentials</span> を更新</td>
+        </tr>
+        <tr>
+          <td class="key-col"><span class="inline-code">curl</span> が数分待たされて<br>タイムアウトする<br><span style="font-size:11.5px;color:var(--muted)">curl: (28) Timeout was reached</span></td>
+          <td>接続先が IPv6 で解決されるが、WSL2 から IPv6 へ到達できず、応答を待ち続ける。<span class="inline-code">raw.githubusercontent.com</span> で起きやすい</td>
+          <td><span class="inline-code">curl -4</span> で IPv4 を強制する。恒久対応するなら <span class="inline-code">~/.curlrc</span> に <span class="inline-code">--ipv4</span> を書いておく。<br><span style="font-size:11.5px;color:var(--muted)">遮断されている場合はタイムアウトではなく即座に 403 が返るため、症状で区別できる</span></td>
         </tr>
       </table>
 
