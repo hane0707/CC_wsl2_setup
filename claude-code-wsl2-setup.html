@@ -768,66 +768,24 @@
           </details>
         </aside>
       </div>
-    </div>
 
-    <!-- 前提確認 -->
-    <div class="section" id="pre">
-      <div class="section-header">
-        <div class="step-badge">前提</div>
-        <h2>前提確認・ネイティブインストール済みの場合</h2>
-      </div>
+      <p style="margin-top:26px">この関係を図にすると次のようになります。層が分かれているのは、<strong>止め方が違う</strong>からです。</p>
 
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>ネイティブインストール済みの場合：</strong>WSL2側とネイティブWindows側はそれぞれ独立したバイナリです。競合は起きませんが、PATH混入に注意してください。追加の注記がある STEP は下表を参照してください。</p>
-      </div>
-
-      <p>あなたの状況に応じて、読み飛ばせる STEP と注意が必要な STEP が変わります。</p>
-
-      <div class="branch-nav">
-        <table>
-          <tr>
-            <th>あなたの状況</th>
-            <th>スキップしてよい STEP</th>
-            <th>追加の注記がある STEP</th>
-          </tr>
-          <tr>
-            <td class="key-col">WSL2 未導入 / ネイティブ未導入</td>
-            <td>なし（STEP 1 から順に）</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td class="key-col">WSL2 導入済み / ネイティブ未導入</td>
-            <td>STEP 1（WSL2 インストール）</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td class="key-col">WSL2 未導入 / ネイティブ導入済み</td>
-            <td>なし（STEP 1 から順に）</td>
-            <td>STEP 3・STEP 5・STEP 8</td>
-          </tr>
-          <tr>
-            <td class="key-col">WSL2 導入済み / ネイティブ導入済み</td>
-            <td>STEP 1</td>
-            <td>STEP 3・STEP 5・STEP 8</td>
-          </tr>
-        </table>
-      </div>
-
-      <p>セットアップを始める前に、各コンポーネントの関係を把握しておきましょう（任意・折りたたみ）。</p>
-
-      <details>
-        <summary>▶ アーキテクチャ概要図を見る（任意）</summary>
+      <details open>
+        <summary>▶ アーキテクチャ概要図</summary>
         <div class="details-body">
-<svg width="100%" viewBox="0 0 900 470" style="display:block; max-width:100%; height:auto;">
+<svg width="100%" viewBox="0 0 900 570" style="display:block; max-width:100%; height:auto;">
 <style>
   .t  { font-family:'IBM Plex Sans JP',sans-serif; }
   .lg { font-size:15px; font-weight:600; }
   .md { font-size:12.5px; font-weight:500; }
   .sm { font-size:11px; font-weight:300; }
   .xs { font-size:10px; font-weight:300; }
-  .mono { font-family:'IBM Plex Mono',monospace; }
 </style>
+<defs>
+  <marker id="ah-g" markerWidth="9" markerHeight="9" refX="4.5" refY="8" orient="auto"><path d="M0,0 L4.5,9 L9,0 z" fill="#a6e3a1"/></marker>
+  <marker id="ah-y" markerWidth="9" markerHeight="9" refX="4.5" refY="8" orient="auto"><path d="M0,0 L4.5,9 L9,0 z" fill="#f9e2af"/></marker>
+</defs>
 
 <!-- Windows -->
 <rect x="8" y="8" width="884" height="402" rx="14" fill="#0a1527" stroke="#89b4fa" stroke-width="1.4"/>
@@ -877,13 +835,73 @@
 <text x="498" y="331" class="t xs" fill="#f9e2af">MCP は信頼できるものだけを入れる。開発サーバーを</text>
 <text x="498" y="345" class="t xs" fill="#f9e2af">ここに出すときは対象を最小限にする。</text>
 
-<!-- 下部の結論 -->
-<line x1="8" y1="424" x2="892" y2="424" stroke="#2a3347" stroke-dasharray="4 4"/>
-<text x="8" y="447" class="t md" fill="#cdd6f4">同じ AI の中でも、OS が物理的に止められる領域と、ルールでしか止められない領域がある。</text>
-<text x="8" y="464" class="t sm" fill="#6c7a96">層が分かれているのはファイルの置き場所の話ではなく、この「止め方の違い」による。だから両方に設定が要る。</text>
+<!-- 外部への通信（両方とも外に出る。違いは通り方） -->
+<line x1="252" y1="366" x2="252" y2="452" stroke="#a6e3a1" stroke-width="2" marker-end="url(#ah-g)"/>
+<rect x="196" y="404" width="112" height="22" rx="4" fill="#0e1117" stroke="#a6e3a1" stroke-width="1.5"/>
+<text x="252" y="419" class="t xs" fill="#a6e3a1" text-anchor="middle">許可リストの検問</text>
+<text x="318" y="419" class="t xs" fill="#5ab055">リスト外は 403 で遮断される</text>
+
+<line x1="664" y1="366" x2="664" y2="452" stroke="#f9e2af" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#ah-y)"/>
+<text x="682" y="414" class="t xs" fill="#f9e2af">検問なし。許可ルールを</text>
+<text x="682" y="428" class="t xs" fill="#f9e2af">通れば、そのまま外へ出る</text>
+
+<!-- インターネット -->
+<rect x="8" y="464" width="884" height="46" rx="10" fill="#1e2535" stroke="#6c7a96" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="26" y="486" class="t md" fill="#cdd6f4">インターネット / 外部サービス</text>
+<text x="26" y="502" class="t xs" fill="#6c7a96">GitHub・npm レジストリ・各種 API・そして攻撃者が用意したかもしれない場所</text>
+
+<!-- 結論 -->
+<text x="8" y="536" class="t md" fill="#cdd6f4">どちらも外部と通信する。違うのは通信の有無ではなく、止め方である。</text>
+<text x="8" y="553" class="t sm" fill="#6c7a96">層が分かれているのはファイルの置き場所の話ではない。OS で止められる領域とルールでしか止められない領域の違いによる。だから両方に設定が要る。</text>
 </svg>
         </div>
       </details>
+    </div>
+
+    <!-- 前提確認 -->
+    <div class="section" id="pre">
+      <div class="section-header">
+        <div class="step-badge">前提</div>
+        <h2>前提確認・ネイティブインストール済みの場合</h2>
+      </div>
+
+      <div class="notice warn">
+        <span class="notice-icon">⚠️</span>
+        <p><strong>ネイティブインストール済みの場合：</strong>WSL2側とネイティブWindows側はそれぞれ独立したバイナリです。競合は起きませんが、PATH混入に注意してください。追加の注記がある STEP は下表を参照してください。</p>
+      </div>
+
+      <p>あなたの状況に応じて、読み飛ばせる STEP と注意が必要な STEP が変わります。</p>
+
+      <div class="branch-nav">
+        <table>
+          <tr>
+            <th>あなたの状況</th>
+            <th>スキップしてよい STEP</th>
+            <th>追加の注記がある STEP</th>
+          </tr>
+          <tr>
+            <td class="key-col">WSL2 未導入 / ネイティブ未導入</td>
+            <td>なし（STEP 1 から順に）</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td class="key-col">WSL2 導入済み / ネイティブ未導入</td>
+            <td>STEP 1（WSL2 インストール）</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td class="key-col">WSL2 未導入 / ネイティブ導入済み</td>
+            <td>なし（STEP 1 から順に）</td>
+            <td>STEP 3・STEP 5・STEP 8</td>
+          </tr>
+          <tr>
+            <td class="key-col">WSL2 導入済み / ネイティブ導入済み</td>
+            <td>STEP 1</td>
+            <td>STEP 3・STEP 5・STEP 8</td>
+          </tr>
+        </table>
+      </div>
+
 
       <p>以下を確認してから進めてください（必須確認事項）。</p>
 
