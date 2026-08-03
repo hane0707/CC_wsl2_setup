@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code セットアップ 脅威モデルと設定の対応表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0e1117; --surface: #161b27; --surface2: #1e2535; --border: #2a3347;
+    --text: #cdd6f4; --muted: #6c7a96; --accent: #89b4fa; --accent2: #cba6f7;
+    --green: #a6e3a1; --yellow: #f9e2af; --red: #f38ba8; --teal: #94e2d5;
+    --orange: #fab387; --pink: #f5c2e7; --tag-bg: #1e2d45;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans JP', sans-serif; font-weight: 300; line-height: 1.8; font-size: 14px; }
+
+  header { border-bottom: 1px solid var(--border); padding: 40px 48px 28px; }
+  header h1 { font-family: 'IBM Plex Mono', monospace; font-size: 21px; font-weight: 600; color: var(--accent); letter-spacing: -0.5px; margin-bottom: 8px; }
+  header p { color: var(--muted); font-size: 13px; max-width: 760px; }
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 10px; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); }
+  .badge.ref { border-color: #6c7a9644; }
+  .badge.ver { border-color: #a6e3a144; color: var(--green); background: #a6e3a10d; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 36px 48px 100px; }
+
+  .lede { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: 0 6px 6px 0; padding: 18px 22px; margin-bottom: 32px; font-size: 13px; color: var(--muted); }
+  .lede b { color: var(--text); font-weight: 500; }
+
+  nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 40px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+  nav.toc a { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--border); }
+  nav.toc a:hover { color: var(--accent); }
+
+  .section { margin-bottom: 52px; scroll-margin-top: 20px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .step-badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; padding: 3px 8px; background: var(--tag-bg); border: 1px solid var(--accent); border-radius: 3px; color: var(--accent); flex-shrink: 0; }
+  .step-badge.p2 { border-color: var(--accent2); color: var(--accent2); }
+  .step-badge.p3 { border-color: var(--green); color: var(--green); }
+  .step-badge.p4 { border-color: var(--pink); color: var(--pink); }
+  .step-badge.p5 { border-color: var(--orange); color: var(--orange); }
+  .section-header h2 { font-size: 16px; font-weight: 500; color: var(--text); }
+
+  h3 { font-size: 14px; font-weight: 500; color: var(--accent); margin: 26px 0 10px; }
+  h4 { font-size: 13px; font-weight: 500; color: var(--text); margin: 18px 0 8px; }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { margin-bottom: 6px; }
+  code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--surface2); padding: 1px 6px; border-radius: 3px; color: var(--teal); }
+  a { color: var(--accent); }
+
+  .tbl-wrap { overflow-x: auto; margin-bottom: 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; min-width: 480px; }
+  th, td { border: 1px solid var(--border); padding: 8px 11px; text-align: left; vertical-align: top; }
+  th { background: var(--surface2); font-weight: 500; color: var(--text); font-size: 11.5px; }
+  td { color: var(--text); }
+  td.ok { color: var(--green); }
+  td.ng { color: var(--red); }
+  td.warn { color: var(--yellow); }
+
+  .callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 13px 18px; margin: 16px 0; border-radius: 0 5px 5px 0; }
+  .callout.warn { border-left-color: var(--yellow); }
+  .callout.danger { border-left-color: var(--red); }
+  .callout.good { border-left-color: var(--green); }
+  .callout .co-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
+  .callout.warn .co-title { color: var(--yellow); }
+  .callout.danger .co-title { color: var(--red); }
+  .callout.good .co-title { color: var(--green); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .why { font-size: 12.5px; color: var(--muted); border-left: 2px solid var(--border); padding-left: 14px; margin: 0 0 22px 0; }
+  .why b { color: var(--text); font-weight: 500; }
+
+  .decision { border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; margin-bottom: 18px; }
+  .decision h4 { color: var(--accent2); margin-top: 0; }
+
+  footer { border-top: 1px solid var(--border); padding: 20px 48px; font-size: 11.5px; color: var(--muted); max-width: 900px; margin: 0 auto; }
+
+  /* 脅威IDバッジ */
+  .tid { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 3px; border: 1px solid; white-space: nowrap; margin: 1px 2px 1px 0; }
+  .tid.t1 { color: var(--red); border-color: var(--red); background: #f38ba81a; }
+  .tid.t2 { color: var(--orange); border-color: var(--orange); background: #fab3871a; }
+  .tid.t3 { color: var(--yellow); border-color: var(--yellow); background: #f9e2af1a; }
+  .tid.t4 { color: var(--teal); border-color: var(--teal); background: #94e2d51a; }
+  .tid.t5 { color: var(--accent2); border-color: var(--accent2); background: #cba6f71a; }
+  .tid.t6 { color: var(--pink); border-color: var(--pink); background: #f5c2e71a; }
+
+  .threat-card { border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; margin-bottom: 12px; }
+  .threat-card .th-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .threat-card .th-head b { font-size: 13px; color: var(--text); font-weight: 500; }
+
+  .residual { border: 1px solid var(--border); border-left: 3px solid var(--red); border-radius: 0 6px 6px 0; padding: 14px 20px; margin-bottom: 14px; }
+  .residual h4 { margin-top: 0; color: var(--red); }
+  .residual .then { font-size: 12.5px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+  .residual .then b { color: var(--text); font-weight: 500; }
+
+  @media (max-width: 700px) {
+    header, main, footer { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Claude Code セットアップ 脅威モデルと設定の対応表</h1>
+  <p>本資料はセットアップ手順書（<code>claude-code-wsl2-setup.html</code>）の根拠資料である。手順そのものはそちらに集約されており、本資料には手順（コマンドの打ち方・設定の書き方）は書かない。目的は2つ。①なぜここまでセキュリティに配慮する必要があるのかを理解すること。②どの設定がどの脅威に対応しているかを横断的に確認し、設定の抜け漏れを自分でチェックできるようにすること。</p>
+  <div class="badge-row">
+    <span class="badge ver">Claude Code 2.1.220</span>
+    <span class="badge ref">対象: sandbox / permissions / MCP / プラグイン設定</span>
+  </div>
+</header>
+
+<main>
+
+<nav class="toc">
+  <a href="#s1">1. なぜAIエージェントには特別な配慮が要るのか</a>
+  <a href="#s2">2. 想定する脅威</a>
+  <a href="#s3">3. 設定と脅威の対応表</a>
+  <a href="#s4">4. 監査チェックリスト</a>
+  <a href="#s5">5. この構成で守れないこと</a>
+</nav>
+
+<!-- ══════════════ 1章 ══════════════ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <span class="step-badge">1</span>
+    <h2>なぜ AI エージェントには特別な配慮が要るのか</h2>
+  </div>
+
+  <p>従来の開発ツールは「人間が書いたコマンドを、書かれた通りに実行する」だけだった。何が実行されるかはコマンドを見れば分かり、危険な操作は人間自身が事前に気づけた。</p>
+
+  <p>AI エージェントはこれと根本的に違う。AI は<b>自分で状況を判断し、その場でコマンドを組み立てて実行する</b>。次に何を実行するかは、実行するまで誰にも（AI自身にも）分からない。</p>
+
+  <div class="callout danger">
+    <div class="co-title">制御方式の転換</div>
+    <p>「何が起きるか事前に列挙できない」ということは、<b>禁止リスト方式（だめなことを列挙する）が機能しない</b>ということでもある。列挙できていない未知の操作は防げない。実効性のある制御は<b>許可リスト方式（してよいことだけを決め、それ以外は default で拒否する）</b>でしか成立しない。本資料の設定がことごとく「allow」ではなく「deny」や「許可リストの外を遮断する」形をとっているのはこのためである。</p>
+  </div>
+
+  <p>さらに AI には、通常のプログラムにはない性質がある。<b>読んだテキストすべてから影響を受ける</b>という点だ。ソースコードのコメント、README、GitHub の Issue、閲覧した Web ページ、依存パッケージの中身——AI はこれらすべてを読み、判断材料にする。そしてその中に埋め込まれた指示文が「開発者からの正当な指示」なのか「第三者が仕込んだ罠」なのかを、AI は常に区別できるとは限らない。</p>
+
+  <div class="callout warn">
+    <div class="co-title">攻撃者は AI に直接触れる必要がない</div>
+    <p>これが最も本質的な帰結である。攻撃者は AI のアカウントを乗っ取る必要も、開発者のマシンに侵入する必要もない。<b>AI がいつか読むかもしれない場所</b>——公開リポジトリの README、Issue のコメント欄、依存パッケージのソース——にテキストを置いておくだけで、AI を操作する足がかりになりうる。</p>
+  </div>
+
+  <p>これが「人間が使うツール」と「AI エージェント」の決定的な違いであり、OS レベルの隔離（サンドボックス）と許可リストが必要になる理由である。問うべきは「この AI を信用できるか」ではなく、「この AI が騙されて誤った操作をしても、被害がその場で閉じる環境になっているか」である。</p>
+</section>
+
+<!-- ══════════════ 2章 ══════════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <span class="step-badge p2">2</span>
+    <h2>想定する脅威</h2>
+  </div>
+  <p>1章で述べた性質から具体的に生じうる6つの脅威を整理する。以降の章では、この T1〜T6 の番号を使って設定との対応関係を示す。</p>
+
+  <div class="threat-card">
+    <div class="th-head"><span class="tid t1">T1</span><b>プロンプトインジェクション</b></div>
+    <p>リポジトリのコード・README・Issue・閲覧した Web ページ・依存パッケージの中身に埋め込まれた指示文を、AI が「ユーザーからの指示」と誤認して実行してしまう。攻撃者は AI に直接触れる必要がなく、AI がいつか読む場所にテキストを置くだけでよい。1章で述べた通り、最も本質的で対処が難しい脅威である。</p>
+  </div>
+
+  <div class="threat-card">
+    <div class="th-head"><span class="tid t2">T2</span><b>認証情報の読み取りと持ち出し</b></div>
+    <p><code>.env</code>、SSH 鍵、クラウド認証情報などを AI が読み取り、外部の通信先へ送信してしまう。読み取り自体を塞ぐことと、たとえ読み取られても外部へ送信する経路を塞ぐこと、その両方が必要になる。</p>
+  </div>
+
+  <div class="threat-card">
+    <div class="th-head"><span class="tid t3">T3</span><b>意図しない破壊的操作</b></div>
+    <p><code>rm -rf</code>、force push、<code>reset --hard</code>、本番環境に対する操作など、取り消しの効かない操作を AI が実行してしまう。悪意がなくても、AI の誤判断や状況の取り違えだけで起こりうる。</p>
+  </div>
+
+  <div class="threat-card">
+    <div class="th-head"><span class="tid t4">T4</span><b>サプライチェーン</b></div>
+    <p>悪意ある、あるいは脆弱な MCP サーバー・プラグイン・npm パッケージを経由した侵害。特にリポジトリに同梱された <code>.mcp.json</code> は、リポジトリをクローンして開いただけで自動的に読み込まれる可能性がある。</p>
+  </div>
+
+  <div class="threat-card">
+    <div class="th-head"><span class="tid t5">T5</span><b>権限昇格（自己書き換え）</b></div>
+    <p>AI が自分自身の設定ファイル（<code>settings.json</code> など）を書き換えて、自らにかかっている制限を緩めてしまう。一度緩めてしまえば、それ以降のすべてのセッションに影響が及ぶ。</p>
+  </div>
+
+  <div class="threat-card">
+    <div class="th-head"><span class="tid t6">T6</span><b>サンドボックス不全</b></div>
+    <p>依存パッケージの欠落など環境側の要因でサンドボックスがそもそも起動できず、警告だけを出して<b>無防備なまま動作してしまう</b>状態。隔離があるつもりで、実は隔離されていないケース。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 3章 ══════════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <span class="step-badge p3">3</span>
+    <h2>設定と脅威の対応表</h2>
+  </div>
+  <p>実際に適用済みの設定と、それぞれがどの脅威に対応するかの一覧。この表が本資料の中核であり、設定変更のたびに立ち返って確認する表である。</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:24%">設定</th><th style="width:18%">値</th><th style="width:16%">対応脅威</th><th>何をするか</th></tr></thead>
+    <tbody>
+      <tr><td><code>sandbox.enabled</code></td><td>true</td><td><span class="tid t1">T1</span><span class="tid t2">T2</span><span class="tid t3">T3</span><span class="tid t5">T5</span></td><td>OSレベルの隔離を有効化する。以下すべての制御の土台となる。</td></tr>
+      <tr><td><code>sandbox.failIfUnavailable</code></td><td>true</td><td><span class="tid t6">T6</span></td><td>サンドボックスが起動できない場合は実行自体を止め、無防備な実行を許さない。</td></tr>
+      <tr><td><code>sandbox.allowUnsandboxedCommands</code></td><td>false</td><td><span class="tid t1">T1</span><span class="tid t5">T5</span></td><td>個別コマンドをサンドボックス対象から外す抜け道を封じる。</td></tr>
+      <tr><td><code>sandbox.autoAllowBashIfSandboxed</code></td><td>false</td><td><span class="tid t1">T1</span><span class="tid t3">T3</span></td><td>サンドボックス内であっても実行前の確認を自動で省略しない。</td></tr>
+      <tr><td><code>sandbox.network.strictAllowlist</code></td><td>true</td><td><span class="tid t2">T2</span></td><td>許可リスト外の通信を実際に遮断する（無いと確認省略の一覧としてしか働かない）。</td></tr>
+      <tr><td><code>sandbox.network.allowedDomains</code></td><td>10件</td><td><span class="tid t2">T2</span></td><td>通信先を業務上必要な最小限のドメインだけに絞る。</td></tr>
+      <tr><td><code>sandbox.filesystem.denyRead</code></td><td>6件</td><td><span class="tid t2">T2</span></td><td>認証情報が置かれるパス自体をファイルシステムレベルで読めなくする。</td></tr>
+      <tr><td><code>sandbox.credentials.envVars</code>（deny 7件）</td><td>GITHUB_TOKEN / GH_TOKEN / NPM_TOKEN / ANTHROPIC_API_KEY / AWS_SECRET_ACCESS_KEY / AWS_SESSION_TOKEN / CLOUDFLARE_API_TOKEN</td><td><span class="tid t2">T2</span></td><td>環境変数経由でのトークンの読み取り・子プロセスへの引き回しを遮断する。</td></tr>
+      <tr><td><code>sandbox.excludedCommands</code></td><td>4件（開発サーバーのみ）</td><td><span class="tid t5">T5</span>（最小化により）</td><td>サンドボックス外で動かす例外を、具体的なコマンドに限定し無制限に広げない。</td></tr>
+      <tr><td><code>permissions.deny</code>（Bash系）</td><td><code>rm -rf</code> / <code>sudo</code> / force push / <code>reset --hard</code> 等</td><td><span class="tid t3">T3</span></td><td>取り消しの効かない操作を AI 単独の判断で実行させない。</td></tr>
+      <tr><td><code>permissions.deny</code>（Read/Edit系）</td><td><code>.env</code> / <code>*.key</code> / <code>*.pem</code> / <code>~/.ssh</code> 等</td><td><span class="tid t2">T2</span></td><td>サンドボックスのファイルシステム制御に加え、権限ルールでも二重に塞ぐ。</td></tr>
+      <tr><td><code>permissions.deny</code>（WebFetch系）</td><td>pastebin / webhook.site / transfer.sh 等 10件</td><td><span class="tid t2">T2</span></td><td>情報の持ち出し先として悪用されやすい外部サービスへの送信を塞ぐ。</td></tr>
+      <tr><td><code>enableAllProjectMcpServers</code></td><td>false</td><td><span class="tid t4">T4</span></td><td>リポジトリ同梱の <code>.mcp.json</code> を無条件に信頼して読み込まない。</td></tr>
+      <tr><td><code>dangerouslySkipPermissions</code></td><td>disable</td><td><span class="tid t3">T3</span></td><td>権限確認を全面スキップする機能自体を使わせない。</td></tr>
+      <tr><td><code>env.CLAUDE_CODE_SUBPROCESS_ENV_SCRUB</code></td><td>1</td><td><span class="tid t2">T2</span></td><td>AI が起動する子プロセスに認証情報の環境変数を渡さない。</td></tr>
+      <tr><td>プラグインを4つに限定</td><td>—</td><td><span class="tid t4">T4</span></td><td>導入するサプライチェーン（skill・依存関係）の数そのものを減らす。</td></tr>
+      <tr><td>CLAUDE.md の方針明文化</td><td>—</td><td><span class="tid t1">T1</span><span class="tid t3">T3</span>（補助的）</td><td>AI への方針として明文化し判断の拠り所を与える。強制力を持つ仕組みではない点に注意。</td></tr>
+      <tr><td>settings.json の自動保護</td><td>Claude Code 側の機能</td><td><span class="tid t5">T5</span></td><td>AI からの設定ファイルへの書き込みが黙って無効化される（実測済みの挙動）。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>逆引き: 脅威ごとに見る対応設定</h3>
+  <p>「この脅威に効く設定は揃っているか」を確認するための逆引き表。抜け漏れの点検はこちらを使う。</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:10%">脅威</th><th>対応する設定</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tid t1">T1</span></td><td><code>sandbox.enabled</code>、<code>allowUnsandboxedCommands=false</code>、<code>autoAllowBashIfSandboxed=false</code>、CLAUDE.md 方針（補助）</td></tr>
+      <tr><td><span class="tid t2">T2</span></td><td><code>sandbox.enabled</code>、<code>network.strictAllowlist</code>、<code>allowedDomains</code>、<code>filesystem.denyRead</code>、<code>credentials.envVars</code>、<code>permissions.deny</code>（Read/Edit・WebFetch）、<code>CLAUDE_CODE_SUBPROCESS_ENV_SCRUB</code></td></tr>
+      <tr><td><span class="tid t3">T3</span></td><td><code>sandbox.enabled</code>、<code>autoAllowBashIfSandboxed=false</code>、<code>permissions.deny</code>（Bash系）、<code>dangerouslySkipPermissions=disable</code>、CLAUDE.md 方針（補助）</td></tr>
+      <tr><td><span class="tid t4">T4</span></td><td><code>enableAllProjectMcpServers=false</code>、プラグインを4つに限定</td></tr>
+      <tr><td><span class="tid t5">T5</span></td><td><code>sandbox.enabled</code>、<code>allowUnsandboxedCommands=false</code>、<code>excludedCommands</code> の最小化、settings.json の自動保護</td></tr>
+      <tr><td><span class="tid t6">T6</span></td><td><code>sandbox.failIfUnavailable=true</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout good">
+    <div class="co-title">読み方</div>
+    <p>すべての脅威に複数の設定が重なっている（多重防御）。特に T2（認証情報の持ち出し）はサンドボックス・permissions・環境変数の3層で塞いでいる点に注目したい。逆に空欄や1つしか対応がない脅威があれば、それが設定の見直しどころである。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 4章 ══════════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <span class="step-badge p4">4</span>
+    <h2>監査チェックリスト</h2>
+  </div>
+  <p>設定が実際に効いているかを自分で確認するための手順。書いてある通りに実行し、期待される結果と一致するかを見る。</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:22%">確認項目</th><th style="width:40%">確認コマンド</th><th>期待される結果</th></tr></thead>
+    <tbody>
+      <tr><td>サンドボックスが有効か</td><td>claude セッション内で <code>/sandbox</code></td><td><code>Sandbox: enabled</code> と表示される</td></tr>
+      <tr><td>許可済み通信が通るか</td><td><code>curl -sS -o /dev/null -w "%{http_code}" https://api.github.com</code></td><td><code>200</code></td></tr>
+      <tr><td>未許可通信が遮断されるか</td><td><code>curl -sS -o /dev/null -w "%{http_code}" https://example.com</code></td><td><code>403</code> で遮断される</td></tr>
+      <tr><td>設定ファイルの構文が正しいか</td><td><code>python3 -m json.tool ~/.claude/settings.json > /dev/null</code></td><td>エラーなく終了する（何も出力しない）</td></tr>
+      <tr><td>主要キーの値を確認する</td><td><code>python3 -c "import json;d=json.load(open('/home/USER/.claude/settings.json'));s=d['sandbox'];print(s['enabled'], s['failIfUnavailable'], s['network']['strictAllowlist'])"</code></td><td><code>True True True</code> のように、意図した値が表示される</td></tr>
+      <tr><td>MCP サーバーの棚卸し</td><td><code>claude mcp list</code></td><td>意図して登録したサーバーだけが表示される。見覚えのない項目があれば要調査</td></tr>
+      <tr><td>プラグインの棚卸し</td><td>claude セッション内で <code>/plugin</code></td><td>有効なプラグインが想定の4件のみ表示される</td></tr>
+      <tr><td>WebFetch 許可の棚卸し</td><td><code>python3 -m json.tool .claude/settings.local.json</code> の <code>permissions.allow</code> 内 <code>WebFetch</code> 項目を確認</td><td>現在も必要なドメインだけが並んでいる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout warn">
+    <div class="co-title">WebFetch allow の蓄積に注意</div>
+    <p><code>.claude/settings.local.json</code> の WebFetch 許可は、作業のたびに「今回だけ」のつもりで承認した項目が積み上がっていく性質がある。一度許可したドメインは自動では消えない。定期的に棚卸しし、もう使っていない許可は削除する運用が必要である。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 5章 ══════════════ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <span class="step-badge p5">5</span>
+    <h2>この構成で守れないこと（残存リスク）</h2>
+  </div>
+  <p>ここまでの設定を入れても「安全になった」わけではない。何が守られていないかを正直に書く。誤解を防ぐことが目的である。</p>
+
+  <div class="residual">
+    <h4>TLS の中身は検査していない</h4>
+    <p>サンドボックスのネットワークプロキシは、通信先をホスト名（ドメイン名）で判断しているだけであり、通信内容そのものを検査しているわけではない。ドメインフロンティングなどの手法で許可リストを迂回されうる可能性が公式に明記されている。</p>
+    <p class="then"><b>ではどうするか:</b> より強い保証が必要な場面では、TLS の中身まで検査するプロキシや、コンテナによる隔離を別途検討する。</p>
+  </div>
+
+  <div class="residual">
+    <h4>広い許可は持ち出し経路になりうる</h4>
+    <p><code>*.github.com</code> のようなワイルドカードを許可しているため、例えば Gist の作成など、その許可の範囲内でも情報を外部に持ち出せる余地が残る。ドメインを許可すること＝そのドメインの全機能を信頼することに等しい。</p>
+    <p class="then"><b>ではどうするか:</b> 許可ドメインは定期的に見直し（4章のチェックリスト参照）、本当に必要な範囲かを都度問い直す。</p>
+  </div>
+
+  <div class="residual">
+    <h4>MCP サーバーはサンドボックスの外で動く</h4>
+    <p>サンドボックスが隔離しているのは Bash コマンドの実行であり、MCP サーバーはその壁の外で動作する。MCP を追加することは、壁の外に新しい経路を追加することと同義である。</p>
+    <p class="then"><b>ではどうするか:</b> 公式・準公式など信頼できる MCP サーバーだけを入れる運用を徹底し、数を増やしすぎない。</p>
+  </div>
+
+  <div class="residual">
+    <h4><code>excludedCommands</code> のプロセスは無防備</h4>
+    <p>開発サーバーなど <code>excludedCommands</code> に登録したコマンドは、サンドボックス外で実行されるため、ファイルアクセスもネットワーク通信も一切の制限を受けない。</p>
+    <p class="then"><b>ではどうするか:</b> 登録するコマンドは具体的なものに限定し（3章参照）、対象を自分のプロジェクトの開発サーバーだけに絞り続ける。</p>
+  </div>
+
+  <div class="residual">
+    <h4>WebFetch はサンドボックスの外</h4>
+    <p>WebFetch はサンドボックスの <code>network.strictAllowlist</code> の対象外であり、<code>permissions</code> のルールでのみ制御されている。サンドボックスのネットワーク隔離を過信すると見落とす部分である。</p>
+    <p class="then"><b>ではどうするか:</b> WebFetch の許可設定は3章・4章の対応表とチェックリストで独立して管理し、サンドボックス側の設定と混同しない。</p>
+  </div>
+
+  <div class="residual">
+    <h4>プロンプトインジェクションを根絶することはできない</h4>
+    <p>サンドボックスや許可リストは「AI が実行できることの範囲」を制限する仕組みであり、AI が騙されて誤った判断をすること自体を防ぐものではない。1章で述べた問題の根はそのまま残る。</p>
+    <p class="then"><b>ではどうするか:</b> 「AI を騙されなくする」ではなく「騙されても被害の上限を下げる」という前提で構成全体を捉え、被害が及ぶ範囲を継続的に狭め続ける。</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  本資料は脅威モデルと設定の対応関係の記録に徹しており、コマンドの打ち方や設定の書き方は記載していない（4章の確認コマンドを除く）。手順は <code>claude-code-wsl2-setup.html</code> を、設計判断の経緯は <code>claude-code-design-notes.html</code> を参照のこと。
+</footer>
+
+</body>
+</html>
