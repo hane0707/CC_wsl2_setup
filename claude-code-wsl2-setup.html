@@ -5,23 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Claude Code WSL2 セットアップガイド</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@300;400;500&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap');
 
   :root {
-    --bg: #0e1117;
-    --surface: #161b27;
-    --surface2: #1e2535;
-    --border: #2a3347;
-    --text: #cdd6f4;
-    --muted: #6c7a96;
-    --accent: #89b4fa;
-    --accent2: #cba6f7;
-    --green: #a6e3a1;
-    --yellow: #f9e2af;
-    --red: #f38ba8;
-    --teal: #94e2d5;
-    --orange: #fab387;
-    --tag-bg: #1e2d45;
+    /* 基調：ニュートラルな墨。青紫みを排除する */
+    --bg: #0C0D10;
+    --surface: #14161B;
+    --surface2: #1B1E25;
+    --border: #262A33;
+    --text: #DFE3E8;
+    --muted: #868E9B;
+
+    /* 意味色：この2色だけが強い。読み手に判断を促す場所にのみ使う */
+    --green: #57C98A;    /* OS が強制して守る側 */
+    --orange: #F0B849;   /* ルールでしか守れない側 = 注意 */
+
+    /* 補助的な意味色 */
+    --red: #E5636D;      /* 壊れる・止まる */
+    --yellow: #F0B849;   /* orange と同値。既存参照の互換のため残す */
+
+    /* 層の識別色：意味色より一段弱く、彩度を落として従属させる */
+    --accent: #5C7CDB;   /* Windows 層 */
+    --teal: #4FBFA8;     /* WSL2 層 */
+    --accent2: #A98BE0;  /* Claude Code 層 */
+    --pink: #C98BB8;     /* 補助 */
+    --tag-bg: #1A1F2B;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -77,11 +85,12 @@
   }
 
   .header-left h1 {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 22px;
-    font-weight: 600;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
     color: var(--accent);
-    letter-spacing: -0.5px;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
     margin-bottom: 6px;
   }
 
@@ -106,8 +115,8 @@
     color: var(--muted);
   }
 
-  .badge.env { border-color: #89b4fa44; color: var(--accent); background: #89b4fa0d; }
-  .badge.warn { border-color: #f9e2af44; color: var(--yellow); background: #f9e2af0d; }
+  .badge.env { border-color: #5C7CDB44; color: var(--accent); background: #5C7CDB0d; }
+  .badge.warn { border-color: #F0B84944; color: var(--yellow); background: #F0B8490d; }
 
   /* レイアウト（NAV 240px + コンテンツ、全体 max 1520px 中央寄せ） */
   header {
@@ -181,8 +190,24 @@
 
   /* セクション */
   .section {
+    position: relative;
     margin-bottom: 52px;
   }
+
+  /* 層インジケーター：この STEP が主にどの層を触るかを示す左端の縦バー */
+  .section[data-layer]::before {
+    content: '';
+    position: absolute;
+    left: -18px;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 2px;
+    opacity: 0.65;
+  }
+  .section[data-layer="win"]::before { background: var(--accent); }
+  .section[data-layer="wsl"]::before { background: var(--teal); }
+  .section[data-layer="cc"]::before  { background: var(--accent2); }
 
   .section-header {
     display: flex;
@@ -206,8 +231,11 @@
   }
 
   .section-header h2 {
-    font-size: 16px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 19px;
     font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
     color: var(--text);
   }
 
@@ -220,12 +248,12 @@
     flex-shrink: 0;
   }
 
-  .tag.required  { background: #f38ba815; border: 1px solid #f38ba844; color: var(--red); }
-  .tag.recommend { background: #a6e3a115; border: 1px solid #a6e3a144; color: var(--green); }
-  .tag.optional  { background: #6c7a9620; border: 1px solid #6c7a9644; color: var(--muted); }
+  .tag.required  { background: #E5636D15; border: 1px solid #E5636D44; color: var(--red); }
+  .tag.recommend { background: #57C98A15; border: 1px solid #57C98A44; color: var(--green); }
+  .tag.optional  { background: #868E9B20; border: 1px solid #868E9B44; color: var(--muted); }
   /* 旧クラス互換 */
-  .tag.native-only { background: #f9e2af15; border: 1px solid #f9e2af44; color: var(--yellow); }
-  .tag.all { background: #a6e3a115; border: 1px solid #a6e3a144; color: var(--green); }
+  .tag.native-only { background: #F0B84915; border: 1px solid #F0B84944; color: var(--yellow); }
+  .tag.all { background: #57C98A15; border: 1px solid #57C98A44; color: var(--green); }
 
   /* コピーボタン */
   .copy-btn {
@@ -254,10 +282,10 @@
     gap: 12px;
   }
 
-  .notice.info { background: #89b4fa0d; border-left: 3px solid var(--accent); }
-  .notice.warn { background: #f9e2af0d; border-left: 3px solid var(--yellow); }
-  .notice.danger { background: #f38ba80d; border-left: 3px solid var(--red); }
-  .notice.success { background: #a6e3a10d; border-left: 3px solid var(--green); }
+  .notice.info { background: #5C7CDB0d; border-left: 3px solid var(--accent); }
+  .notice.warn { background: #F0B8490d; border-left: 3px solid var(--yellow); }
+  .notice.danger { background: #E5636D0d; border-left: 3px solid var(--red); }
+  .notice.success { background: #57C98A0d; border-left: 3px solid var(--green); }
 
   .notice-icon { flex-shrink: 0; font-size: 14px; line-height: 1.7; }
   .notice p { color: var(--text); }
@@ -320,9 +348,9 @@
     white-space: nowrap;
   }
 
-  .env-tag.win  { background: #89b4fa15; color: #89b4fa; border: 1px solid #89b4fa33; }
-  .env-tag.wsl  { background: #a6e3a115; color: #a6e3a1; border: 1px solid #a6e3a133; }
-  .env-tag.file { background: #cba6f715; color: #cba6f7; border: 1px solid #cba6f733; }
+  .env-tag.win  { background: #5C7CDB15; color: #5C7CDB; border: 1px solid #5C7CDB33; }
+  .env-tag.wsl  { background: #4FBFA815; color: #4FBFA8; border: 1px solid #4FBFA833; }
+  .env-tag.file { background: #A98BE015; color: #A98BE0; border: 1px solid #A98BE033; }
 
   .code-block pre {
     padding: 14px 16px;
@@ -534,12 +562,12 @@
 
   /* 実行場所の色分け：コードブロック左端 4px バー */
   .code-block.env-win     { border-left: 4px solid var(--accent); }
-  .code-block.env-wsl     { border-left: 4px solid var(--green); }
+  .code-block.env-wsl     { border-left: 4px solid var(--teal); }
   .code-block.env-outside { border-left: 4px solid var(--orange); }
   .code-block.env-cc      { border-left: 4px solid var(--accent2); }
 
-  .env-tag.outside { background: #fab38718; color: var(--orange); border: 1px solid #fab38744; font-weight: 600; }
-  .env-tag.cc      { background: #cba6f715; color: var(--accent2); border: 1px solid #cba6f733; }
+  .env-tag.outside { background: #F0B84918; color: var(--orange); border: 1px solid #F0B84944; font-weight: 600; }
+  .env-tag.cc      { background: #A98BE015; color: var(--accent2); border: 1px solid #A98BE033; }
 
   /* 凡例 */
   .legend {
@@ -556,10 +584,26 @@
   .legend-item { display: flex; align-items: center; gap: 8px; color: var(--muted); white-space: nowrap; }
   .legend-bar { width: 4px; height: 15px; border-radius: 2px; flex-shrink: 0; }
   .legend-bar.win { background: var(--accent); }
-  .legend-bar.wsl { background: var(--green); }
+  .legend-bar.wsl { background: var(--teal); }
   .legend-bar.outside { background: var(--orange); }
   .legend-bar.cc { background: var(--accent2); }
   .legend-item strong { color: var(--text); font-weight: 500; }
+
+  /* 層インジケーターの凡例（実行場所の凡例とは役割が違う旨を補足する1行） */
+  .layer-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0 18px 22px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .layer-legend strong { color: var(--text); font-weight: 500; }
+  .layer-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; opacity: .75; }
+  .layer-dot.win { background: var(--accent); }
+  .layer-dot.wsl { background: var(--teal); }
+  .layer-dot.cc  { background: var(--accent2); }
 
   /* 進捗表示（ヘッダー下） */
   .progress-wrap {
@@ -624,8 +668,8 @@
 
   /* 完了条件（チェックポイント） */
   .checkpoint {
-    border: 1px solid #a6e3a133;
-    background: #a6e3a108;
+    border: 1px solid #57C98A33;
+    background: #57C98A08;
     border-left: 3px solid var(--green);
     border-radius: 4px;
     padding: 12px 16px;
@@ -700,10 +744,11 @@
 
     <div class="legend">
       <div class="legend-item"><span class="legend-bar win"></span><strong>青</strong>＝Windows（PowerShell 等）で実行</div>
-      <div class="legend-item"><span class="legend-bar wsl"></span><strong>緑</strong>＝WSL Ubuntu で実行</div>
+      <div class="legend-item"><span class="legend-bar wsl"></span><strong>ティール</strong>＝WSL Ubuntu で実行</div>
       <div class="legend-item"><span class="legend-bar outside"></span><strong>オレンジ</strong>＝Claude Code の外で実行必須（最も事故が多い）</div>
       <div class="legend-item"><span class="legend-bar cc"></span><strong>紫</strong>＝Claude Code セッション内（スラッシュコマンド等）</div>
     </div>
+    <div class="layer-legend">各 STEP の左端のバーは、その STEP が主に<strong>どの層を触るか</strong>を示します（上の実行場所の凡例＝「どこでコマンドを打つか」とは役割が違います）。<span class="layer-dot win"></span>青＝Windows　<span class="layer-dot wsl"></span>ティール＝WSL2　<span class="layer-dot cc"></span>紫＝Claude Code</div>
 
     <!-- なぜこの構成なのか -->
     <div class="section" id="why">
@@ -784,78 +829,78 @@
   .mono { font-family:'IBM Plex Mono',monospace; font-size:9.5px; }
 </style>
 <defs>
-  <marker id="ah-g" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a6e3a1"/></marker>
-  <marker id="ah-y" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f9e2af"/></marker>
+  <marker id="ah-g" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#57C98A"/></marker>
+  <marker id="ah-y" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#F0B849"/></marker>
 </defs>
 
 <!-- Windows -->
-<rect x="8" y="8" width="884" height="462" rx="14" fill="#0a1527" stroke="#89b4fa" stroke-width="1.4"/>
-<text x="26" y="32" class="t lg" fill="#89b4fa">Windows</text>
-<text x="26" y="50" class="t xs" fill="#4a7acc">あなたが画面を見る側。ここには隔離のしくみが無い</text>
-<rect x="612" y="20" width="264" height="40" rx="8" fill="#89b4fa14" stroke="#89b4fa44"/>
-<text x="628" y="37" class="t sm" fill="#89b4fa">Windows Terminal / ブラウザ</text>
-<text x="628" y="52" class="t xs" fill="#4a7acc">人間が操作・目視する場所</text>
+<rect x="8" y="8" width="884" height="462" rx="14" fill="#0F1420" stroke="#5C7CDB" stroke-width="1.4"/>
+<text x="26" y="32" class="t lg" fill="#5C7CDB">Windows</text>
+<text x="26" y="50" class="t xs" fill="#4A63A8">あなたが画面を見る側。ここには隔離のしくみが無い</text>
+<rect x="612" y="20" width="264" height="40" rx="8" fill="#5C7CDB14" stroke="#5C7CDB44"/>
+<text x="628" y="37" class="t sm" fill="#5C7CDB">Windows Terminal / ブラウザ</text>
+<text x="628" y="52" class="t xs" fill="#4A63A8">人間が操作・目視する場所</text>
 
 <!-- WSL2 -->
-<rect x="24" y="64" width="852" height="392" rx="12" fill="#0d2323" stroke="#94e2d5" stroke-width="1.3"/>
-<text x="42" y="88" class="t md" fill="#94e2d5">WSL2 (Ubuntu)</text>
-<text x="42" y="105" class="t xs" fill="#5ab8aa">この層を挟む理由：サンドボックスは Linux の機能（bubblewrap）で、Windows では動かない。</text>
-<text x="42" y="119" class="t xs" fill="#5ab8aa">WSL2 を入れて初めて、下の隔離が使えるようになる。</text>
+<rect x="24" y="64" width="852" height="392" rx="12" fill="#0E1F1D" stroke="#4FBFA8" stroke-width="1.3"/>
+<text x="42" y="88" class="t md" fill="#4FBFA8">WSL2 (Ubuntu)</text>
+<text x="42" y="105" class="t xs" fill="#3F9584">この層を挟む理由：サンドボックスは Linux の機能（bubblewrap）で、Windows では動かない。</text>
+<text x="42" y="119" class="t xs" fill="#3F9584">WSL2 を入れて初めて、下の隔離が使えるようになる。</text>
 
 <!-- Claude Code -->
-<rect x="40" y="130" width="820" height="310" rx="10" fill="#160f26" stroke="#cba6f7" stroke-width="1.3"/>
-<text x="58" y="152" class="t md" fill="#cba6f7">Claude Code</text>
-<text x="58" y="169" class="t xs" fill="#8a60c0">AI が状況を判断し、その場でツールを呼ぶ。何を呼ぶかは事前に決まっていない</text>
+<rect x="40" y="130" width="820" height="310" rx="10" fill="#171325" stroke="#A98BE0" stroke-width="1.3"/>
+<text x="58" y="152" class="t md" fill="#A98BE0">Claude Code</text>
+<text x="58" y="169" class="t xs" fill="#8264B0">AI が状況を判断し、その場でツールを呼ぶ。何を呼ぶかは事前に決まっていない</text>
 
 <!-- 左: サンドボックスの中 -->
-<rect x="56" y="180" width="392" height="196" rx="8" fill="#0a1f0a" stroke="#a6e3a1" stroke-width="2"/>
-<text x="74" y="204" class="t md" fill="#a6e3a1">サンドボックスの中</text>
-<text x="74" y="221" class="t xs" fill="#5ab055">Bash コマンドと、それが起動した子プロセス</text>
+<rect x="56" y="180" width="392" height="196" rx="8" fill="#0D1C14" stroke="#57C98A" stroke-width="2"/>
+<text x="74" y="204" class="t md" fill="#57C98A">サンドボックスの中</text>
+<text x="74" y="221" class="t xs" fill="#3F9E68">Bash コマンドと、それが起動した子プロセス</text>
 <line x1="74" y1="232" x2="430" y2="232" stroke="#1a4a1a"/>
-<text x="74" y="255" class="t sm" fill="#cdd6f4">書ける場所</text>
-<text x="164" y="255" class="t sm" fill="#a6e3a1">作業フォルダと一時領域だけ</text>
-<text x="74" y="283" class="t sm" fill="#cdd6f4">つなげる先</text>
-<text x="164" y="283" class="t sm" fill="#a6e3a1">許可したドメインだけ</text>
-<text x="74" y="311" class="t sm" fill="#cdd6f4">守るしくみ</text>
-<text x="164" y="311" class="t sm" fill="#a6e3a1">OS が強制する</text>
-<rect x="74" y="325" width="356" height="38" rx="5" fill="#a6e3a10f"/>
-<text x="86" y="342" class="t xs" fill="#a6e3a1">AI がコマンドをどう書き換えても、OS が拒否する。</text>
-<text x="86" y="356" class="t xs" fill="#a6e3a1">すり抜ける余地がない。</text>
+<text x="74" y="255" class="t sm" fill="#DFE3E8">書ける場所</text>
+<text x="164" y="255" class="t sm" fill="#57C98A">作業フォルダと一時領域だけ</text>
+<text x="74" y="283" class="t sm" fill="#DFE3E8">つなげる先</text>
+<text x="164" y="283" class="t sm" fill="#57C98A">許可したドメインだけ</text>
+<text x="74" y="311" class="t sm" fill="#DFE3E8">守るしくみ</text>
+<text x="164" y="311" class="t sm" fill="#57C98A">OS が強制する</text>
+<rect x="74" y="325" width="356" height="38" rx="5" fill="#57C98A0f"/>
+<text x="86" y="342" class="t xs" fill="#57C98A">AI がコマンドをどう書き換えても、OS が拒否する。</text>
+<text x="86" y="356" class="t xs" fill="#57C98A">すり抜ける余地がない。</text>
 
 <!-- 右: サンドボックスの外 -->
-<rect x="468" y="180" width="392" height="196" rx="8" fill="#2a1f0a" stroke="#f9e2af" stroke-width="2"/>
-<text x="486" y="204" class="t md" fill="#f9e2af">サンドボックスの外</text>
-<text x="486" y="221" class="t xs" fill="#c9a85a">ファイル読み書き・WebFetch・MCP サーバー</text>
+<rect x="468" y="180" width="392" height="196" rx="8" fill="#241C0D" stroke="#F0B849" stroke-width="2"/>
+<text x="486" y="204" class="t md" fill="#F0B849">サンドボックスの外</text>
+<text x="486" y="221" class="t xs" fill="#B08A3A">ファイル読み書き・WebFetch・MCP サーバー</text>
 <line x1="486" y1="232" x2="842" y2="232" stroke="#4a380f"/>
-<text x="486" y="255" class="t sm" fill="#cdd6f4">守るしくみ</text>
-<text x="576" y="255" class="t sm" fill="#f9e2af">許可ルールで1件ずつ判定</text>
-<text x="486" y="283" class="t sm" fill="#cdd6f4">弱いところ</text>
-<text x="576" y="283" class="t sm" fill="#f9e2af">見た目で判断するため</text>
-<text x="576" y="298" class="t sm" fill="#f9e2af">書き方次第で抜ける余地</text>
-<rect x="486" y="312" width="356" height="51" rx="5" fill="#f9e2af0f"/>
-<text x="498" y="329" class="t xs" fill="#f9e2af">だから、秘密ファイルは読めなくし、通信先も絞る。</text>
-<text x="498" y="343" class="t xs" fill="#f9e2af">MCP は信頼できるものだけを入れる。開発サーバーを</text>
-<text x="498" y="357" class="t xs" fill="#f9e2af">ここに出すときは対象を最小限にする。</text>
+<text x="486" y="255" class="t sm" fill="#DFE3E8">守るしくみ</text>
+<text x="576" y="255" class="t sm" fill="#F0B849">許可ルールで1件ずつ判定</text>
+<text x="486" y="283" class="t sm" fill="#DFE3E8">弱いところ</text>
+<text x="576" y="283" class="t sm" fill="#F0B849">見た目で判断するため</text>
+<text x="576" y="298" class="t sm" fill="#F0B849">書き方次第で抜ける余地</text>
+<rect x="486" y="312" width="356" height="51" rx="5" fill="#F0B8490f"/>
+<text x="498" y="329" class="t xs" fill="#F0B849">だから、秘密ファイルは読めなくし、通信先も絞る。</text>
+<text x="498" y="343" class="t xs" fill="#F0B849">MCP は信頼できるものだけを入れる。開発サーバーを</text>
+<text x="498" y="357" class="t xs" fill="#F0B849">ここに出すときは対象を最小限にする。</text>
 
 <!-- 通信経路（矢印は最下部まで貫通） -->
-<line x1="252" y1="378" x2="252" y2="536" stroke="#a6e3a1" stroke-width="2" marker-end="url(#ah-g)"/>
-<line x1="664" y1="378" x2="664" y2="536" stroke="#f9e2af" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#ah-y)"/>
+<line x1="252" y1="378" x2="252" y2="536" stroke="#57C98A" stroke-width="2" marker-end="url(#ah-g)"/>
+<line x1="664" y1="378" x2="664" y2="536" stroke="#F0B849" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#ah-y)"/>
 
 <!-- 検問はサンドボックスの外・Claude Code の中にある -->
-<rect x="192" y="390" width="120" height="22" rx="4" fill="#0e1117" stroke="#a6e3a1" stroke-width="1.5"/>
-<text x="252" y="405" class="t xs" fill="#a6e3a1" text-anchor="middle">許可リストの検問</text>
-<text x="322" y="399" class="t xs" fill="#5ab055">許可リスト = つないでよいドメインの一覧</text>
-<text x="322" y="413" class="t xs" fill="#5ab055">検問役はサンドボックスの外にいる（Claude Code が管理）</text>
-<rect x="604" y="390" width="120" height="22" rx="4" fill="#0e1117" stroke="#f9e2af" stroke-width="1.5" stroke-dasharray="4 3"/>
-<text x="664" y="405" class="t xs" fill="#f9e2af" text-anchor="middle">検問なし</text>
-<text x="734" y="399" class="t xs" fill="#c9a85a">許可ルール = ツールと</text>
-<text x="734" y="413" class="t xs" fill="#c9a85a">対象ごとの可否</text>
+<rect x="192" y="390" width="120" height="22" rx="4" fill="#0C0D10" stroke="#57C98A" stroke-width="1.5"/>
+<text x="252" y="405" class="t xs" fill="#57C98A" text-anchor="middle">許可リストの検問</text>
+<text x="322" y="399" class="t xs" fill="#3F9E68">許可リスト = つないでよいドメインの一覧</text>
+<text x="322" y="413" class="t xs" fill="#3F9E68">検問役はサンドボックスの外にいる（Claude Code が管理）</text>
+<rect x="604" y="390" width="120" height="22" rx="4" fill="#0C0D10" stroke="#F0B849" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="664" y="405" class="t xs" fill="#F0B849" text-anchor="middle">検問なし</text>
+<text x="734" y="399" class="t xs" fill="#B08A3A">許可ルール = ツールと</text>
+<text x="734" y="413" class="t xs" fill="#B08A3A">対象ごとの可否</text>
 
 <!-- OK / NG（Windows の枠外） -->
-<text x="272" y="496" class="t mono" fill="#a6e3a1">OK  github.com    リストにあるので通る</text>
-<text x="272" y="512" class="t mono" fill="#f38ba8">NG  example.com   リストにないので 403</text>
-<text x="682" y="496" class="t mono" fill="#a6e3a1">OK  WebFetch(github.com)  ルールで許可</text>
-<text x="682" y="512" class="t mono" fill="#f38ba8">NG  Read(~/.ssh/**)       ルールで拒否</text>
+<text x="272" y="496" class="t mono" fill="#57C98A">OK  github.com    リストにあるので通る</text>
+<text x="272" y="512" class="t mono" fill="#E5636D">NG  example.com   リストにないので 403</text>
+<text x="682" y="496" class="t mono" fill="#57C98A">OK  WebFetch(github.com)  ルールで許可</text>
+<text x="682" y="512" class="t mono" fill="#E5636D">NG  Read(~/.ssh/**)       ルールで拒否</text>
 
 <!-- インターネット -->
 <rect x="8" y="542" width="884" height="52" rx="10" fill="#242c3e" stroke="#9aa5bd" stroke-width="1.5" stroke-dasharray="6 4"/>
@@ -863,8 +908,8 @@
 <text x="26" y="583" class="t xs" fill="#9aa5bd">GitHub・npm レジストリ・各種 API・そして攻撃者が用意したかもしれない場所</text>
 
 <!-- 結論 -->
-<text x="8" y="623" class="t md" fill="#cdd6f4">どちらも外部と通信する。違うのは通信の有無ではなく、止め方である。</text>
-<text x="8" y="640" class="t sm" fill="#6c7a96">層が分かれているのはファイルの置き場所の話ではない。OS で止められる領域とルールでしか止められない領域の違いによる。だから両方に設定が要る。</text>
+<text x="8" y="623" class="t md" fill="#DFE3E8">どちらも外部と通信する。違うのは通信の有無ではなく、止め方である。</text>
+<text x="8" y="640" class="t sm" fill="#868E9B">層が分かれているのはファイルの置き場所の話ではない。OS で止められる領域とルールでしか止められない領域の違いによる。だから両方に設定が要る。</text>
 </svg>
         </div>
       </details>
@@ -952,7 +997,7 @@
     </div>
 
     <!-- STEP 1 -->
-    <div class="section" id="s1">
+    <div class="section" id="s1" data-layer="win">
       <div class="section-header">
         <div class="step-badge">STEP 1</div>
         <h2>WSL2 インストール</h2>
@@ -1006,7 +1051,7 @@
     </div>
 
     <!-- STEP 2 -->
-    <div class="section" id="s2">
+    <div class="section" id="s2" data-layer="win">
       <div class="section-header">
         <div class="step-badge">STEP 2</div>
         <h2>.wslconfig でメモリ上限を設定</h2>
@@ -1055,7 +1100,7 @@
     </div>
 
     <!-- STEP 3 -->
-    <div class="section" id="s3">
+    <div class="section" id="s3" data-layer="wsl">
       <div class="section-header">
         <div class="step-badge">STEP 3</div>
         <h2>Ubuntu 初期設定</h2>
@@ -1115,7 +1160,7 @@
     </div>
 
     <!-- STEP 4（新設） -->
-    <div class="section" id="s4">
+    <div class="section" id="s4" data-layer="wsl">
       <div class="section-header">
         <div class="step-badge">STEP 4</div>
         <h2>Node.js / npm の導入（nvm 経由）</h2>
@@ -1208,7 +1253,7 @@
     </div>
 
     <!-- STEP 5 -->
-    <div class="section" id="s5">
+    <div class="section" id="s5" data-layer="wsl">
       <div class="section-header">
         <div class="step-badge">STEP 5</div>
         <h2>Claude Code インストール（WSL内）</h2>
@@ -1269,7 +1314,7 @@
     </div>
 
     <!-- STEP 6 -->
-    <div class="section" id="s6">
+    <div class="section" id="s6" data-layer="cc">
       <div class="section-header">
         <div class="step-badge">STEP 6</div>
         <h2>サンドボックス有効化 &amp; settings.json 設定</h2>
@@ -1639,7 +1684,7 @@
     </div>
 
     <!-- STEP 7（新設） -->
-    <div class="section" id="s7">
+    <div class="section" id="s7" data-layer="cc">
       <div class="section-header">
         <div class="step-badge">STEP 7</div>
         <h2>CLAUDE.md でグローバル方針を明文化</h2>
@@ -1718,7 +1763,7 @@
     </div>
 
     <!-- STEP 8 -->
-    <div class="section" id="s8">
+    <div class="section" id="s8" data-layer="cc">
       <div class="section-header">
         <div class="step-badge">STEP 8</div>
         <h2>認証 &amp; 動作確認</h2>
@@ -1843,7 +1888,7 @@
     </div>
 
     <!-- STEP 9（新設） -->
-    <div class="section" id="s9">
+    <div class="section" id="s9" data-layer="cc">
       <div class="section-header">
         <div class="step-badge">STEP 9</div>
         <h2>プラグインの導入</h2>
@@ -1955,7 +2000,7 @@
     </div>
 
     <!-- STEP 10 -->
-    <div class="section" id="s10">
+    <div class="section" id="s10" data-layer="wsl">
       <div class="section-header">
         <div class="step-badge">STEP 10</div>
         <h2>Git の設定（WSL内）</h2>
@@ -2014,7 +2059,7 @@
     </div>
 
     <!-- STEP 11 -->
-    <div class="section" id="s11">
+    <div class="section" id="s11" data-layer="cc">
       <div class="section-header">
         <div class="step-badge">STEP 11</div>
         <h2>GitHub HTTPS 連携 &amp; PR</h2>
@@ -2177,7 +2222,7 @@
     </div>
 
     <!-- STEP 12 -->
-    <div class="section" id="s12">
+    <div class="section" id="s12" data-layer="cc">
       <div class="section-header">
         <div class="step-badge">STEP 12</div>
         <h2>ブラウザ確認環境（AI に画面を見せる）</h2>
@@ -2325,7 +2370,7 @@
     </div>
 
     <!-- STEP 13 -->
-    <div class="section" id="s13">
+    <div class="section" id="s13" data-layer="win">
       <div class="section-header">
         <div class="step-badge">STEP 13</div>
         <h2>Windows Terminal の設定（任意・推奨）</h2>
@@ -2354,7 +2399,7 @@
     </div>
 
     <!-- STEP 14 -->
-    <div class="section" id="s14">
+    <div class="section" id="s14" data-layer="win">
       <div class="section-header">
         <div class="step-badge">STEP 14</div>
         <h2>Zed / VS Code のターミナルを WSL2 に向ける（任意）</h2>
@@ -2416,7 +2461,7 @@
     </div>
 
     <!-- STEP 15（新設） -->
-    <div class="section" id="s15">
+    <div class="section" id="s15" data-layer="wsl">
       <div class="section-header">
         <div class="step-badge">STEP 15</div>
         <h2>dotenvx による .env ファイル暗号化（任意）</h2>
