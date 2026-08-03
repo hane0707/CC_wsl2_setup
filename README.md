@@ -13,10 +13,13 @@ AI に画面を確認させるブラウザ環境まで、必要な手順をす�
 
 ## 資料
 
-| ファイル | 内容 |
-|---|---|
-| [claude-code-wsl2-setup.html](./claude-code-wsl2-setup.html) | **セットアップ手順書** — これだけ読めばセットアップできる |
-| [claude-code-design-notes.html](./claude-code-design-notes.html) | 補足 — なぜその設定なのか、何を検証して何が分かったか。セットアップには不要 |
+| ファイル | 内容 | いつ読むか |
+|---|---|---|
+| [claude-code-wsl2-setup.html](./claude-code-wsl2-setup.html) | **セットアップ手順書** | セットアップするとき。**これだけで完結する** |
+| [claude-code-threat-model.html](./claude-code-threat-model.html) | 脅威モデルと設定の対応表 | なぜここまでやるのか納得したいとき。設定に抜け漏れがないか監査したいとき |
+| [claude-code-design-notes.html](./claude-code-design-notes.html) | 設計判断と検証記録 | なぜこの構成を選んだのか、何を却下したのかを確認したいとき |
+
+補足2本はいずれもセットアップには不要です。
 
 ## skills
 
