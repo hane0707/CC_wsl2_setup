@@ -20,6 +20,7 @@
     --yellow: #f9e2af;
     --red: #f38ba8;
     --teal: #94e2d5;
+    --orange: #fab387;
     --tag-bg: #1e2d45;
   }
 
@@ -108,11 +109,18 @@
   .badge.env { border-color: #89b4fa44; color: var(--accent); background: #89b4fa0d; }
   .badge.warn { border-color: #f9e2af44; color: var(--yellow); background: #f9e2af0d; }
 
-  /* レイアウト */
+  /* レイアウト（NAV 240px + コンテンツ、全体 max 1520px 中央寄せ） */
+  header {
+    max-width: 1520px;
+    margin: 0 auto;
+  }
+
   .layout {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 240px 1fr;
     min-height: calc(100vh - 110px);
+    max-width: 1520px;
+    margin: 0 auto;
   }
 
   /* サイドバー */
@@ -164,10 +172,11 @@
     margin: 12px 16px;
   }
 
-  /* メインコンテンツ */
+  /* メインコンテンツ（中央「手順」+ 右「補足」の土台。幅は .layout の 1fr に追従） */
   main {
     padding: 36px 48px 80px;
-    max-width: 820px;
+    max-width: none;
+    min-width: 0;
   }
 
   /* セクション */
@@ -456,6 +465,181 @@
     height: 1px;
     background: var(--border);
   }
+
+  /* ===================================================================
+     ここから追加分（2026-08 全面再構成）
+     - STEP 内 2カラム（中央=手順 / 右=補足）
+     - 実行場所の色分け（コードブロック左端バー）
+     - details（折りたたみ）
+     - 進捗チェックボックス・プログレスバー
+     - 完了条件（チェックポイント）
+     =================================================================== */
+
+  /* STEP 内2カラム。補足が無いSTEPはこのラッパーごと省略してよい */
+  .step-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 28px;
+    align-items: start;
+  }
+  .step-main { min-width: 0; }
+
+  .step-aside {
+    min-width: 0;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .step-aside-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    opacity: .75;
+    margin-bottom: 10px;
+  }
+  .step-aside p { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+  .step-aside strong { color: var(--text); font-weight: 500; }
+  .step-aside .inline-code { font-size: 11px; }
+  .step-aside .notice { font-size: 12px; padding: 10px 12px; margin-bottom: 12px; }
+  .step-aside .notice p { color: var(--text); }
+
+  @media (max-width: 1200px) {
+    .step-grid { grid-template-columns: 1fr; }
+    .step-aside:not(:empty) { margin-top: 6px; padding-top: 14px; border-top: 1px dashed var(--border); }
+  }
+
+  /* details（折りたたみ） */
+  details {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    margin: 12px 0;
+  }
+  details summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 9px 14px;
+    font-size: 12.5px;
+    color: var(--accent);
+    user-select: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::marker { content: ''; }
+  details[open] summary { border-bottom: 1px solid var(--border); }
+  details .details-body { padding: 12px 14px; }
+  details .details-body p:last-child { margin-bottom: 0; }
+  .step-aside details { background: var(--surface2); }
+  .step-aside details summary { font-size: 12px; }
+
+  /* 実行場所の色分け：コードブロック左端 4px バー */
+  .code-block.env-win     { border-left: 4px solid var(--accent); }
+  .code-block.env-wsl     { border-left: 4px solid var(--green); }
+  .code-block.env-outside { border-left: 4px solid var(--orange); }
+  .code-block.env-cc      { border-left: 4px solid var(--accent2); }
+
+  .env-tag.outside { background: #fab38718; color: var(--orange); border: 1px solid #fab38744; font-weight: 600; }
+  .env-tag.cc      { background: #cba6f715; color: var(--accent2); border: 1px solid #cba6f733; }
+
+  /* 凡例 */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding: 12px 18px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    margin-bottom: 28px;
+    font-size: 12px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; color: var(--muted); white-space: nowrap; }
+  .legend-bar { width: 4px; height: 15px; border-radius: 2px; flex-shrink: 0; }
+  .legend-bar.win { background: var(--accent); }
+  .legend-bar.wsl { background: var(--green); }
+  .legend-bar.outside { background: var(--orange); }
+  .legend-bar.cc { background: var(--accent2); }
+  .legend-item strong { color: var(--text); font-weight: 500; }
+
+  /* 進捗表示（ヘッダー下） */
+  .progress-wrap {
+    max-width: 1520px;
+    margin: 0 auto;
+    padding: 10px 48px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width .2s ease;
+  }
+  .progress-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    min-width: 92px;
+  }
+  .progress-reset {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s;
+  }
+  .progress-reset:hover { border-color: var(--red); color: var(--red); }
+
+  /* タスクチェックボックス */
+  .task-check {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .task-check input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--green);
+    cursor: pointer;
+  }
+  .code-block.done { opacity: .5; }
+  .code-block.done .label-text { text-decoration: line-through; }
+
+  /* 完了条件（チェックポイント） */
+  .checkpoint {
+    border: 1px solid #a6e3a133;
+    background: #a6e3a108;
+    border-left: 3px solid var(--green);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-top: 18px;
+    font-size: 13px;
+    display: flex;
+    gap: 12px;
+  }
+  .checkpoint .notice-icon { flex-shrink: 0; font-size: 14px; line-height: 1.7; }
+  .checkpoint p { color: var(--text); }
+  .checkpoint strong { font-weight: 500; }
+
+  /* 分岐ナビ */
+  .branch-nav { margin: 16px 0 26px; }
 </style>
 </head>
 <body>
@@ -474,9 +658,15 @@
   <div class="header-meta">
     <div class="meta-row"><span class="meta-label">作成</span><span class="meta-val">2025-03-31</span></div>
     <div class="meta-row"><span class="meta-label">更新</span><span class="meta-val">2026-08-03</span></div>
-    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">2.0</span></div>
+    <div class="meta-row" style="margin-top:8px;"><span class="meta-label">v</span><span class="meta-val">2.1</span></div>
   </div>
 </header>
+
+<div class="progress-wrap">
+  <span class="progress-text" id="progress-text">0 / 0 完了</span>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  <button type="button" class="progress-reset" id="progress-reset">進捗をリセット</button>
+</div>
 
 <div class="layout">
 
@@ -486,20 +676,28 @@
     <a href="#s1"><span class="step-num">1</span>WSL2 インストール</a>
     <a href="#s2"><span class="step-num">2</span>.wslconfig 設定</a>
     <a href="#s3"><span class="step-num">3</span>Ubuntu 初期設定</a>
-    <a href="#s4"><span class="step-num">4</span>Claude Code インストール</a>
-    <a href="#s5"><span class="step-num">5</span>サンドボックス &amp; settings.json</a>
-    <a href="#s6"><span class="step-num">6</span>認証 &amp; 動作確認</a>
-    <a href="#s7"><span class="step-num">7</span>Git 設定</a>
-    <a href="#s8"><span class="step-num">8</span>GitHub HTTPS 連携 &amp; PR</a>
-    <a href="#s9"><span class="step-num">9</span>ブラウザ確認環境</a>
-    <a href="#s10"><span class="step-num">10</span>Windows Terminal 設定</a>
-    <a href="#s11"><span class="step-num">11</span>Zed / VS Code 設定</a>
+    <a href="#s4"><span class="step-num">4</span>Node.js / npm 導入</a>
+    <a href="#s5"><span class="step-num">5</span>Claude Code インストール</a>
+    <a href="#s6"><span class="step-num">6</span>サンドボックス &amp; settings.json</a>
+    <a href="#s7"><span class="step-num">7</span>認証 &amp; 動作確認</a>
+    <a href="#s8"><span class="step-num">8</span>Git 設定</a>
+    <a href="#s9"><span class="step-num">9</span>GitHub HTTPS 連携 &amp; PR</a>
+    <a href="#s10"><span class="step-num">10</span>ブラウザ確認環境</a>
+    <a href="#s11"><span class="step-num">11</span>Windows Terminal 設定</a>
+    <a href="#s12"><span class="step-num">12</span>Zed / VS Code 設定</a>
     <div class="nav-divider"></div>
     <div class="nav-label">補足</div>
     <a href="#tips"><span class="step-num">+</span>運用上の注意点</a>
   </nav>
 
   <main>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-bar win"></span><strong>青</strong>＝Windows（PowerShell 等）で実行</div>
+      <div class="legend-item"><span class="legend-bar wsl"></span><strong>緑</strong>＝WSL Ubuntu で実行</div>
+      <div class="legend-item"><span class="legend-bar outside"></span><strong>オレンジ</strong>＝Claude Code の外で実行必須（最も事故が多い）</div>
+      <div class="legend-item"><span class="legend-bar cc"></span><strong>紫</strong>＝Claude Code セッション内（スラッシュコマンド等）</div>
+    </div>
 
     <!-- 前提確認 -->
     <div class="section" id="pre">
@@ -510,16 +708,46 @@
 
       <div class="notice warn">
         <span class="notice-icon">⚠️</span>
-        <p><strong>ネイティブインストール済みの場合：</strong>WSL2側とネイティブWindows側はそれぞれ独立したバイナリです。競合は起きませんが、PATH混入に注意してください。本手順の<strong>STEP 3・4・6</strong>に追加の注記があります。</p>
+        <p><strong>ネイティブインストール済みの場合：</strong>WSL2側とネイティブWindows側はそれぞれ独立したバイナリです。競合は起きませんが、PATH混入に注意してください。追加の注記がある STEP は下表を参照してください。</p>
       </div>
 
-      <p>セットアップを始める前に、各コンポーネントの関係を把握しておきましょう。</p>
+      <p>あなたの状況に応じて、読み飛ばせる STEP と注意が必要な STEP が変わります。</p>
 
-      <div style="margin: 16px 0 28px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface);">
-        <div style="padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border);">
-          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.8px; color: var(--muted); text-transform: uppercase;">アーキテクチャ概要</span>
-        </div>
-        <div style="padding: 12px;">
+      <div class="branch-nav">
+        <table>
+          <tr>
+            <th>あなたの状況</th>
+            <th>スキップしてよい STEP</th>
+            <th>追加の注記がある STEP</th>
+          </tr>
+          <tr>
+            <td class="key-col">WSL2 未導入 / ネイティブ未導入</td>
+            <td>なし（STEP 1 から順に）</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td class="key-col">WSL2 導入済み / ネイティブ未導入</td>
+            <td>STEP 1（WSL2 インストール）</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td class="key-col">WSL2 未導入 / ネイティブ導入済み</td>
+            <td>なし（STEP 1 から順に）</td>
+            <td>STEP 3・STEP 5・STEP 7</td>
+          </tr>
+          <tr>
+            <td class="key-col">WSL2 導入済み / ネイティブ導入済み</td>
+            <td>STEP 1</td>
+            <td>STEP 3・STEP 5・STEP 7</td>
+          </tr>
+        </table>
+      </div>
+
+      <p>セットアップを始める前に、各コンポーネントの関係を把握しておきましょう（任意・折りたたみ）。</p>
+
+      <details>
+        <summary>▶ アーキテクチャ概要図を見る（任意）</summary>
+        <div class="details-body">
 <svg width="100%" viewBox="0 0 680 980" style="display:block; font-family: 'IBM Plex Mono', 'IBM Plex Sans JP', monospace;">
 <style>
   .dg-label-lg { font-size: 13px; font-weight: 600; }
@@ -664,9 +892,9 @@
 <text x="352" y="892" class="dg-label-sm fg-blue-s" text-anchor="middle">permissions.deny — Bash(rm -rf *)  Bash(sudo *)  Read(~/.ssh/**)  Edit(~/.bashrc) ...</text>
 </svg>
         </div>
-      </div>
+      </details>
 
-      <p>以下を確認してから進めてください。</p>
+      <p>以下を確認してから進めてください（必須確認事項）。</p>
 
       <table>
         <tr>
@@ -710,15 +938,13 @@
         <span class="tag required">必須</span>
       </div>
 
-      <div class="notice success">
-        <span class="notice-icon">✅</span>
-        <p><strong>この手順はすでに完了しています。</strong> ログで <span class="inline-code">yourname@hostname:~$</span> が表示されUbuntuに入れているので、WSL2のインストールは成功しています。STEP 2 に進んでください。</p>
-      </div>
+      <p>以下は記録として残します（この手順はすでに完了しています）。</p>
 
-      <p>以下は記録として残します。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">PowerShell（管理者）</span><span class="env-tag win">Windows</span></div>
+      <div class="code-block env-win">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s1-1"></label>
+          <span class="label-text">PowerShell（管理者）</span><span class="env-tag win">Windows</span>
+        </div>
         <pre><span class="cmd">wsl</span> --install -d Ubuntu</pre>
       </div>
 
@@ -730,18 +956,31 @@
       </div>
 
       <p>プロンプトの見た目で今どちらにいるかが分かります。</p>
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">Ubuntu 内（WSL）のプロンプト — Linux コマンドのみ有効</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s1-2"></label>
+          <span class="label-text">Ubuntu 内（WSL）のプロンプト — Linux コマンドのみ有効</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre>yourname@hostname:~$</pre>
       </div>
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">PowerShell のプロンプト — ここで wsl --shutdown を実行する</span><span class="env-tag win">Windows</span></div>
+      <div class="code-block env-win">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s1-3"></label>
+          <span class="label-text">PowerShell のプロンプト — ここで wsl --shutdown を実行する</span><span class="env-tag win">Windows</span>
+        </div>
         <pre>PS C:\Users\yourname></pre>
       </div>
 
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>STEP 2 の <span class="inline-code">wsl --shutdown</span> について：</strong> Ubuntu タブを <span class="inline-code">exit</span> で閉じてからPowerShellで実行してください。または Windows Terminal で PowerShell タブを新たに開いて実行するのが確実です。</p>
+      <details>
+        <summary>▶ 次の STEP で使う wsl --shutdown について</summary>
+        <div class="details-body">
+          <p>Ubuntu タブを <span class="inline-code">exit</span> で閉じてから PowerShell で実行してください。または Windows Terminal で PowerShell タブを新たに開いて実行するのが確実です。</p>
+        </div>
+      </details>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> ログで <span class="inline-code">yourname@hostname:~$</span> が表示され Ubuntu に入れていれば、WSL2 のインストールは成功しています。</p>
       </div>
     </div>
 
@@ -757,8 +996,11 @@
 
       <p>エクスプローラーで <span class="inline-code">C:\Users\<あなたのユーザー名>\</span> を開き、<strong>.wslconfig</strong> というファイルを新規作成して以下を記入します。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">.wslconfig（新規作成）</span><span class="env-tag file">C:\Users\YourName\.wslconfig</span></div>
+      <div class="code-block env-win">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s2-1"></label>
+          <span class="label-text">.wslconfig（新規作成）</span><span class="env-tag file">C:\Users\YourName\.wslconfig</span>
+        </div>
         <pre><span class="key">[wsl2]</span>
 <span class="val">memory</span>=8GB
 <span class="val">swap</span>=16GB
@@ -771,19 +1013,23 @@
 
       <p>保存後、<strong>UbuntuタブをすべてexitまたはタブのXで閉じてから</strong>、PowerShell で以下を実行して設定を反映します。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">PowerShell（Ubuntuを閉じた後に実行）</span><span class="env-tag win">Windows</span></div>
+      <div class="code-block env-win">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s2-2"></label>
+          <span class="label-text">PowerShell（Ubuntuを閉じた後に実行）</span><span class="env-tag win">Windows</span>
+        </div>
         <pre><span class="cmd">wsl</span> --shutdown</pre>
       </div>
 
       <div class="notice info">
         <span class="notice-icon">ℹ️</span>
-        <p>何も表示されなければ成功です。「致命的なエラー」が出た場合はすでに停止済みなので無視して次へ進んでください。</p>
+        <p>何も表示されなければ成功です。「致命的なエラー」が出た場合はすでに停止済みなので無視して次へ進んでください。<br>
+        <span class="inline-code">wsl --shutdown</span> は Windows のコマンドです。Ubuntu内（<span class="inline-code">yourname@hostname:~$</span> の状態）では動きません。必ず PowerShell のプロンプト（<span class="inline-code">PS C:\...</span>）から実行してください。</p>
       </div>
 
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><span class="inline-code">wsl --shutdown</span> はWindowsのコマンドです。Ubuntu内（<span class="inline-code">yourname@hostname:~$</span> の状態）では動きません。必ずPowerShellのプロンプト（<span class="inline-code">PS C:\...</span>）から実行してください。</p>
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">wsl --shutdown</span> がエラーなく完了し、次に開いた Ubuntu タブで作業を続けられれば設定は反映されています。</p>
       </div>
     </div>
 
@@ -797,8 +1043,11 @@
 
       <p>Windows Terminal で <strong>Ubuntu タブ</strong>を開きます。タブバー右端の <span class="inline-code">∨</span> をクリックして「Ubuntu」を選ぶか、PowerShell で <span class="inline-code">wsl</span> と入力すると入れます。プロンプトが <span class="inline-code">yourname@hostname:~$</span> のような表示になればOKです。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">パッケージ更新</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s3-1"></label>
+          <span class="label-text">パッケージ更新</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre><span class="cmd">sudo apt</span> update && <span class="cmd">sudo apt</span> upgrade -y</pre>
       </div>
 
@@ -807,20 +1056,29 @@
         <p><strong>ネイティブインストール済みの場合：</strong>WSL内でも PATH にWindowsの <span class="inline-code">claude.exe</span> が混入することがあります。以下で確認してください。</p>
       </div>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">PATH 汚染の確認（/mnt/c/ が出れば汚染あり）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s3-2"></label>
+          <span class="label-text">PATH 汚染の確認（/mnt/c/ が出れば汚染あり）</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre><span class="cmd">echo</span> $PATH | tr ':' '\n' | <span class="cmd">grep</span> -i mnt</pre>
       </div>
 
       <p><span class="inline-code">/mnt/c/</span> が出た場合は汚染ありです。以下を実行して <span class="inline-code">~/.bashrc</span> にフィルタを追記します。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">PATH フィルタを .bashrc に追記</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s3-3"></label>
+          <span class="label-text">PATH フィルタを .bashrc に追記</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre><span class="cmd">echo</span> <span class="str">'export PATH=$(echo $PATH | tr ":" "\n" | grep -v "/mnt/c" | tr "\n" ":" | sed "s/:$//")'</span> >> ~/.bashrc</pre>
       </div>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">.bashrc を反映</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s3-4"></label>
+          <span class="label-text">.bashrc を反映</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre><span class="cmd">source</span> ~/.bashrc</pre>
       </div>
 
@@ -828,45 +1086,103 @@
         <span class="notice-icon">ℹ️</span>
         <p>PATH汚染がない（<span class="inline-code">/mnt/c/</span> が出ない）場合はこの操作は不要です。次のステップに進んでください。</p>
       </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">echo $PATH | tr ':' '\n' | grep -i mnt</span> の結果が空、または対処済みであれば完了です。</p>
+      </div>
     </div>
 
-    <!-- STEP 4 -->
+    <!-- STEP 4（新設） -->
     <div class="section" id="s4">
       <div class="section-header">
         <div class="step-badge">STEP 4</div>
-        <h2>Claude Code インストール（WSL内）</h2>
+        <h2>Node.js / npm の導入（nvm 経由）</h2>
         <span class="tag required">必須</span>
       </div>
 
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>ネイティブインストール済みの場合：</strong>WSL内への追加インストールは問題ありません。Windows側のバイナリ（<span class="inline-code">~\.local\bin\claude.exe</span>）とWSL側のバイナリは完全に独立しています。設定ファイル（<span class="inline-code">~/.claude/</span>）は認証情報を含め<strong>共有されません</strong>。WSL内で別途ログインが必要です（STEP 6）。</p>
+      <div class="step-grid">
+        <div class="step-main">
+          <p>このガイドは Web アプリ開発を前提とするため、ここで Node.js を導入します。<strong>nvm（Node Version Manager）経由で WSL（Linux）側に</strong>導入し、Windows 側の Node.js とは独立させます。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s4-1"></label>
+              <span class="label-text">nvm インストールスクリプトを実行</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">curl</span> -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash</pre>
+          </div>
+
+          <p>インストール後、シェルに読み込みます（新しいタブを開き直しても構いません）。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s4-2"></label>
+              <span class="label-text">.bashrc を反映</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">source</span> ~/.bashrc</pre>
+          </div>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s4-3"></label>
+              <span class="label-text">Node.js LTS 版をインストールして既定に設定</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">nvm</span> install --lts
+<span class="cmd">nvm</span> use --lts
+<span class="cmd">nvm</span> alias default lts/*</pre>
+          </div>
+
+          <p>バージョンと実体のパスを確認します。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s4-4"></label>
+              <span class="label-text">バージョン確認 &amp; 実体パスの確認</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">node</span> --version
+<span class="cmd">npm</span> --version
+<span class="cmd">which</span> node</pre>
+          </div>
+
+          <div class="notice warn">
+            <span class="notice-icon">⚠️</span>
+            <p><strong><span class="inline-code">which node</span> の結果が <span class="inline-code">/mnt/c/...</span> の場合は要注意です。</strong> Windows 側の Node.js を拾ってしまっています。PATH フィルタ（<span class="inline-code">/mnt/c</span> を除去する設定）が効いているか確認し、ターミナルを開き直してください。正しくは <span class="inline-code">$HOME/.nvm/versions/node/...</span> を指します。</p>
+          </div>
+
+          <div class="section-group-label">4-2 seccomp フィルタの導入（npm が使えるようになったので今のうちに）</div>
+
+          <p>Claude Code のサンドボックスは Unix ソケット経由の通信も制限できますが、そのためには追加の seccomp フィルタが必要です。npm が使えるようになった今、導入しておきます。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s4-5"></label>
+              <span class="label-text">sandbox-runtime（seccomp フィルタ）のインストール</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">npm</span> install -g @anthropic-ai/sandbox-runtime</pre>
+          </div>
+
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p>この時点ではまだ <span class="inline-code">claude</span> コマンドがインストールされていません。有効化の確認（<span class="inline-code">/doctor</span> で <span class="inline-code">seccomp filter: installed</span> になっているか）は、次の STEP で Claude Code を導入し認証を済ませたあとに行います。</p>
+          </div>
+        </div>
+
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <details open>
+            <summary>▶ なぜ nvm 経由で WSL 側に入れるのか</summary>
+            <div class="details-body">
+              <p>WSL は Windows 側の PATH を引き継ぐ設計になっています。先ほど PATH フィルタで Windows の <span class="inline-code">claude.exe</span> 混入に対処したのと同じ理由で、<strong>何も対策しないと Windows 側にインストール済みの node/npm を WSL からそのまま拾ってしまう</strong>ことがあります。バージョン不一致やネイティブモジュールの再ビルド要求など、原因の分かりにくい事故につながります。</p>
+              <p>nvm で WSL（Linux）側に独立した Node.js を入れておけば、この混入経路を根本から断てます。apt 版の nodejs はバージョンが古くなりがちなため、nvm を使っています。</p>
+            </div>
+          </details>
+        </aside>
       </div>
 
-      <p>公式推奨のネイティブインストーラーを使います（Node.js 不要）。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">Claude Code インストール</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">curl</span> -fsSL https://claude.ai/install.sh | bash</pre>
-      </div>
-
-      <p>インストール完了後、シェルを再読み込みして動作確認します。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">PATH を反映</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">source</span> ~/.bashrc</pre>
-      </div>
-
-      <p>バージョン番号が表示されれば成功です。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">バージョン確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">claude</span> --version</pre>
-      </div>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><span class="inline-code">npm install -g @anthropic-ai/claude-code</span> は<strong>非推奨</strong>（公式が廃止予定）。上記の <span class="inline-code">curl</span> コマンドを使ってください。</p>
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">node --version</span> / <span class="inline-code">npm --version</span> がバージョン番号を返し、<span class="inline-code">which node</span> が <span class="inline-code">$HOME/.nvm/...</span> を指していれば完了です。</p>
       </div>
     </div>
 
@@ -874,36 +1190,119 @@
     <div class="section" id="s5">
       <div class="section-header">
         <div class="step-badge">STEP 5</div>
+        <h2>Claude Code インストール（WSL内）</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <p>公式推奨のネイティブインストーラーを使います（Node.js は前の STEP で導入済みですが、このインストーラー自体は Node.js に依存しません）。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s5-1"></label>
+              <span class="label-text">Claude Code インストール</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">curl</span> -fsSL https://claude.ai/install.sh | bash</pre>
+          </div>
+
+          <p>インストール完了後、シェルを再読み込みして動作確認します。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s5-2"></label>
+              <span class="label-text">PATH を反映</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">source</span> ~/.bashrc</pre>
+          </div>
+
+          <p>バージョン番号が表示されれば成功です。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s5-3"></label>
+              <span class="label-text">バージョン確認</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">claude</span> --version</pre>
+          </div>
+
+          <div class="notice warn">
+            <span class="notice-icon">⚠️</span>
+            <p><span class="inline-code">npm install -g @anthropic-ai/claude-code</span> は<strong>非推奨</strong>（公式が廃止予定）。上記の <span class="inline-code">curl</span> コマンドを使ってください。</p>
+          </div>
+        </div>
+
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p><strong>ネイティブインストール済みの場合：</strong>WSL内への追加インストールは問題ありません。Windows側のバイナリ（<span class="inline-code">~\.local\bin\claude.exe</span>）とWSL側のバイナリは完全に独立しています。設定ファイル（<span class="inline-code">~/.claude/</span>）は認証情報を含め<strong>共有されません</strong>。この後の認証 STEP で、WSL 内から別途ログインが必要です（同じアカウントで構いません）。</p>
+          </div>
+        </aside>
+      </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">claude --version</span> がバージョン番号を表示すれば完了です。</p>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="step-badge">STEP 6</div>
         <h2>サンドボックス有効化 &amp; settings.json 設定</h2>
         <span class="tag recommend">推奨</span>
       </div>
 
-      <p>WSL2 限定の機能です。Claude Code が Bash ツールで実行するコマンドをサンドボックス内に隔離し、意図しないネットワーク通信やシステム変更を防ぎます。</p>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>サンドボックスの適用範囲：</strong> Bash ツールの実行のみに適用されます。Read / Write / WebSearch / WebFetch / MCP ツールやフック（Hooks）には適用されません。ファイル操作の制限は別途 <span class="inline-code">permissions</span> で設定します。</p>
+      <div class="step-grid">
+        <div class="step-main">
+          <p>WSL2 限定の機能です。Claude Code が Bash ツールで実行するコマンドをサンドボックス内に隔離し、意図しないネットワーク通信やシステム変更を防ぎます。</p>
+        </div>
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p><strong>サンドボックスの適用範囲：</strong> Bash ツールの実行のみに適用されます。Read / Write / WebSearch / WebFetch / MCP ツールやフック（Hooks）には適用されません。ファイル操作の制限は別途 <span class="inline-code">permissions</span> で設定します。</p>
+          </div>
+        </aside>
       </div>
 
-      <div class="section-group-label">5-1 依存パッケージのインストール</div>
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="section-group-label">6-1 依存パッケージのインストール</div>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">bubblewrap + socat インストール</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">sudo apt</span> install -y bubblewrap socat</pre>
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s6-1"></label>
+              <span class="label-text">bubblewrap + socat インストール</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">sudo apt</span> install -y bubblewrap socat</pre>
+          </div>
+        </div>
+        <aside class="step-aside"></aside>
       </div>
 
-      <div class="section-group-label">5-2 settings.json の作成（推奨設定）</div>
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="section-group-label">6-2 settings.json の作成（推奨設定）</div>
 
-      <p>公式リポジトリには <span class="inline-code">settings-lax</span> / <span class="inline-code">settings-bash-sandbox</span> / <span class="inline-code">settings-strict</span> の3プリセットがあります。個人のWSL2開発環境には <strong>settings-bash-sandbox をベース</strong>にした以下の設定が適しています。設定は <span class="inline-code">~/.claude/settings.json</span>（全プロジェクト共通）に置きます。プロジェクト単位で上書きしたい場合は <span class="inline-code">.claude/settings.json</span> 、適用前にテストしたい場合は <span class="inline-code">.claude/settings.local.json</span> を使ってください。</p>
+          <p>公式リポジトリには <span class="inline-code">settings-lax</span> / <span class="inline-code">settings-bash-sandbox</span> / <span class="inline-code">settings-strict</span> の3プリセットがあります。個人のWSL2開発環境には <strong>settings-bash-sandbox をベース</strong>にした以下の設定が適しています。設定は <span class="inline-code">~/.claude/settings.json</span>（全プロジェクト共通）に置きます。プロジェクト単位で上書きしたい場合は <span class="inline-code">.claude/settings.json</span> 、適用前にテストしたい場合は <span class="inline-code">.claude/settings.local.json</span> を使ってください。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">設定ディレクトリの作成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">mkdir</span> -p ~/.claude</pre>
-      </div>
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s6-2"></label>
+              <span class="label-text">設定ディレクトリの作成</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">mkdir</span> -p ~/.claude</pre>
+          </div>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">settings.json の作成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">cat</span> > ~/.claude/settings.json << <span class="str">'EOF'</span>
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s6-3"></label>
+              <span class="label-text">settings.json の作成</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">cat</span> > ~/.claude/settings.json << <span class="str">'EOF'</span>
 {
   "dangerouslySkipPermissions": "disable",
   "enableAllProjectMcpServers": false,
@@ -981,142 +1380,265 @@
   }
 }
 <span class="str">EOF</span></pre>
+          </div>
+        </div>
+        <aside class="step-aside"></aside>
       </div>
 
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>各設定の意図：</strong><br>
-        <span class="inline-code">enableAllProjectMcpServers: false</span> — リポジトリの <span class="inline-code">.mcp.json</span> に仕込まれた悪意ある MCP サーバーの自動読み込みを防ぎます。MCP はサンドボックスの外で動くため、自動有効化すると SSH キーや <span class="inline-code">.env</span> を外部送信できてしまいます。<br>
-        <span class="inline-code">sandbox.filesystem.denyRead</span> — OS レベルで機密パスへの読み取りを遮断します。サンドボックスが有効なとき、Bash コマンド（<span class="inline-code">cat ~/.ssh/id_rsa</span> 等）による迂回も防止します。<br>
-        <span class="inline-code">permissions.deny</span> — 内蔵ツール（Read / Edit）への防御線です。<span class="inline-code">sandbox.filesystem.denyRead</span> と同じパスを両方に設定することで多層防御になります。ただし deny ルールが無視されるバグの報告が複数あるため（GitHub issues #6699, #24846, #27040）、<strong>sandbox.filesystem.denyRead を主防御、permissions.deny を副防御</strong>として扱ってください。</p>
+      <div class="step-grid">
+        <div class="step-main">
+      <div class="section-group-label">6-3 各設定の意図（settings.json キー対応表）</div>
+
+      <table>
+        <tr>
+          <th>設定キー</th>
+          <th>内容</th>
+          <th>なぜこの設定か</th>
+        </tr>
+        <tr>
+          <td class="key-col">sandbox.enabled</td>
+          <td>サンドボックス機能そのものを有効化</td>
+          <td>Bash ツールの実行を bubblewrap で OS レベル隔離する。以下の子設定はすべてこれが前提</td>
+        </tr>
+        <tr>
+          <td class="key-col">allowUnsandboxedCommands</td>
+          <td>サンドボックス無しでのコマンド実行を許可しない（false）</td>
+          <td>true にすると個別コマンド単位で隔離を迂回できてしまうため、徹底するなら false</td>
+        </tr>
+        <tr>
+          <td class="key-col">autoAllowBashIfSandboxed</td>
+          <td>サンドボックス内で完結する Bash コマンドの自動承認（false＝毎回確認）</td>
+          <td>「OS レベルの壁が守る範囲でのみ自動化する」という考え方。詳細は右の補足を参照</td>
+        </tr>
+        <tr>
+          <td class="key-col">network.allowedDomains</td>
+          <td>Bash コマンドからの通信を許可するドメイン一覧</td>
+          <td>実際に必要な通信だけを列挙し、それ以外を遮断する。書き方の注意点は右の補足を参照</td>
+        </tr>
+        <tr>
+          <td class="key-col">network.strictAllowlist</td>
+          <td>allowedDomains 以外への接続を 403 で遮断（true）</td>
+          <td class="warn-td">これが無いと allowedDomains は「確認せず素通りさせる一覧」として働く（下の危険な例を参照）</td>
+        </tr>
+        <tr>
+          <td class="key-col">sandbox.filesystem.denyRead</td>
+          <td>~/.ssh・~/.aws・.env・*.pem 等への読み取りを拒否</td>
+          <td>OS レベルの主防御。Bash 経由の迂回（<span class="inline-code">cat ~/.ssh/id_rsa</span> 等）を防ぐ</td>
+        </tr>
+        <tr>
+          <td class="key-col">sandbox.excludedCommands</td>
+          <td>指定したコマンドをサンドボックスの<strong>外</strong>で実行する</td>
+          <td>開発サーバーをブラウザ（MCP）から到達可能にするために必要。理由は右の補足を参照。範囲は最小限に、<span class="inline-code">npm *</span> のような広いパターンは避ける</td>
+        </tr>
+        <tr>
+          <td class="key-col">permissions.deny</td>
+          <td>内蔵ツール（Bash / Read / Edit）への禁止ルール</td>
+          <td>sandbox と同じパスを重ねることで多層防御にする副防御。deny が無視される既知バグの報告があるため（GitHub issues #6699, #24846, #27040）、主防御は sandbox.filesystem.denyRead 側とする</td>
+        </tr>
+        <tr>
+          <td class="key-col">enableAllProjectMcpServers</td>
+          <td>リポジトリの .mcp.json にある MCP サーバーを自動読み込みしない（false）</td>
+          <td>MCP はサンドボックスの外で動くため、自動有効化すると悪意ある MCP が SSH キーや .env を外部送信できてしまう</td>
+        </tr>
+        <tr>
+          <td class="key-col">dangerouslySkipPermissions</td>
+          <td>権限確認スキップ機能そのものを無効化（"disable"）</td>
+          <td>誤って有効化しても機能しないようにする保険。個人の WSL2 開発環境では常時 disable を推奨</td>
+        </tr>
+      </table>
+
+      <div class="notice danger">
+        <span class="notice-icon">🚫</span>
+        <p><strong>strictAllowlist を外すと allowedDomains は実質ノーガードになります（実測）。</strong> 許可リストに無い <span class="inline-code">https://example.com</span> に確認もなく接続できてしまう挙動を確認済みです。<span class="inline-code">strictAllowlist: true</span>（Claude Code 2.1.219 以降）を必ず入れてください。</p>
+      </div>
+        </div>
+        <aside class="step-aside">
+          <div class="step-aside-label">補足・任意設定</div>
+
+          <details>
+            <summary>▶ なぜ sandbox と permissions.deny を両方設定するのか</summary>
+            <div class="details-body">
+              <p>sandbox なしでは Bash コマンドが deny ルールを完全に迂回できます（<span class="inline-code">cat ~/.ssh/id_rsa</span> は素通りします）。sandbox と deny を両方設定して初めて多層防御になります。sandbox が有効なとき、OS レベルで同じパスが遮断されるため、どちらか一方がバグで機能しなくても残りが守ります。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>▶ allowedDomains を書くときの落とし穴（実測）</summary>
+            <div class="details-body">
+              <p><strong>① ドメイン本体とワイルドカードは両方書く。</strong> <span class="inline-code">*.github.com</span> だけにすると <span class="inline-code">github.com</span> 本体にマッチせず <span class="inline-code">git push</span> が壊れる恐れがあります。<span class="inline-code">github.com</span> と <span class="inline-code">*.github.com</span> を併記してください。</p>
+              <p><strong>② api.github.com は必須。</strong> PR 作成は <span class="inline-code">github.com</span> ではなく <span class="inline-code">api.github.com</span> を使います。ワイルドカードで確実に含めます。</p>
+              <p><strong>③ 追加する前にリダイレクト先を確認する。</strong> 例えば <span class="inline-code">cdn.playwright.dev</span> は 307 で <span class="inline-code">storage.googleapis.com</span> に転送されるため、CDN だけ許可しても通りません。<span class="inline-code">curl -I &lt;URL&gt;</span> で転送先を調べてから判断してください。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>▶ なぜ開発サーバーを外に出すのか</summary>
+            <div class="details-body">
+              <p>サンドボックスは <strong>Bash コマンド1回ごとに作られては捨てられます。</strong> 実測では、コマンド内のプロセス番号が <span class="inline-code">1, 2, 389</span>、ネットワークインターフェースが <span class="inline-code">lo</span> のみでした。同じコマンドの中でだけサーバーに接続でき、次のコマンドからも MCP のブラウザからも到達できません。</p>
+              <p>そこで <span class="inline-code">excludedCommands</span> に開発サーバー起動コマンドを登録すると、そのプロセスだけがサンドボックスの外に立ち、ブラウザと同じネットワークで動くようになります。隔離が壊れるわけではありません — 実測では、外に出したサーバーに対して<strong>サンドボックス内からは依然として接続できません</strong>。外に出たのはそのプロセスだけで、壁自体は残っています。</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>▶ 自律実行に向けた任意設定（autoAllowBashIfSandboxed）</summary>
+            <div class="details-body">
+              <p><span class="inline-code">autoAllowBashIfSandboxed</span> を <span class="inline-code">true</span> にすると、サンドボックス内で完結するコマンドが確認なしで実行されます。「OS レベルの壁が守っている範囲でのみ自動化する」という考え方です。上の設定では <span class="inline-code">false</span>（毎回確認）にしてあります。エージェントに長時間走らせたくなった段階で切り替えを検討してください。</p>
+            </div>
+          </details>
+        </aside>
       </div>
 
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>permissions.deny の限界：</strong> sandbox なしでは Bash コマンドが deny ルールを完全に迂回できます（<span class="inline-code">cat ~/.ssh/id_rsa</span> は素通りします）。<strong>sandbox と deny を両方設定して初めて多層防御</strong>になります。sandbox が有効なとき、OS レベルで同じパスが遮断されるため、どちらか一方がバグで機能しなくても残りが守ります。</p>
+      <div class="step-grid">
+        <div class="step-main">
+          <p>settings.json の作成はここで完了です。この後、認証を済ませた STEP で動作確認を行います。</p>
+        </div>
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <details>
+            <summary>▶ なぜ MCP の登録だけ再起動が必要なのか</summary>
+            <div class="details-body">
+              <p><span class="inline-code">~/.claude/settings.json</span> の変更は Claude Code の<strong>再起動なしで反映されます</strong>（実測確認済み）。一方 MCP サーバーの登録は起動時に接続されるため、稼働中のセッションには反映されず<strong>再起動が必要</strong>です。設定ファイルの読み込みタイミングが異なるためです。</p>
+            </div>
+          </details>
+        </aside>
       </div>
 
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>strictAllowlist を必ず入れること（2026-08 追記・実測）：</strong> これが無いと <span class="inline-code">allowedDomains</span> は「通してよい先の一覧」ではなく<strong>「いちいち確認しないで済ませる一覧」</strong>として動きます。実測では、許可リストに無い <span class="inline-code">https://example.com</span> に確認もなく接続できてしまいました。<span class="inline-code">strictAllowlist: true</span>（Claude Code 2.1.219 以降）を入れて初めて、リスト外が <strong>403 で遮断</strong>されます。</p>
-      </div>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>allowedDomains の書き方（実測で判明した落とし穴）：</strong><br>
-        <strong>① ドメイン本体とワイルドカードは両方書く。</strong> <span class="inline-code">*.github.com</span> だけにすると <span class="inline-code">github.com</span> 本体にマッチせず <span class="inline-code">git push</span> が壊れる恐れがあります。<span class="inline-code">github.com</span> と <span class="inline-code">*.github.com</span> を併記してください。<br>
-        <strong>② api.github.com は必須。</strong> PR 作成は <span class="inline-code">github.com</span> ではなく <span class="inline-code">api.github.com</span> を使います。ワイルドカードで確実に含めます。<br>
-        <strong>③ 追加する前にリダイレクト先を確認する。</strong> 例えば <span class="inline-code">cdn.playwright.dev</span> は 307 で <span class="inline-code">storage.googleapis.com</span> に転送されるため、CDN だけ許可しても通りません。<span class="inline-code">curl -I &lt;URL&gt;</span> で転送先を調べてから判断してください。</p>
-      </div>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>excludedCommands は「サンドボックスの外で実行する」指定です。</strong> ここに書いたコマンドはファイルもネットワークも制限を受けません。<strong>開発サーバーをここに入れる理由は STEP 9</strong> にあります（ブラウザから開発サーバーへ到達させるために必須）。<strong>登録は最小限に留め、<span class="inline-code">npm *</span> のような広いパターンは絶対に避けてください。</strong></p>
-      </div>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>自律実行を目指す場合の任意設定：</strong> <span class="inline-code">autoAllowBashIfSandboxed</span> を <span class="inline-code">true</span> にすると、サンドボックス内で完結するコマンドが確認なしで実行されます。<strong>OS レベルの壁が守っている範囲でのみ自動化する</strong>という考え方です。上の設定では <span class="inline-code">false</span>（毎回確認）にしてあります。エージェントに長時間走らせたくなった段階で切り替えを検討してください。</p>
-      </div>
-
-      <div class="notice success">
+      <div class="checkpoint">
         <span class="notice-icon">✅</span>
-        <p>settings.json の作成はここで完了です。STEP 6 で認証を済ませた後、セッション内から動作確認を行います。<br>
-        なお <strong><span class="inline-code">~/.claude/settings.json</span> の変更は Claude Code の再起動なしで反映されます</strong>（実測確認済み）。MCP の設定とは挙動が異なります（STEP 9 参照）。</p>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">~/.claude/settings.json</span> が作成されていれば完了です（構文チェックは次の STEP で行います）。</p>
       </div>
     </div>
 
-
-    <!-- STEP 6 -->
-    <div class="section" id="s6">
-      <div class="section-header">
-        <div class="step-badge">STEP 6</div>
-        <h2>認証（ログイン）</h2>
-        <span class="tag required">必須</span>
-      </div>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>ネイティブインストール済みの場合：</strong>Windows側でログイン済みでも、WSL内では<strong>別途ログインが必要</strong>です。同じアカウントで問題ありません。</p>
-      </div>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">Claude Code 起動・認証</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">claude</span></pre>
-      </div>
-
-      <p>ブラウザが自動で開かない場合（WSLからWindowsブラウザへの連携ができていない場合）：</p>
-
-      <p>ブラウザが自動で開かない場合、ログイン画面で <span class="inline-code">c</span> キーを押すと URL がクリップボードにコピーされます。それを Windows のブラウザに貼り付けて認証してください。または以下で <span class="inline-code">BROWSER</span> 環境変数を設定しておくと自動で開くようになります。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">BROWSER 環境変数を .bashrc に追記</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">echo</span> <span class="str">'export BROWSER="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"'</span> >> ~/.bashrc</pre>
-      </div>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">.bashrc を反映</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">source</span> ~/.bashrc</pre>
-      </div>
-
-      <p>ブラウザで認証完了後、表示されるトークンをターミナルに貼り付けて Enter。Claude Code のプロンプト（<span class="inline-code">&gt;</span> の表示）が出れば認証成功です。</p>
-
-      <p>認証が完了したセッション内で、settings.json とサンドボックスが正しく有効になっているか確認します。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">settings.json の構文チェック（シェルで実行）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">cat</span> ~/.claude/settings.json | python3 -m json.tool</pre>
-      </div>
-
-      <p>エラーなく整形表示されれば JSON として正しい形式です。続けて Claude Code セッション内でサンドボックス状態を確認します。</p>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><span class="inline-code">/sandbox</span> と <span class="inline-code">/doctor</span> は <strong>Claude Code のスラッシュコマンド</strong>です。シェルプロンプトから実行すると「No such file or directory」になります。必ず <span class="inline-code">claude</span> で起動したセッション内（<span class="inline-code">&gt;</span> の表示）から入力してください。</p>
-      </div>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">サンドボックスの有効確認（「Sandbox: enabled」と表示されれば完了）</span><span class="env-tag wsl">Claude Code セッション内</span></div>
-        <pre>/sandbox</pre>
-      </div>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">インストール状態・設定の総合チェック</span><span class="env-tag wsl">Claude Code セッション内</span></div>
-        <pre>/doctor</pre>
-      </div>
-
-      <div class="section-group-label">6-2 ネットワーク遮断が効いているか確認（2026-08 追記）</div>
-
-      <p><strong>「有効になっている」と「実際に遮断されている」は別です。</strong>必ず両方を実測で確認してください。Claude Code に以下を実行させます。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">許可済みドメイン → 200 が返るはず</span><span class="env-tag wsl">Claude Code セッション内</span></div>
-        <pre><span class="cmd">curl</span> -sS -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://api.github.com/zen</pre>
-      </div>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">未許可ドメイン → 遮断されるはず</span><span class="env-tag wsl">Claude Code セッション内</span></div>
-        <pre><span class="cmd">curl</span> -sS -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://example.com</pre>
-      </div>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>期待される結果：</strong> 1つ目は <span class="inline-code">200</span>、2つ目は <span class="inline-code">CONNECT tunnel failed, response 403</span> です。<br>
-        <strong>2つ目が 200 で通ってしまう場合、遮断が機能していません。</strong> <span class="inline-code">strictAllowlist: true</span> が設定されているか確認してください（STEP 5）。これは実際に発生した問題で、設定した気になっていても<strong>穴が空いたまま</strong>ということが起こります。</p>
-      </div>
-
-      <div class="notice success">
-        <span class="notice-icon">✅</span>
-        <p>サンドボックス有効時、Bash コマンドは <span class="inline-code">allowedDomains</span> に列挙したドメイン以外への通信がブロックされます。Docker を使う場合は <span class="inline-code">allowUnixSockets</span> に <span class="inline-code">"/var/run/docker.sock"</span> を追加してください。</p>
-      </div>
-
-      <p>確認が終わったら <span class="inline-code">/exit</span> または <span class="inline-code">Ctrl+C</span> でシェルに戻り、STEP 7 へ進みます。</p>
-    </div>
 
     <!-- STEP 7 -->
     <div class="section" id="s7">
       <div class="section-header">
         <div class="step-badge">STEP 7</div>
+        <h2>認証 &amp; 動作確認</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-1"></label>
+              <span class="label-text">Claude Code 起動・認証</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">claude</span></pre>
+          </div>
+
+          <p>ブラウザが自動で開かない場合、ログイン画面で <span class="inline-code">c</span> キーを押すと URL がクリップボードにコピーされます。それを Windows のブラウザに貼り付けて認証してください。または以下で <span class="inline-code">BROWSER</span> 環境変数を設定しておくと自動で開くようになります。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-2"></label>
+              <span class="label-text">BROWSER 環境変数を .bashrc に追記</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">echo</span> <span class="str">'export BROWSER="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"'</span> >> ~/.bashrc</pre>
+          </div>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-3"></label>
+              <span class="label-text">.bashrc を反映</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">source</span> ~/.bashrc</pre>
+          </div>
+
+          <p>ブラウザで認証完了後、表示されるトークンをターミナルに貼り付けて Enter。Claude Code のプロンプト（<span class="inline-code">&gt;</span> の表示）が出れば認証成功です。</p>
+
+          <p>認証が完了したセッション内で、settings.json とサンドボックスが正しく有効になっているか確認します。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-4"></label>
+              <span class="label-text">settings.json の構文チェック（シェルで実行）</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">cat</span> ~/.claude/settings.json | python3 -m json.tool</pre>
+          </div>
+
+          <p>エラーなく整形表示されれば JSON として正しい形式です。続けて Claude Code セッション内でサンドボックス状態を確認します。</p>
+
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p><span class="inline-code">/sandbox</span> と <span class="inline-code">/doctor</span> は <strong>Claude Code のスラッシュコマンド</strong>です。シェルプロンプトから実行すると「No such file or directory」になります。必ず <span class="inline-code">claude</span> で起動したセッション内（<span class="inline-code">&gt;</span> の表示）から入力してください。</p>
+          </div>
+
+          <div class="code-block env-cc">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-5"></label>
+              <span class="label-text">サンドボックスの有効確認（「Sandbox: enabled」と表示されれば完了）</span><span class="env-tag cc">Claude Code セッション内</span>
+            </div>
+            <pre>/sandbox</pre>
+          </div>
+
+          <div class="code-block env-cc">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-6"></label>
+              <span class="label-text">インストール状態・設定の総合チェック（seccomp filter: installed も確認）</span><span class="env-tag cc">Claude Code セッション内</span>
+            </div>
+            <pre>/doctor</pre>
+          </div>
+
+          <div class="section-group-label">7-2 ネットワーク遮断が効いているか確認（2026-08 追記）</div>
+
+          <p><strong>「有効になっている」と「実際に遮断されている」は別です。</strong>必ず両方を実測で確認してください。Claude Code に以下を実行させます。</p>
+
+          <div class="code-block env-cc">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-7"></label>
+              <span class="label-text">許可済みドメイン → 200 が返るはず</span><span class="env-tag cc">Claude Code セッション内</span>
+            </div>
+            <pre><span class="cmd">curl</span> -sS -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://api.github.com/zen</pre>
+          </div>
+
+          <div class="code-block env-cc">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-8"></label>
+              <span class="label-text">未許可ドメイン → 遮断されるはず</span><span class="env-tag cc">Claude Code セッション内</span>
+            </div>
+            <pre><span class="cmd">curl</span> -sS -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://example.com</pre>
+          </div>
+
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p><strong>期待される結果：</strong> 1つ目は <span class="inline-code">200</span>、2つ目は <span class="inline-code">CONNECT tunnel failed, response 403</span> です。</p>
+          </div>
+
+          <div class="notice danger">
+            <span class="notice-icon">🚫</span>
+            <p><strong>2つ目が 200 で通ってしまう場合、遮断が機能していません。</strong> <span class="inline-code">~/.claude/settings.json</span> の <span class="inline-code">sandbox.network.strictAllowlist</span> が <span class="inline-code">true</span> になっているか確認してください。これは実際に発生した問題で、設定した気になっていても<strong>穴が空いたまま</strong>ということが起こります。</p>
+          </div>
+
+          <p>確認が終わったら <span class="inline-code">/exit</span> または <span class="inline-code">Ctrl+C</span> でシェルに戻り、次の STEP へ進みます。</p>
+        </div>
+
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p><strong>ネイティブインストール済みの場合：</strong>Windows側でログイン済みでも、WSL内では<strong>別途ログインが必要</strong>です。同じアカウントで問題ありません。</p>
+          </div>
+          <details>
+            <summary>▶ Docker を使う場合の追加設定（任意）</summary>
+            <div class="details-body">
+              <p>サンドボックス有効時、Bash コマンドは <span class="inline-code">allowedDomains</span> に列挙したドメイン以外への通信がブロックされます。Docker を使う場合は <span class="inline-code">allowUnixSockets</span> に <span class="inline-code">"/var/run/docker.sock"</span> を追加してください。</p>
+            </div>
+          </details>
+        </aside>
+      </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">/sandbox</span> が有効と表示され、許可ドメインへの curl が <span class="inline-code">200</span>、未許可ドメインへの curl が <span class="inline-code">403</span> で遮断されれば完了です。</p>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="step-badge">STEP 8</div>
         <h2>Git の設定（WSL内）</h2>
         <span class="tag required">必須</span>
       </div>
@@ -1128,134 +1650,47 @@
 
       <p>まず Git が入っているか確認します。入っていなければインストールします。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">Git バージョン確認</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s8-1"></label>
+          <span class="label-text">Git バージョン確認</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre><span class="cmd">git</span> --version</pre>
       </div>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">Git インストール（入っていない場合のみ）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s8-2"></label>
+          <span class="label-text">Git インストール（入っていない場合のみ）</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre><span class="cmd">sudo apt</span> install -y git</pre>
       </div>
 
       <p>GitHub アカウントと合わせてユーザー情報を設定します。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">ユーザー情報の設定</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s8-3"></label>
+          <span class="label-text">ユーザー情報の設定</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre><span class="cmd">git</span> config --global user.name <span class="str">"Your Name"</span>
-<span class="cmd">git</span> config --global user.email <span class="str">"<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="671e08121527020a060e0b4904080a">[email&#160;protected]</a>"</span></pre>
+<span class="cmd">git</span> config --global user.email <span class="str">"you@example.com"</span></pre>
       </div>
 
       <p>デフォルトブランチを <span class="inline-code">main</span> に設定し、Windows 混在環境での改行コード変換を無効化します。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">デフォルトブランチと改行コードの設定</span><span class="env-tag wsl">WSL Ubuntu</span></div>
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s8-4"></label>
+          <span class="label-text">デフォルトブランチと改行コードの設定</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
         <pre><span class="cmd">git</span> config --global init.defaultBranch main
 <span class="cmd">git</span> config --global core.autocrlf false</pre>
       </div>
-    </div>
 
-    <!-- STEP 8 -->
-    <div class="section" id="s8">
-      <div class="section-header">
-        <div class="step-badge">STEP 8</div>
-        <h2>GitHub HTTPS 連携</h2>
-        <span class="tag required">必須</span>
-      </div>
-
-      <p>HTTPS + PAT（Personal Access Token）を使って GitHub に接続します。credential helper でトークンを保存しておけば、2回目以降の push/pull でパスワード入力は不要です。</p>
-
-      <p>まず GitHub で PAT を発行します。</p>
-
-      <ol class="step-list">
-        <li><span class="li-num">1.</span> GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → <strong>Generate new token</strong> を開く</li>
-        <li><span class="li-num">2.</span> Note に適当な名前（例：<span class="inline-code">WSL2-Ubuntu</span>）を入力し、有効期限を設定</li>
-        <li><span class="li-num">3.</span> スコープの <strong>repo</strong> にチェックを入れて生成</li>
-        <li><span class="li-num">4.</span> 表示されたトークン（<span class="inline-code">ghp_...</span>）をコピー — <strong>画面を閉じると再表示されません</strong></li>
-      </ol>
-
-      <p>次に、credential helper を設定してトークンをディスクに保存します。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">credential helper の設定</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">git</span> config --global credential.helper store</pre>
-      </div>
-
-      <p>プロジェクトディレクトリを作成してリポジトリをクローンします。初回のクローン時に Username と Password を求められます。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">projects ディレクトリを作成してクローン</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">mkdir</span> -p ~/projects
-<span class="cmd">cd</span> ~/projects
-<span class="cmd">git</span> clone https://github.com/yourname/yourrepo.git</pre>
-      </div>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p>認証を求められたら <strong>Username</strong> に GitHub ユーザー名、<strong>Password</strong> に発行した PAT（パスワードではなくトークン）を入力してください。<br>
-        入力内容は <span class="inline-code">~/.git-credentials</span> に保存され、以降の push/pull では入力不要になります。</p>
-      </div>
-
-      <div class="notice danger">
-        <span class="notice-icon">🚫</span>
-        <p><strong>プロジェクトは必ず <span class="inline-code">~/projects/</span> 以下に置いてください。</strong><br>
-        <span class="inline-code">/mnt/c/</span> 配下（Windows ドライブ上）に置くとファイルI/Oが約9倍遅くなり、Claude Code のパフォーマンスが大幅に低下します。</p>
-      </div>
-
-      <div class="section-group-label">Git for Windows 側の PAT 保存（任意）</div>
-
-      <p>Windows 側（PowerShell や Git Bash）でも同じリポジトリを操作する場合は、Git for Windows の credential helper に PAT を保存します。Git for Windows をインストールすると <strong>Git Credential Manager（GCM）</strong> が標準で組み込まれており、Windows 資格情報マネージャーに安全に保存できます。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">credential helper の確認</span><span class="env-tag win">Windows（PowerShell）</span></div>
-        <pre><span class="cmd">git</span> config --global credential.helper</pre>
-      </div>
-
-      <p><span class="inline-code">manager</span> と表示されれば GCM が有効です。未設定の場合は以下で有効化します。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">GCM を有効化（未設定の場合のみ）</span><span class="env-tag win">Windows（PowerShell）</span></div>
-        <pre><span class="cmd">git</span> config --global credential.helper manager</pre>
-      </div>
-
-      <p>設定後、初回の <span class="inline-code">git clone</span> または <span class="inline-code">git push</span> 時にブラウザが開いてGitHub認証画面が表示されます。ログイン後、PAT は Windows 資格情報マネージャーに自動保存され、以降は入力不要です。</p>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p>ブラウザ認証ではなく PAT を直接入力したい場合は、Username に GitHub ユーザー名、Password に PAT を入力してください。GCM が Windows 資格情報マネージャーに保存します。<br>
-        保存済みの認証情報は <strong>コントロールパネル → 資格情報マネージャー → Windows 資格情報</strong> から確認・削除できます。</p>
-      </div>
-
-      <div class="section-group-label">8-3 PR を作れるようにする（2026-08 追記）</div>
-
-      <p>Claude Code から PR を作ろうとすると失敗する、という現象がよく報告されます。<strong>原因はサンドボックスではありません。</strong>実測で切り分けた結果、通信・認証・書き込み権限はいずれも正常でした。</p>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>真因は <span class="inline-code">gh pr create</span> の対話 UI です。</strong> 引数を省くとタイトル入力・エディタ起動・最終確認を人間に尋ねてきますが、Claude Code の Bash はキーボード入力を受け付けないため、そこで停止します。<strong>フラグをすべて明示すれば解決します。</strong></p>
-      </div>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">非対話での PR 作成</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">gh</span> pr create \
-  --base main \
-  --head "$(git rev-parse --abbrev-ref HEAD)" \
-  --title "タイトル" \
-  --body-file "$(git rev-parse --git-dir)/PR_BODY.md"</pre>
-      </div>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong><span class="inline-code">git push -u</span> は使わないこと。</strong> <span class="inline-code">-u</span> は <span class="inline-code">.git/config</span> への書き込みを伴いますが、サンドボックスは <span class="inline-code">.git/config.lock</span> に <span class="inline-code">/dev/null</span> をマウントして書き込みを封じています。そのため <strong>push 自体は成功しているのに <span class="inline-code">unable to write upstream branch configuration</span> で異常終了</strong>し、失敗したように見えます。<span class="inline-code">git push origin &lt;branch&gt;</span> を使ってください。</p>
-      </div>
-
-      <div class="section-group-label">8-4 PR 作成手順を skill として固定する</div>
-
-      <p>毎回 AI に正しいフラグを思い出させるのではなく、手順書ファイル（skill）として固定するのが確実です。配置先は <span class="inline-code">~/.claude/skills/create-pr/SKILL.md</span>。内容は本リポジトリの <span class="inline-code">skills/create-pr/SKILL.md</span> にあります。</p>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong><span class="inline-code">cp</span> では設置できません。</strong> <span class="inline-code">~/.claude/skills/</span> はサンドボックスが書き込みを拒否します（<span class="inline-code">Read-only file system</span>）。AI が自分の手順書を書き換えるのを防ぐ保護です。<strong>エディタで開いて保存するか、Claude Code のファイル編集ツールに書かせてください。</strong></p>
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">git config --global --list</span> で <span class="inline-code">user.name</span> / <span class="inline-code">user.email</span> が表示されれば完了です。</p>
       </div>
     </div>
 
@@ -1263,106 +1698,162 @@
     <div class="section" id="s9">
       <div class="section-header">
         <div class="step-badge">STEP 9</div>
-        <h2>ブラウザ確認環境（AI に画面を見せる）</h2>
-        <span class="tag recommend">推奨</span>
+        <h2>GitHub HTTPS 連携 &amp; PR</h2>
+        <span class="tag required">必須</span>
       </div>
 
-      <p>Claude Code が作った画面を、AI 自身に確認させるための設定です。Web 開発をするなら<strong>これが無いと「見た目が正しいか」を人間が毎回目視する</strong>ことになります。</p>
+      <div class="step-grid">
+        <div class="step-main">
+          <p>HTTPS + PAT（Personal Access Token）を使って GitHub に接続します。credential helper でトークンを保存しておけば、2回目以降の push/pull でパスワード入力は不要です。</p>
 
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>なぜ実現できるのか：</strong> サンドボックスが制限しているのは <strong>Bash コマンドだけ</strong>です。ブラウザ操作を担当する MCP サーバーは<strong>サンドボックスの外</strong>で動くため、セキュリティ設定を緩めずに追加できます。</p>
+          <p>まず GitHub で PAT を発行します。</p>
+
+          <ol class="step-list">
+            <li><span class="li-num">1.</span> GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → <strong>Generate new token</strong> を開く</li>
+            <li><span class="li-num">2.</span> Note に適当な名前（例：<span class="inline-code">WSL2-Ubuntu</span>）を入力し、有効期限を設定</li>
+            <li><span class="li-num">3.</span> スコープの <strong>repo</strong> にチェックを入れて生成</li>
+            <li><span class="li-num">4.</span> 表示されたトークン（<span class="inline-code">ghp_...</span>）をコピー — <strong>画面を閉じると再表示されません</strong></li>
+          </ol>
+
+          <p>次に、credential helper を設定してトークンをディスクに保存します。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s9-1"></label>
+              <span class="label-text">credential helper の設定</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">git</span> config --global credential.helper store</pre>
+          </div>
+
+          <p>プロジェクトディレクトリを作成してリポジトリをクローンします。初回のクローン時に Username と Password を求められます。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s9-2"></label>
+              <span class="label-text">projects ディレクトリを作成してクローン</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">mkdir</span> -p ~/projects
+<span class="cmd">cd</span> ~/projects
+<span class="cmd">git</span> clone https://github.com/yourname/yourrepo.git</pre>
+          </div>
+
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p>認証を求められたら <strong>Username</strong> に GitHub ユーザー名、<strong>Password</strong> に発行した PAT（パスワードではなくトークン）を入力してください。<br>
+            入力内容は <span class="inline-code">~/.git-credentials</span> に保存され、以降の push/pull では入力不要になります。</p>
+          </div>
+
+          <div class="notice danger">
+            <span class="notice-icon">🚫</span>
+            <p><strong>プロジェクトは必ず <span class="inline-code">~/projects/</span> 以下に置いてください。</strong><br>
+            <span class="inline-code">/mnt/c/</span> 配下（Windows ドライブ上）に置くとファイルI/Oが約9倍遅くなり、Claude Code のパフォーマンスが大幅に低下します。</p>
+          </div>
+        </div>
+        <aside class="step-aside"></aside>
       </div>
 
-      <div class="section-group-label">9-1 MCP サーバーの登録</div>
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="section-group-label">Git for Windows 側の PAT 保存（任意）</div>
 
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>このコマンドは必ず自分のターミナルで実行してください（Claude Code の中で AI に実行させない）。</strong> サンドボックス内で実行すると、MCP の設定ファイルが <span class="inline-code">/dev/null</span> にマウントされているため、<strong>「追加しました」と表示されるのに何も登録されません</strong>。しかも書き込み先パス自体が変わります（内: <span class="inline-code">~/.claude/.config.json</span> ／ 外: <span class="inline-code">~/.claude.json</span>）。失敗がエラーとして表面化しないため、非常に気付きにくい罠です。</p>
+          <p>Windows 側（PowerShell や Git Bash）でも同じリポジトリを操作する場合は、Git for Windows の credential helper に PAT を保存します。Git for Windows をインストールすると <strong>Git Credential Manager（GCM）</strong> が標準で組み込まれており、Windows 資格情報マネージャーに安全に保存できます。</p>
+
+          <div class="code-block env-win">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s9-3"></label>
+              <span class="label-text">credential helper の確認</span><span class="env-tag win">Windows（PowerShell）</span>
+            </div>
+            <pre><span class="cmd">git</span> config --global credential.helper</pre>
+          </div>
+
+          <p><span class="inline-code">manager</span> と表示されれば GCM が有効です。未設定の場合は以下で有効化します。</p>
+
+          <div class="code-block env-win">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s9-4"></label>
+              <span class="label-text">GCM を有効化（未設定の場合のみ）</span><span class="env-tag win">Windows（PowerShell）</span>
+            </div>
+            <pre><span class="cmd">git</span> config --global credential.helper manager</pre>
+          </div>
+
+          <p>設定後、初回の <span class="inline-code">git clone</span> または <span class="inline-code">git push</span> 時にブラウザが開いてGitHub認証画面が表示されます。ログイン後、PAT は Windows 資格情報マネージャーに自動保存され、以降は入力不要です。</p>
+
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p>ブラウザ認証ではなく PAT を直接入力したい場合は、Username に GitHub ユーザー名、Password に PAT を入力してください。GCM が Windows 資格情報マネージャーに保存します。<br>
+            保存済みの認証情報は <strong>コントロールパネル → 資格情報マネージャー → Windows 資格情報</strong> から確認・削除できます。</p>
+          </div>
+        </div>
+        <aside class="step-aside"></aside>
       </div>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">Playwright MCP を登録</span><span class="env-tag wsl">WSL Ubuntu（Claude Code の外）</span></div>
-        <pre><span class="cmd">claude</span> mcp add playwright --scope user -- npx @playwright/mcp@latest \
-  --headless --browser=chromium --viewport-size=1280,720 \
-  --allowed-origins <span class="str">"http://localhost:*"</span></pre>
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="section-group-label">9-3 PR を作れるようにする（2026-08 追記）</div>
+
+          <p>Claude Code から PR を作ろうとすると失敗する、という現象がよく報告されます。<strong>原因はサンドボックスではありません。</strong>実測で切り分けた結果、通信・認証・書き込み権限はいずれも正常でした。フラグをすべて明示すれば解決します。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s9-5"></label>
+              <span class="label-text">非対話での PR 作成</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">gh</span> pr create \
+  --base main \
+  --head "$(git rev-parse --abbrev-ref HEAD)" \
+  --title "タイトル" \
+  --body-file "$(git rev-parse --git-dir)/PR_BODY.md"</pre>
+          </div>
+
+          <div class="notice danger">
+            <span class="notice-icon">🚫</span>
+            <p><strong><span class="inline-code">git push -u</span> は使わないこと。</strong> push 自体は成功しているのに <span class="inline-code">unable to write upstream branch configuration</span> で異常終了し、失敗したように見えます。<span class="inline-code">git push origin &lt;branch&gt;</span> を使ってください。</p>
+          </div>
+        </div>
+
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <details>
+            <summary>▶ なぜ gh pr create がAIから失敗するのか</summary>
+            <div class="details-body">
+              <p><strong>真因は <span class="inline-code">gh pr create</span> の対話 UI です。</strong> 引数を省くとタイトル入力・エディタ起動・最終確認を人間に尋ねてきますが、Claude Code の Bash はキーボード入力を受け付けないため、そこで停止します。</p>
+            </div>
+          </details>
+          <details>
+            <summary>▶ なぜ push 自体は成功するのにエラーになるのか</summary>
+            <div class="details-body">
+              <p><span class="inline-code">-u</span> は <span class="inline-code">.git/config</span> への書き込みを伴いますが、サンドボックスは <span class="inline-code">.git/config.lock</span> に <span class="inline-code">/dev/null</span> をマウントして書き込みを封じています。push リクエスト自体はリモートに届いて成功しますが、そのあとのローカル設定書き込みで失敗し、コマンド全体が異常終了扱いになります。</p>
+            </div>
+          </details>
+        </aside>
       </div>
 
-      <p><span class="inline-code">--allowed-origins</span> は、AI が自動運転中に想定外のサイトへ飛ぶのを防ぐ<strong>安全装置</strong>です。必ず指定してください。</p>
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="section-group-label">9-4 PR 作成手順を skill として固定する</div>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">登録できたか確認（✔ Connected になること）</span><span class="env-tag wsl">WSL Ubuntu</span></div>
-        <pre><span class="cmd">claude</span> mcp list</pre>
+          <p>毎回 AI に正しいフラグを思い出させるのではなく、手順書ファイル（skill）として固定するのが確実です。配置先は <span class="inline-code">~/.claude/skills/create-pr/SKILL.md</span>。内容は本リポジトリの <span class="inline-code">skills/create-pr/SKILL.md</span> にあります。</p>
+
+          <div class="notice danger">
+            <span class="notice-icon">🚫</span>
+            <p><strong><span class="inline-code">cp</span> では設置できません。</strong> <span class="inline-code">~/.claude/skills/</span> はサンドボックスが書き込みを拒否します（<span class="inline-code">Read-only file system</span>）。AI が自分の手順書を書き換えるのを防ぐ保護です。<strong>エディタで開いて保存するか、Claude Code のファイル編集ツールに書かせてください。</strong></p>
+          </div>
+        </div>
+
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <details>
+            <summary>▶ なぜ cp が失敗するのか</summary>
+            <div class="details-body">
+              <p><span class="inline-code">~/.claude/skills/</span> はサンドボックスから見て読み取り専用にマウントされています。AI が自分自身の手順書を書き換えて挙動を変えてしまうことを防ぐ保護です。</p>
+            </div>
+          </details>
+        </aside>
       </div>
 
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>登録後は Claude Code の再起動が必要です。</strong> MCP は起動時に接続されるため、稼働中のセッションには反映されません。（<span class="inline-code">settings.json</span> の変更は再起動不要という違いがあります）</p>
-      </div>
-
-      <div class="section-group-label">9-2 ブラウザ本体と依存パッケージ</div>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>これらも自分のターミナルで実行してください。</strong> ブラウザの実体は <span class="inline-code">storage.googleapis.com</span> にあり、サンドボックス内では遮断されます。ここを許可すると <strong>Google Cloud Storage 全体（任意のバケット）が開いてしまう</strong>ため、一度きりの作業は外で実行する方針としています。</p>
-      </div>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">ブラウザ本体・依存ライブラリ・日本語フォント</span><span class="env-tag wsl">WSL Ubuntu（Claude Code の外）</span></div>
-        <pre><span class="cmd">npx</span> @playwright/mcp install-browser chrome-for-testing
-
-<span class="cmt"># ブラウザ動作に必要な共有ライブラリ</span>
-<span class="cmd">sudo apt</span> install -y libnss3 libnspr4 libasound2t64
-
-<span class="cmt"># 日本語フォント（これが無いと文字が全部豆腐になる）</span>
-<span class="cmd">sudo apt</span> install -y fonts-noto-cjk</pre>
-      </div>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>日本語フォントは必須です。</strong> WSL2 の Ubuntu には日本語フォントが入っていません（実測で CJK フォント 0 件）。この状態でスクリーンショットを撮ると<strong>日本語がすべて □ になり、画面確認の意味がなくなります</strong>。</p>
-      </div>
-
-      <div class="section-group-label">9-3 最後の一手：開発サーバーを壁の外に出す</div>
-
-      <p>ここが<strong>最も見落としやすい</strong>ところです。MCP のブラウザは壁の外にいますが、<span class="inline-code">npm run dev</span> で起動する開発サーバーは<strong>壁の中</strong>にいます。このままでは両者は通信できません。</p>
-
-      <div class="notice warn">
-        <span class="notice-icon">⚠️</span>
-        <p><strong>サンドボックスは Bash コマンド1回ごとに作られては捨てられます。</strong> 実測では、コマンド内のプロセス番号が <span class="inline-code">1, 2, 389</span>、ネットワークインターフェースが <span class="inline-code">lo</span> のみでした。<strong>同じコマンドの中でだけサーバーに接続でき、次のコマンドからも MCP のブラウザからも到達できません。</strong></p>
-      </div>
-
-      <p>解決策は STEP 5 で設定済みです。<span class="inline-code">sandbox.excludedCommands</span> に開発サーバーの起動コマンドを登録すると、<strong>そのプロセスだけがサンドボックスの外</strong>に立ち、ブラウザと同じネットワークで動きます。</p>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>隔離が壊れるわけではありません。</strong> 実測では、外に出したサーバーに対して<strong>サンドボックス内からは依然として接続できません</strong>。外に出たのはそのプロセスだけで、壁自体は残っています。使うフレームワークに合わせて <span class="inline-code">"npx vite *"</span> などを追加してください（広いパターンは避けること）。</p>
-      </div>
-
-      <div class="section-group-label">9-4 動作確認</div>
-
-      <p>Claude Code のセッション内で、開発サーバーを起動してから次のように指示します。</p>
-
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">指示の例</span><span class="env-tag">Claude Code</span></div>
-        <pre>http://localhost:5173 を開いてスクリーンショットを撮って、
-コンソールエラーが出ていないか確認して</pre>
-      </div>
-
-      <div class="notice success">
+      <div class="checkpoint">
         <span class="notice-icon">✅</span>
-        <p>スクリーンショットが取得でき、<strong>日本語が読める状態</strong>で表示されれば成功です。あわせてコンソールエラーの検出、要素を指定した部分スクリーンショット、クリックなどの操作も可能になります。</p>
-      </div>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>WSL2 特有の注意：</strong> ブラウザを複数同時に立ち上げると、GPU メモリの制約で連鎖クラッシュする既知の問題があります。並列実行は避けてください。<br>
-        <strong>ページを更新したのに反映されないとき：</strong> URL の末尾に <span class="inline-code">?v=2</span> のようなパラメータを付けると確実に再読み込みされます（ハッシュだけの変更ではリロードされないため）。</p>
-      </div>
-
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>人間と同じ画面を見せたい場合（任意）：</strong> Windows 側の Chrome を <span class="inline-code">--remote-debugging-port</span> 付きで起動し、<span class="inline-code">.wslconfig</span> に <span class="inline-code">networkingMode=mirrored</span> を設定すると、Chrome DevTools MCP から接続できます。ログイン済みの状態をそのまま使えますが、無人実行には向きません。日常の自動確認は上記の Playwright MCP で十分です。</p>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">~/projects/</span> 以下にリポジトリを clone でき、<span class="inline-code">gh pr create</span>（フラグ明示）で PR が作成できれば完了です。</p>
       </div>
     </div>
 
@@ -1370,6 +1861,154 @@
     <div class="section" id="s10">
       <div class="section-header">
         <div class="step-badge">STEP 10</div>
+        <h2>ブラウザ確認環境（AI に画面を見せる）</h2>
+        <span class="tag required">必須</span>
+      </div>
+
+      <p>Claude Code が作った画面を、AI 自身に確認させるための設定です。Web 開発をするなら<strong>これが無いと「見た目が正しいか」を人間が毎回目視する</strong>ことになります。Web アプリ開発を前提とするこのガイドでは必須の STEP です。</p>
+
+      <div class="section-group-label">10-1 MCP サーバーの登録</div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="notice danger">
+            <span class="notice-icon">🚫</span>
+            <p><strong>このコマンドは必ず自分のターミナルで実行してください（Claude Code の中で AI に実行させない）。</strong> サンドボックス内で実行すると、MCP の設定ファイルが <span class="inline-code">/dev/null</span> にマウントされているため、<strong>「追加しました」と表示されるのに何も登録されません</strong>。しかも書き込み先パス自体が変わります（内: <span class="inline-code">~/.claude/.config.json</span> ／ 外: <span class="inline-code">~/.claude.json</span>）。失敗がエラーとして表面化しないため、非常に気付きにくい罠です。</p>
+          </div>
+
+          <div class="code-block env-outside">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s10-1"></label>
+              <span class="label-text">Playwright MCP を登録</span><span class="env-tag outside">Claude Code の外</span>
+            </div>
+            <pre><span class="cmd">claude</span> mcp add playwright --scope user -- npx @playwright/mcp@latest \
+  --headless --browser=chromium --viewport-size=1280,720 \
+  --allowed-origins <span class="str">"http://localhost:*"</span></pre>
+          </div>
+
+          <p><span class="inline-code">--allowed-origins</span> は、AI が自動運転中に想定外のサイトへ飛ぶのを防ぐ<strong>安全装置</strong>です。必ず指定してください。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s10-2"></label>
+              <span class="label-text">登録できたか確認（✔ Connected になること）</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">claude</span> mcp list</pre>
+          </div>
+
+          <div class="notice warn">
+            <span class="notice-icon">⚠️</span>
+            <p><strong>登録後は Claude Code の再起動が必要です。</strong> MCP は起動時に接続されるため、稼働中のセッションには反映されません。</p>
+          </div>
+        </div>
+
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p><strong>なぜ実現できるのか：</strong> サンドボックスが制限しているのは <strong>Bash コマンドだけ</strong>です。ブラウザ操作を担当する MCP サーバーは<strong>サンドボックスの外</strong>で動くため、セキュリティ設定を緩めずに追加できます。</p>
+          </div>
+        </aside>
+      </div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="section-group-label">10-2 ブラウザ本体と依存パッケージ</div>
+
+          <div class="notice warn">
+            <span class="notice-icon">⚠️</span>
+            <p><strong>これらも自分のターミナルで実行してください。</strong> ブラウザの実体は <span class="inline-code">storage.googleapis.com</span> にあり、サンドボックス内では遮断されます。ここを許可すると <strong>Google Cloud Storage 全体（任意のバケット）が開いてしまう</strong>ため、一度きりの作業は外で実行する方針としています。</p>
+          </div>
+
+          <div class="code-block env-outside">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s10-3"></label>
+              <span class="label-text">ブラウザ本体・依存ライブラリ・日本語フォント</span><span class="env-tag outside">Claude Code の外</span>
+            </div>
+            <pre><span class="cmd">npx</span> @playwright/mcp install-browser chrome-for-testing
+
+<span class="cmt"># ブラウザ動作に必要な共有ライブラリ</span>
+<span class="cmd">sudo apt</span> install -y libnss3 libnspr4 libasound2t64
+
+<span class="cmt"># 日本語フォントと絵文字フォント（無いと文字が全部豆腐になる）</span>
+<span class="cmd">sudo apt</span> install -y fonts-noto-cjk fonts-noto-color-emoji</pre>
+          </div>
+
+          <div class="notice danger">
+            <span class="notice-icon">🚫</span>
+            <p><strong>フォントは必須です。</strong> WSL2 の Ubuntu には日本語フォントが入っていません（実測で CJK フォント 0 件）。この状態でスクリーンショットを撮ると<strong>日本語がすべて □ になり、画面確認の意味がなくなります</strong>。</p>
+          </div>
+        </div>
+        <aside class="step-aside">
+          <div class="aside-label">補足</div>
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p><strong>絵文字フォントも入れる理由：</strong> Windows のブラウザでは正しく見える絵文字（✅ ⚠️ ℹ️ など）も、WSL2 側には絵文字フォントが無いため<strong>ヘッドレスブラウザでは □ になります</strong>。AI にスクリーンショットで画面を確認させるとき、アイコンが読めないと状態を誤判定する原因になります。実際にこのガイド自身をヘッドレスで撮影した際に発生しました。</p>
+          </div>
+        </aside>
+      </div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="section-group-label">10-3 最後の一手：開発サーバーを壁の外に出す</div>
+
+          <p>ここが<strong>最も見落としやすい</strong>ところです。MCP のブラウザは壁の外にいますが、<span class="inline-code">npm run dev</span> で起動する開発サーバーは<strong>壁の中</strong>にいます。このままでは両者は通信できません。<span class="inline-code">sandbox.excludedCommands</span> に開発サーバーの起動コマンドを登録すると、<strong>そのプロセスだけがサンドボックスの外</strong>に立ち、ブラウザと同じネットワークで動きます（設定は settings.json 作成時に済ませてあります）。使うフレームワークに合わせて <span class="inline-code">"npx vite *"</span> などを追加してください（広いパターンは避けること）。</p>
+        </div>
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <details>
+            <summary>▶ なぜ開発サーバーを外に出す必要があるのか</summary>
+            <div class="details-body">
+              <p>サンドボックスは <strong>Bash コマンド1回ごとに作られては捨てられます。</strong> 実測では、コマンド内のプロセス番号が <span class="inline-code">1, 2, 389</span>、ネットワークインターフェースが <span class="inline-code">lo</span> のみでした。同じコマンドの中でだけサーバーに接続でき、<strong>次の別コマンドからも、MCP のブラウザからも開発サーバーに到達できません</strong>。</p>
+              <p>そこで <span class="inline-code">excludedCommands</span> に開発サーバー起動コマンドを登録すると、そのプロセスだけがサンドボックスの外に立ち、ブラウザと同じネットワークで動くようになります。隔離が壊れるわけではありません — 実測では、外に出したサーバーに対して<strong>サンドボックス内からは依然として接続できません</strong>。外に出たのはそのプロセスだけで、壁自体は残っています。</p>
+            </div>
+          </details>
+        </aside>
+      </div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <div class="section-group-label">10-4 動作確認</div>
+
+          <p>Claude Code のセッション内で、開発サーバーを起動してから次のように指示します。</p>
+
+          <div class="code-block env-cc">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s10-4"></label>
+              <span class="label-text">指示の例</span><span class="env-tag cc">Claude Code セッション内</span>
+            </div>
+            <pre>http://localhost:5173 を開いてスクリーンショットを撮って、
+コンソールエラーが出ていないか確認して</pre>
+          </div>
+        </div>
+        <aside class="step-aside">
+          <div class="step-aside-label">補足・任意設定</div>
+          <details>
+            <summary>▶ 複数ブラウザ同時起動とキャッシュに関する注意（実測・任意）</summary>
+            <div class="details-body">
+              <p><strong>WSL2 特有の注意：</strong> ブラウザを複数同時に立ち上げると、GPU メモリの制約で連鎖クラッシュする既知の問題があります。並列実行は避けてください。</p>
+              <p><strong>ページを更新したのに反映されないとき：</strong> URL の末尾に <span class="inline-code">?v=2</span> のようなパラメータを付けると確実に再読み込みされます（ハッシュだけの変更ではリロードされないため）。</p>
+            </div>
+          </details>
+          <details>
+            <summary>▶ 人間と同じ画面を見せたい場合（任意）</summary>
+            <div class="details-body">
+              <p>Windows 側の Chrome を <span class="inline-code">--remote-debugging-port</span> 付きで起動し、<span class="inline-code">.wslconfig</span> に <span class="inline-code">networkingMode=mirrored</span> を設定すると、Chrome DevTools MCP から接続できます。ログイン済みの状態をそのまま使えますが、無人実行には向きません。日常の自動確認は上記の Playwright MCP で十分です。</p>
+            </div>
+          </details>
+        </aside>
+      </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> スクリーンショットが取得でき、<strong>日本語が読める状態</strong>で表示されれば成功です。あわせてコンソールエラーの検出、要素を指定した部分スクリーンショット、クリックなどの操作も可能になります。</p>
+      </div>
+    </div>
+
+    <!-- STEP 11 -->
+    <div class="section" id="s11">
+      <div class="section-header">
+        <div class="step-badge">STEP 11</div>
         <h2>Windows Terminal の設定（任意・推奨）</h2>
         <span class="tag recommend">推奨</span>
       </div>
@@ -1388,12 +2027,17 @@
         <span class="notice-icon">ℹ️</span>
         <p>デフォルトのまま（PowerShell）でも、タブ横の <span class="inline-code">∨</span> ボタンから Ubuntu を選べます。どちらでも問題ありません。</p>
       </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> Windows Terminal を新規に開くと Ubuntu プロンプトが直接表示されれば完了です（任意の STEP のため必須ではありません）。</p>
+      </div>
     </div>
 
-    <!-- STEP 11 -->
-    <div class="section" id="s11">
+    <!-- STEP 12 -->
+    <div class="section" id="s12">
       <div class="section-header">
-        <div class="step-badge">STEP 11</div>
+        <div class="step-badge">STEP 12</div>
         <h2>Zed / VS Code のターミナルを WSL2 に向ける（任意）</h2>
         <span class="tag recommend">推奨</span>
       </div>
@@ -1404,8 +2048,11 @@
 
       <p><span class="inline-code">~/.config/zed/settings.json</span>（または <kbd>Ctrl+,</kbd> で開く設定ファイル）に以下を追加します。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">Zed — settings.json に追加</span><span class="env-tag win">Windows</span></div>
+      <div class="code-block env-win">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s12-1"></label>
+          <span class="label-text">Zed — settings.json に追加</span><span class="env-tag win">Windows</span>
+        </div>
         <pre>{
   <span class="str">"terminal"</span>: {
     <span class="str">"shell"</span>: {
@@ -1422,8 +2069,11 @@
 
       <p>VS Code のユーザー設定（<span class="inline-code">settings.json</span>）に以下を追加します。<kbd>Ctrl+Shift+P</kbd> →「Preferences: Open User Settings (JSON)」で開けます。</p>
 
-      <div class="code-block">
-        <div class="code-label"><span class="label-text">VS Code — settings.json に追加</span><span class="env-tag win">Windows</span></div>
+      <div class="code-block env-win">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="s12-2"></label>
+          <span class="label-text">VS Code — settings.json に追加</span><span class="env-tag win">Windows</span>
+        </div>
         <pre>{
   <span class="str">"terminal.integrated.profiles.windows"</span>: {
     <span class="str">"WSL Ubuntu"</span>: {
@@ -1438,6 +2088,11 @@
       <div class="notice info">
         <span class="notice-icon">ℹ️</span>
         <p>設定後、エディタのターミナルを新規に開くと Ubuntu プロンプトが表示されます。<span class="inline-code">claude --version</span> で動作を確認してください。既存のターミナルタブは再起動が必要です。</p>
+      </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> エディタ内蔵ターミナルで Ubuntu プロンプトが表示され、<span class="inline-code">claude --version</span> が通れば完了です。これでセットアップはすべて完了です。</p>
       </div>
     </div>
 
@@ -1459,7 +2114,7 @@
         <tr>
           <td class="key-col">メモリ不足・動作が重い</td>
           <td>Node.jsのヒープ肥大</td>
-          <td><span class="inline-code">.wslconfig</span> でメモリ上限を設定（STEP 2）</td>
+          <td><span class="inline-code">.wslconfig</span> でメモリ上限を設定</td>
         </tr>
         <tr>
           <td class="key-col"><span class="inline-code">claude: not found</span></td>
@@ -1469,7 +2124,7 @@
         <tr>
           <td class="key-col">ブラウザが開かない</td>
           <td>WSL→Windowsブラウザ連携</td>
-          <td>STEP 6 の <span class="inline-code">BROWSER</span> 設定、または <span class="inline-code">c</span> キーでURLコピー</td>
+          <td><span class="inline-code">BROWSER</span> 環境変数を設定、または <span class="inline-code">c</span> キーでURLコピー</td>
         </tr>
         <tr>
           <td class="key-col">MCP サーバーに接続できない</td>
@@ -1479,7 +2134,7 @@
         <tr>
           <td class="key-col">git push で認証エラー</td>
           <td>PAT未設定または期限切れ</td>
-          <td>STEP 8 を参照。PAT を再発行し <span class="inline-code">~/.git-credentials</span> を更新</td>
+          <td>PAT を再発行し <span class="inline-code">~/.git-credentials</span> を更新</td>
         </tr>
       </table>
 
@@ -1515,26 +2170,6 @@
           <td class="key-col">推奨用途</td>
           <td>本格開発・長時間利用</td>
           <td>素早く試す・Windowsプロジェクト</td>
-        </tr>
-      </table>
-
-      <div class="section-group-label">未完了タスク</div>
-
-      <table>
-        <tr>
-          <th>タスク</th>
-          <th>条件</th>
-          <th>対応手順</th>
-        </tr>
-        <tr>
-          <td class="key-col">seccomp フィルタのインストール</td>
-          <td>Node.js / npm を WSL 内に導入したタイミング</td>
-          <td>
-            <span class="inline-code">npm install -g @anthropic-ai/sandbox-runtime</span> を実行後、
-            <span class="inline-code">claude</span> を再起動して <span class="inline-code">/doctor</span> で
-            <span class="inline-code">seccomp filter: installed</span> になったことを確認する。
-            これにより Unix ソケット経由の通信制限が有効になる。
-          </td>
         </tr>
       </table>
 
@@ -1595,7 +2230,7 @@
         </tr>
         <tr>
           <td class="key-col">Bash コマンド1回ごとに<br>作られては捨てられる</td>
-          <td>バックグラウンドで起動したサーバーは<strong>次のコマンドから見えません</strong>。プロセス番号が <span class="inline-code">1, 2, 389</span>、インターフェースが <span class="inline-code">lo</span> のみという実測結果から確認しました。開発サーバーは <span class="inline-code">excludedCommands</span> で外に出す必要があります（STEP 9）</td>
+          <td>バックグラウンドで起動したサーバーは<strong>次のコマンドから見えません</strong>。プロセス番号が <span class="inline-code">1, 2, 389</span>、インターフェースが <span class="inline-code">lo</span> のみという実測結果から確認しました。開発サーバーは <span class="inline-code">excludedCommands</span> で外に出す必要があります</td>
         </tr>
         <tr>
           <td class="key-col">MCP は壁の外で動く</td>
@@ -1622,6 +2257,8 @@
 </div>
 
 <script>
+(function () {
+  // ---- COPY ボタン ----
   document.querySelectorAll('.code-block').forEach(block => {
     const pre = block.querySelector('pre');
     if (!pre) return;
@@ -1638,4 +2275,83 @@
         setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
       };
       const doFallback = () => {
-        const ta = document.crea
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) { /* noop */ }
+        document.body.removeChild(ta);
+        markCopied();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(markCopied, doFallback);
+      } else {
+        doFallback();
+      }
+    });
+
+    block.appendChild(btn);
+  });
+
+  // ---- 進捗チェックボックス（localStorage 保存） ----
+  var STORAGE_KEY = 'ccsetup-progress-v1';
+  var done = {};
+  try {
+    done = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch (e) {
+    done = {};
+  }
+
+  var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.task-check input[data-task]'));
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(done)); } catch (e) { /* noop */ }
+  }
+
+  function updateProgress() {
+    var total = checkboxes.length;
+    var completed = checkboxes.filter(function (cb) { return cb.checked; }).length;
+    var textEl = document.getElementById('progress-text');
+    var fillEl = document.getElementById('progress-fill');
+    if (textEl) textEl.textContent = completed + ' / ' + total + ' 完了';
+    if (fillEl) fillEl.style.width = (total ? (completed / total * 100) : 0) + '%';
+  }
+
+  checkboxes.forEach(function (cb) {
+    var id = cb.getAttribute('data-task');
+    var block = cb.closest('.code-block');
+    if (done[id]) {
+      cb.checked = true;
+      if (block) block.classList.add('done');
+    }
+    cb.addEventListener('change', function () {
+      done[id] = cb.checked;
+      if (block) block.classList.toggle('done', cb.checked);
+      save();
+      updateProgress();
+    });
+  });
+
+  var resetBtn = document.getElementById('progress-reset');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      if (!window.confirm('進捗をすべてリセットしますか？')) return;
+      done = {};
+      save();
+      checkboxes.forEach(function (cb) {
+        cb.checked = false;
+        var block = cb.closest('.code-block');
+        if (block) block.classList.remove('done');
+      });
+      updateProgress();
+    });
+  }
+
+  updateProgress();
+})();
+</script>
+</body>
+</html>
