@@ -819,148 +819,68 @@
       <details>
         <summary>▶ アーキテクチャ概要図を見る（任意）</summary>
         <div class="details-body">
-<svg width="100%" viewBox="0 0 680 980" style="display:block; font-family: 'IBM Plex Mono', 'IBM Plex Sans JP', monospace;">
+<svg width="100%" viewBox="0 0 900 470" style="display:block; max-width:100%; height:auto;">
 <style>
-  .dg-label-lg { font-size: 13px; font-weight: 600; }
-  .dg-label-sm { font-size: 11px; font-weight: 400; }
-  /* gray */
-  .bg-gray   { fill: #2a3347; stroke: #3d4f6a; }
-  .fg-gray   { fill: #cdd6f4; }
-  .fg-gray-s { fill: #6c7a96; }
-  /* teal */
-  .bg-teal   { fill: #0d2a2a; stroke: #1a4f4f; }
-  .fg-teal   { fill: #94e2d5; }
-  .fg-teal-s { fill: #5ab8aa; }
-  /* amber */
-  .bg-amber  { fill: #2a1f0a; stroke: #4a380f; }
-  .fg-amber  { fill: #f9e2af; }
-  .fg-amber-s{ fill: #c9a85a; }
-  /* coral */
-  .bg-coral  { fill: #2a0f0a; stroke: #4a1f15; }
-  .fg-coral  { fill: #f5b8a8; }
-  .fg-coral-s{ fill: #c07060; }
-  /* green */
-  .bg-green  { fill: #0a1f0a; stroke: #1a4a1a; }
-  .fg-green  { fill: #a6e3a1; }
-  .fg-green-s{ fill: #5ab055; }
-  /* purple */
-  .bg-purple { fill: #1a0f2a; stroke: #3a2060; }
-  .fg-purple { fill: #cba6f7; }
-  .fg-purple-s{ fill: #8a60c0; }
-  /* blue */
-  .bg-blue   { fill: #0a1527; stroke: #1a3a6a; }
-  .fg-blue   { fill: #89b4fa; }
-  .fg-blue-s { fill: #4a7acc; }
-  /* divider */
-  .dg-divider { stroke: #3d4f6a; }
+  .t  { font-family:'IBM Plex Sans JP',sans-serif; }
+  .lg { font-size:15px; font-weight:600; }
+  .md { font-size:12.5px; font-weight:500; }
+  .sm { font-size:11px; font-weight:300; }
+  .xs { font-size:10px; font-weight:300; }
+  .mono { font-family:'IBM Plex Mono',monospace; }
 </style>
 
-<!-- Layer 0: Windows OS -->
-<rect x="16" y="12" width="648" height="960" rx="18" class="bg-gray" stroke-width="1.5"/>
-<text x="40" y="44" class="dg-label-lg fg-gray">Windows OS</text>
-<text x="40" y="62" class="dg-label-sm fg-gray-s">ホスト環境 · ファイルシステム · プロセス管理</text>
+<!-- Windows -->
+<rect x="8" y="8" width="884" height="402" rx="14" fill="#0a1527" stroke="#89b4fa" stroke-width="1.4"/>
+<text x="26" y="32" class="t lg" fill="#89b4fa">Windows</text>
+<text x="26" y="50" class="t xs" fill="#4a7acc">あなたが画面を見る側</text>
+<rect x="612" y="20" width="264" height="40" rx="8" fill="#89b4fa14" stroke="#89b4fa44"/>
+<text x="628" y="37" class="t sm" fill="#89b4fa">Windows Terminal / ブラウザ</text>
+<text x="628" y="52" class="t xs" fill="#4a7acc">人間が操作・目視する場所</text>
 
-<!-- Windows Terminal -->
-<rect x="40" y="80" width="608" height="56" rx="10" class="bg-gray" stroke-width="1.2"/>
-<text x="344" y="104" class="dg-label-lg fg-gray" text-anchor="middle">Windows Terminal</text>
-<text x="344" y="122" class="dg-label-sm fg-gray-s" text-anchor="middle">WSL2 / PowerShell / CMD タブを切り替えるターミナルアプリ</text>
+<!-- WSL2 -->
+<rect x="24" y="64" width="852" height="332" rx="12" fill="#0d2323" stroke="#94e2d5" stroke-width="1.3"/>
+<text x="42" y="88" class="t md" fill="#94e2d5">WSL2 (Ubuntu)</text>
+<text x="42" y="105" class="t xs" fill="#5ab8aa">開発はここで行う。Linux のファイルシステム上に作業フォルダを置く</text>
 
-<!-- .wslconfig -->
-<rect x="40" y="152" width="296" height="62" rx="10" class="bg-gray" stroke-width="1.2"/>
-<text x="188" y="176" class="dg-label-lg fg-gray" text-anchor="middle">.wslconfig</text>
-<text x="188" y="194" class="dg-label-sm fg-gray-s" text-anchor="middle">C:\Users\name\.wslconfig</text>
-<text x="188" y="210" class="dg-label-sm fg-gray-s" text-anchor="middle">WSL2 メモリ・CPU 上限</text>
+<!-- Claude Code -->
+<rect x="40" y="116" width="820" height="264" rx="10" fill="#160f26" stroke="#cba6f7" stroke-width="1.3"/>
+<text x="58" y="139" class="t md" fill="#cba6f7">Claude Code</text>
+<text x="58" y="156" class="t xs" fill="#8a60c0">AI が状況を判断し、その場でツールを呼ぶ。何を呼ぶかは事前に決まっていない</text>
 
-<!-- .claude.json -->
-<rect x="352" y="152" width="296" height="62" rx="10" class="bg-gray" stroke-width="1.2"/>
-<text x="500" y="176" class="dg-label-lg fg-gray" text-anchor="middle">~/.claude.json</text>
-<text x="500" y="194" class="dg-label-sm fg-gray-s" text-anchor="middle">認証トークン・オンボーディング状態</text>
-<text x="500" y="210" class="dg-label-sm fg-gray-s" text-anchor="middle">Claude Code が自動管理</text>
+<!-- 左: サンドボックスの中 -->
+<rect x="56" y="168" width="392" height="196" rx="8" fill="#0a1f0a" stroke="#a6e3a1" stroke-width="2"/>
+<text x="74" y="192" class="t md" fill="#a6e3a1">サンドボックスの中</text>
+<text x="74" y="209" class="t xs" fill="#5ab055">Bash コマンドと、それが起動した子プロセス</text>
+<line x1="74" y1="220" x2="430" y2="220" stroke="#1a4a1a"/>
+<text x="74" y="243" class="t sm" fill="#cdd6f4">書ける場所</text>
+<text x="164" y="243" class="t sm" fill="#a6e3a1">作業フォルダと一時領域だけ</text>
+<text x="74" y="271" class="t sm" fill="#cdd6f4">つなげる先</text>
+<text x="164" y="271" class="t sm" fill="#a6e3a1">許可したドメインだけ</text>
+<text x="74" y="299" class="t sm" fill="#cdd6f4">守るしくみ</text>
+<text x="164" y="299" class="t sm" fill="#a6e3a1">OS が強制する</text>
+<rect x="74" y="313" width="356" height="38" rx="5" fill="#a6e3a10f"/>
+<text x="86" y="330" class="t xs" fill="#a6e3a1">AI がコマンドをどう書き換えても、OS が拒否する。</text>
+<text x="86" y="344" class="t xs" fill="#a6e3a1">すり抜ける余地がない。</text>
 
-<!-- Layer 1: WSL2 VM -->
-<rect x="40" y="230" width="608" height="718" rx="14" class="bg-teal" stroke-width="1.5"/>
-<text x="64" y="258" class="dg-label-lg fg-teal">WSL2 (Ubuntu)</text>
-<text x="64" y="276" class="dg-label-sm fg-teal-s">Linux 仮想マシン — ext4 FS · ~/projects/ 以下で作業</text>
+<!-- 右: サンドボックスの外 -->
+<rect x="468" y="168" width="392" height="196" rx="8" fill="#2a1f0a" stroke="#f9e2af" stroke-width="2"/>
+<text x="486" y="192" class="t md" fill="#f9e2af">サンドボックスの外</text>
+<text x="486" y="209" class="t xs" fill="#c9a85a">ファイル読み書き・WebFetch・MCP サーバー</text>
+<line x1="486" y1="220" x2="842" y2="220" stroke="#4a380f"/>
+<text x="486" y="243" class="t sm" fill="#cdd6f4">守るしくみ</text>
+<text x="576" y="243" class="t sm" fill="#f9e2af">許可ルールで1件ずつ判定</text>
+<text x="486" y="271" class="t sm" fill="#cdd6f4">弱いところ</text>
+<text x="576" y="271" class="t sm" fill="#f9e2af">見た目で判断するため</text>
+<text x="576" y="286" class="t sm" fill="#f9e2af">書き方次第で抜ける余地</text>
+<rect x="486" y="300" width="356" height="51" rx="5" fill="#f9e2af0f"/>
+<text x="498" y="317" class="t xs" fill="#f9e2af">だから、秘密ファイルは読めなくし、通信先も絞る。</text>
+<text x="498" y="331" class="t xs" fill="#f9e2af">MCP は信頼できるものだけを入れる。開発サーバーを</text>
+<text x="498" y="345" class="t xs" fill="#f9e2af">ここに出すときは対象を最小限にする。</text>
 
-<!-- MCP サーバー -->
-<rect x="64" y="294" width="568" height="122" rx="10" class="bg-amber" stroke-width="1.2"/>
-<text x="348" y="318" class="dg-label-lg fg-amber" text-anchor="middle">MCP サーバー（sandbox 外で動作）</text>
-<text x="348" y="336" class="dg-label-sm fg-amber-s" text-anchor="middle">sandbox の外で起動するため .env や SSH キーを</text>
-<text x="348" y="352" class="dg-label-sm fg-amber-s" text-anchor="middle">読み取り外部送信できるリスクがある</text>
-
-<rect x="80" y="366" width="148" height="38" rx="6" class="bg-amber" stroke-width="1"/>
-<text x="154" y="383" class="dg-label-lg fg-amber" text-anchor="middle">Gmail MCP</text>
-<text x="154" y="397" class="dg-label-sm fg-amber-s" text-anchor="middle">ユーザーが明示追加</text>
-
-<rect x="244" y="366" width="148" height="38" rx="6" class="bg-amber" stroke-width="1"/>
-<text x="318" y="383" class="dg-label-lg fg-amber" text-anchor="middle">GitHub MCP</text>
-<text x="318" y="397" class="dg-label-sm fg-amber-s" text-anchor="middle">ユーザーが明示追加</text>
-
-<rect x="408" y="366" width="208" height="38" rx="6" class="bg-coral" stroke-width="1"/>
-<text x="512" y="383" class="dg-label-lg fg-coral" text-anchor="middle">.mcp.json (repo)</text>
-<text x="512" y="397" class="dg-label-sm fg-coral-s" text-anchor="middle">enableAllProjectMcpServers: false でブロック</text>
-
-<!-- settings.json -->
-<rect x="64" y="432" width="568" height="134" rx="10" class="bg-green" stroke-width="1.2"/>
-<text x="348" y="456" class="dg-label-lg fg-green" text-anchor="middle">~/.claude/settings.json</text>
-<text x="348" y="474" class="dg-label-sm fg-green-s" text-anchor="middle">ユーザーグローバル設定 — Claude Code の全動作を制御</text>
-
-<rect x="80" y="488" width="168" height="62" rx="6" class="bg-green" stroke-width="1"/>
-<text x="164" y="510" class="dg-label-lg fg-green" text-anchor="middle">dangerouslySkip</text>
-<text x="164" y="526" class="dg-label-lg fg-green" text-anchor="middle">Permissions</text>
-<text x="164" y="542" class="dg-label-sm fg-green-s" text-anchor="middle">"disable" で無効化</text>
-
-<rect x="264" y="488" width="168" height="62" rx="6" class="bg-green" stroke-width="1"/>
-<text x="348" y="510" class="dg-label-lg fg-green" text-anchor="middle">enableAllProject</text>
-<text x="348" y="526" class="dg-label-lg fg-green" text-anchor="middle">McpServers</text>
-<text x="348" y="542" class="dg-label-sm fg-green-s" text-anchor="middle">false で自動読込ブロック</text>
-
-<rect x="448" y="488" width="168" height="62" rx="6" class="bg-green" stroke-width="1"/>
-<text x="532" y="510" class="dg-label-lg fg-green" text-anchor="middle">permissions {}</text>
-<text x="532" y="526" class="dg-label-sm fg-green-s" text-anchor="middle">allow / ask / deny</text>
-<text x="532" y="542" class="dg-label-sm fg-green-s" text-anchor="middle">ツール実行の可否制御</text>
-
-<!-- Layer 2: Sandbox -->
-<rect x="64" y="582" width="568" height="346" rx="12" class="bg-purple" stroke-width="1.5"/>
-<text x="88" y="608" class="dg-label-lg fg-purple">Sandbox（bubblewrap）</text>
-<text x="88" y="626" class="dg-label-sm fg-purple-s">OS レベル隔離 — Bash ツールのみに適用</text>
-<text x="88" y="644" class="dg-label-sm fg-purple-s">Read / Edit / WebFetch / MCP には適用されない</text>
-
-<rect x="88" y="660" width="248" height="62" rx="8" class="bg-coral" stroke-width="1.2"/>
-<text x="212" y="681" class="dg-label-lg fg-coral" text-anchor="middle">sandbox.filesystem</text>
-<text x="212" y="697" class="dg-label-lg fg-coral" text-anchor="middle">.denyRead</text>
-<text x="212" y="714" class="dg-label-sm fg-coral-s" text-anchor="middle">~/.ssh  ~/.aws  .env  *.pem</text>
-
-<rect x="352" y="660" width="264" height="62" rx="8" class="bg-coral" stroke-width="1.2"/>
-<text x="484" y="681" class="dg-label-lg fg-coral" text-anchor="middle">sandbox.network</text>
-<text x="484" y="697" class="dg-label-lg fg-coral" text-anchor="middle">.allowedDomains</text>
-<text x="484" y="714" class="dg-label-sm fg-coral-s" text-anchor="middle">api.anthropic.com  github.com  ...</text>
-
-<!-- Claude Code プロセス -->
-<rect x="88" y="738" width="528" height="174" rx="8" class="bg-blue" stroke-width="1.2"/>
-<text x="352" y="762" class="dg-label-lg fg-blue" text-anchor="middle">Claude Code CLI プロセス</text>
-<text x="352" y="780" class="dg-label-sm fg-blue-s" text-anchor="middle">permissions.deny が内蔵ツールへの副防御</text>
-<text x="352" y="796" class="dg-label-sm fg-blue-s" text-anchor="middle">sandbox と二重設定することで多層防御を実現</text>
-
-<rect x="104" y="810" width="112" height="48" rx="6" class="bg-blue" stroke-width="1"/>
-<text x="160" y="831" class="dg-label-lg fg-blue" text-anchor="middle">Read / Edit</text>
-<text x="160" y="849" class="dg-label-sm fg-blue-s" text-anchor="middle">ファイル操作</text>
-
-<rect x="232" y="810" width="112" height="48" rx="6" class="bg-blue" stroke-width="1"/>
-<text x="288" y="831" class="dg-label-lg fg-blue" text-anchor="middle">Bash ツール</text>
-<text x="288" y="849" class="dg-label-sm fg-blue-s" text-anchor="middle">sandbox 適用</text>
-
-<rect x="360" y="810" width="140" height="48" rx="6" class="bg-blue" stroke-width="1"/>
-<text x="430" y="831" class="dg-label-lg fg-blue" text-anchor="middle">WebFetch / Search</text>
-<text x="430" y="849" class="dg-label-sm fg-blue-s" text-anchor="middle">外部アクセス</text>
-
-<rect x="516" y="810" width="84" height="48" rx="6" class="bg-blue" stroke-width="1"/>
-<text x="558" y="831" class="dg-label-lg fg-blue" text-anchor="middle">Agent</text>
-<text x="558" y="849" class="dg-label-sm fg-blue-s" text-anchor="middle">サブエージェント</text>
-
-<!-- permissions.deny ライン -->
-<line x1="104" y1="874" x2="600" y2="874" class="dg-divider" stroke-width="1" stroke-dasharray="5 4" fill="none"/>
-<text x="352" y="892" class="dg-label-sm fg-blue-s" text-anchor="middle">permissions.deny — Bash(rm -rf *)  Bash(sudo *)  Read(~/.ssh/**)  Edit(~/.bashrc) ...</text>
+<!-- 下部の結論 -->
+<line x1="8" y1="424" x2="892" y2="424" stroke="#2a3347" stroke-dasharray="4 4"/>
+<text x="8" y="447" class="t md" fill="#cdd6f4">同じ AI の中でも、OS が物理的に止められる領域と、ルールでしか止められない領域がある。</text>
+<text x="8" y="464" class="t sm" fill="#6c7a96">層が分かれているのはファイルの置き場所の話ではなく、この「止め方の違い」による。だから両方に設定が要る。</text>
 </svg>
         </div>
       </details>
