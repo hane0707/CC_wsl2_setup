@@ -774,7 +774,7 @@
       <details open>
         <summary>▶ アーキテクチャ概要図</summary>
         <div class="details-body">
-<svg width="100%" viewBox="0 0 900 640" style="display:block; max-width:100%; height:auto;">
+<svg width="100%" viewBox="0 0 900 660" style="display:block; max-width:100%; height:auto;">
 <style>
   .t  { font-family:'IBM Plex Sans JP',sans-serif; }
   .lg { font-size:15px; font-weight:600; }
@@ -789,78 +789,82 @@
 </defs>
 
 <!-- Windows -->
-<rect x="8" y="8" width="884" height="402" rx="14" fill="#0a1527" stroke="#89b4fa" stroke-width="1.4"/>
+<rect x="8" y="8" width="884" height="462" rx="14" fill="#0a1527" stroke="#89b4fa" stroke-width="1.4"/>
 <text x="26" y="32" class="t lg" fill="#89b4fa">Windows</text>
-<text x="26" y="50" class="t xs" fill="#4a7acc">あなたが画面を見る側</text>
+<text x="26" y="50" class="t xs" fill="#4a7acc">あなたが画面を見る側。ここには隔離のしくみが無い</text>
 <rect x="612" y="20" width="264" height="40" rx="8" fill="#89b4fa14" stroke="#89b4fa44"/>
 <text x="628" y="37" class="t sm" fill="#89b4fa">Windows Terminal / ブラウザ</text>
 <text x="628" y="52" class="t xs" fill="#4a7acc">人間が操作・目視する場所</text>
 
 <!-- WSL2 -->
-<rect x="24" y="64" width="852" height="332" rx="12" fill="#0d2323" stroke="#94e2d5" stroke-width="1.3"/>
+<rect x="24" y="64" width="852" height="392" rx="12" fill="#0d2323" stroke="#94e2d5" stroke-width="1.3"/>
 <text x="42" y="88" class="t md" fill="#94e2d5">WSL2 (Ubuntu)</text>
-<text x="42" y="105" class="t xs" fill="#5ab8aa">開発はここで行う。Linux のファイルシステム上に作業フォルダを置く</text>
+<text x="42" y="105" class="t xs" fill="#5ab8aa">この層を挟む理由：サンドボックスは Linux の機能（bubblewrap）で、Windows では動かない。</text>
+<text x="42" y="119" class="t xs" fill="#5ab8aa">WSL2 を入れて初めて、下の隔離が使えるようになる。</text>
 
 <!-- Claude Code -->
-<rect x="40" y="116" width="820" height="264" rx="10" fill="#160f26" stroke="#cba6f7" stroke-width="1.3"/>
-<text x="58" y="139" class="t md" fill="#cba6f7">Claude Code</text>
-<text x="58" y="156" class="t xs" fill="#8a60c0">AI が状況を判断し、その場でツールを呼ぶ。何を呼ぶかは事前に決まっていない</text>
+<rect x="40" y="130" width="820" height="310" rx="10" fill="#160f26" stroke="#cba6f7" stroke-width="1.3"/>
+<text x="58" y="152" class="t md" fill="#cba6f7">Claude Code</text>
+<text x="58" y="169" class="t xs" fill="#8a60c0">AI が状況を判断し、その場でツールを呼ぶ。何を呼ぶかは事前に決まっていない</text>
 
 <!-- 左: サンドボックスの中 -->
-<rect x="56" y="168" width="392" height="196" rx="8" fill="#0a1f0a" stroke="#a6e3a1" stroke-width="2"/>
-<text x="74" y="192" class="t md" fill="#a6e3a1">サンドボックスの中</text>
-<text x="74" y="209" class="t xs" fill="#5ab055">Bash コマンドと、それが起動した子プロセス</text>
-<line x1="74" y1="220" x2="430" y2="220" stroke="#1a4a1a"/>
-<text x="74" y="243" class="t sm" fill="#cdd6f4">書ける場所</text>
-<text x="164" y="243" class="t sm" fill="#a6e3a1">作業フォルダと一時領域だけ</text>
-<text x="74" y="271" class="t sm" fill="#cdd6f4">つなげる先</text>
-<text x="164" y="271" class="t sm" fill="#a6e3a1">許可したドメインだけ</text>
-<text x="74" y="299" class="t sm" fill="#cdd6f4">守るしくみ</text>
-<text x="164" y="299" class="t sm" fill="#a6e3a1">OS が強制する</text>
-<rect x="74" y="313" width="356" height="38" rx="5" fill="#a6e3a10f"/>
-<text x="86" y="330" class="t xs" fill="#a6e3a1">AI がコマンドをどう書き換えても、OS が拒否する。</text>
-<text x="86" y="344" class="t xs" fill="#a6e3a1">すり抜ける余地がない。</text>
+<rect x="56" y="180" width="392" height="196" rx="8" fill="#0a1f0a" stroke="#a6e3a1" stroke-width="2"/>
+<text x="74" y="204" class="t md" fill="#a6e3a1">サンドボックスの中</text>
+<text x="74" y="221" class="t xs" fill="#5ab055">Bash コマンドと、それが起動した子プロセス</text>
+<line x1="74" y1="232" x2="430" y2="232" stroke="#1a4a1a"/>
+<text x="74" y="255" class="t sm" fill="#cdd6f4">書ける場所</text>
+<text x="164" y="255" class="t sm" fill="#a6e3a1">作業フォルダと一時領域だけ</text>
+<text x="74" y="283" class="t sm" fill="#cdd6f4">つなげる先</text>
+<text x="164" y="283" class="t sm" fill="#a6e3a1">許可したドメインだけ</text>
+<text x="74" y="311" class="t sm" fill="#cdd6f4">守るしくみ</text>
+<text x="164" y="311" class="t sm" fill="#a6e3a1">OS が強制する</text>
+<rect x="74" y="325" width="356" height="38" rx="5" fill="#a6e3a10f"/>
+<text x="86" y="342" class="t xs" fill="#a6e3a1">AI がコマンドをどう書き換えても、OS が拒否する。</text>
+<text x="86" y="356" class="t xs" fill="#a6e3a1">すり抜ける余地がない。</text>
 
 <!-- 右: サンドボックスの外 -->
-<rect x="468" y="168" width="392" height="196" rx="8" fill="#2a1f0a" stroke="#f9e2af" stroke-width="2"/>
-<text x="486" y="192" class="t md" fill="#f9e2af">サンドボックスの外</text>
-<text x="486" y="209" class="t xs" fill="#c9a85a">ファイル読み書き・WebFetch・MCP サーバー</text>
-<line x1="486" y1="220" x2="842" y2="220" stroke="#4a380f"/>
-<text x="486" y="243" class="t sm" fill="#cdd6f4">守るしくみ</text>
-<text x="576" y="243" class="t sm" fill="#f9e2af">許可ルールで1件ずつ判定</text>
-<text x="486" y="271" class="t sm" fill="#cdd6f4">弱いところ</text>
-<text x="576" y="271" class="t sm" fill="#f9e2af">見た目で判断するため</text>
-<text x="576" y="286" class="t sm" fill="#f9e2af">書き方次第で抜ける余地</text>
-<rect x="486" y="300" width="356" height="51" rx="5" fill="#f9e2af0f"/>
-<text x="498" y="317" class="t xs" fill="#f9e2af">だから、秘密ファイルは読めなくし、通信先も絞る。</text>
-<text x="498" y="331" class="t xs" fill="#f9e2af">MCP は信頼できるものだけを入れる。開発サーバーを</text>
-<text x="498" y="345" class="t xs" fill="#f9e2af">ここに出すときは対象を最小限にする。</text>
+<rect x="468" y="180" width="392" height="196" rx="8" fill="#2a1f0a" stroke="#f9e2af" stroke-width="2"/>
+<text x="486" y="204" class="t md" fill="#f9e2af">サンドボックスの外</text>
+<text x="486" y="221" class="t xs" fill="#c9a85a">ファイル読み書き・WebFetch・MCP サーバー</text>
+<line x1="486" y1="232" x2="842" y2="232" stroke="#4a380f"/>
+<text x="486" y="255" class="t sm" fill="#cdd6f4">守るしくみ</text>
+<text x="576" y="255" class="t sm" fill="#f9e2af">許可ルールで1件ずつ判定</text>
+<text x="486" y="283" class="t sm" fill="#cdd6f4">弱いところ</text>
+<text x="576" y="283" class="t sm" fill="#f9e2af">見た目で判断するため</text>
+<text x="576" y="298" class="t sm" fill="#f9e2af">書き方次第で抜ける余地</text>
+<rect x="486" y="312" width="356" height="51" rx="5" fill="#f9e2af0f"/>
+<text x="498" y="329" class="t xs" fill="#f9e2af">だから、秘密ファイルは読めなくし、通信先も絞る。</text>
+<text x="498" y="343" class="t xs" fill="#f9e2af">MCP は信頼できるものだけを入れる。開発サーバーを</text>
+<text x="498" y="357" class="t xs" fill="#f9e2af">ここに出すときは対象を最小限にする。</text>
 
-<!-- 左の経路: 許可リスト（ドメインの一覧）で検問する -->
-<line x1="252" y1="366" x2="252" y2="512" stroke="#a6e3a1" stroke-width="2" marker-end="url(#ah-g)"/>
-<rect x="192" y="422" width="120" height="22" rx="4" fill="#0e1117" stroke="#a6e3a1" stroke-width="1.5"/>
-<text x="252" y="437" class="t xs" fill="#a6e3a1" text-anchor="middle">許可リストの検問</text>
-<text x="322" y="437" class="t xs" fill="#5ab055">許可リスト = つないでよいドメインの一覧</text>
-<text x="272" y="466" class="t mono" fill="#a6e3a1">OK  github.com    リストにあるので通る</text>
-<text x="272" y="482" class="t mono" fill="#f38ba8">NG  example.com   リストにないので 403</text>
+<!-- 通信経路（矢印は最下部まで貫通） -->
+<line x1="252" y1="378" x2="252" y2="536" stroke="#a6e3a1" stroke-width="2" marker-end="url(#ah-g)"/>
+<line x1="664" y1="378" x2="664" y2="536" stroke="#f9e2af" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#ah-y)"/>
 
-<!-- 右の経路: 許可ルール（ツールと対象の可否）だけ -->
-<line x1="664" y1="366" x2="664" y2="512" stroke="#f9e2af" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#ah-y)"/>
-<text x="682" y="430" class="t xs" fill="#f9e2af">検問なし。許可ルールだけで判定する</text>
-<text x="682" y="444" class="t xs" fill="#c9a85a">許可ルール = ツールと対象ごとの可否</text>
-<text x="682" y="470" class="t mono" fill="#a6e3a1">OK  WebFetch(github.com)</text>
-<text x="700" y="483" class="t xs" fill="#5ab055">ルールで許可しているので通る</text>
-<text x="682" y="500" class="t mono" fill="#f38ba8">NG  Read(~/.ssh/**)</text>
-<text x="700" y="513" class="t xs" fill="#c07060">ルールで拒否しているので止まる</text>
+<!-- 検問はサンドボックスの外・Claude Code の中にある -->
+<rect x="192" y="390" width="120" height="22" rx="4" fill="#0e1117" stroke="#a6e3a1" stroke-width="1.5"/>
+<text x="252" y="405" class="t xs" fill="#a6e3a1" text-anchor="middle">許可リストの検問</text>
+<text x="322" y="399" class="t xs" fill="#5ab055">許可リスト = つないでよいドメインの一覧</text>
+<text x="322" y="413" class="t xs" fill="#5ab055">検問役はサンドボックスの外にいる（Claude Code が管理）</text>
+<rect x="604" y="390" width="120" height="22" rx="4" fill="#0e1117" stroke="#f9e2af" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="664" y="405" class="t xs" fill="#f9e2af" text-anchor="middle">検問なし</text>
+<text x="734" y="399" class="t xs" fill="#c9a85a">許可ルール = ツールと</text>
+<text x="734" y="413" class="t xs" fill="#c9a85a">対象ごとの可否</text>
+
+<!-- OK / NG（Windows の枠外） -->
+<text x="272" y="496" class="t mono" fill="#a6e3a1">OK  github.com    リストにあるので通る</text>
+<text x="272" y="512" class="t mono" fill="#f38ba8">NG  example.com   リストにないので 403</text>
+<text x="682" y="496" class="t mono" fill="#a6e3a1">OK  WebFetch(github.com)  ルールで許可</text>
+<text x="682" y="512" class="t mono" fill="#f38ba8">NG  Read(~/.ssh/**)       ルールで拒否</text>
 
 <!-- インターネット -->
-<rect x="8" y="526" width="884" height="52" rx="10" fill="#242c3e" stroke="#9aa5bd" stroke-width="1.5" stroke-dasharray="6 4"/>
-<text x="26" y="550" class="t md" fill="#e4ebfb">インターネット / 外部サービス</text>
-<text x="26" y="567" class="t xs" fill="#9aa5bd">GitHub・npm レジストリ・各種 API・そして攻撃者が用意したかもしれない場所</text>
+<rect x="8" y="542" width="884" height="52" rx="10" fill="#242c3e" stroke="#9aa5bd" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="26" y="566" class="t md" fill="#e4ebfb">インターネット / 外部サービス</text>
+<text x="26" y="583" class="t xs" fill="#9aa5bd">GitHub・npm レジストリ・各種 API・そして攻撃者が用意したかもしれない場所</text>
 
 <!-- 結論 -->
-<text x="8" y="606" class="t md" fill="#cdd6f4">どちらも外部と通信する。違うのは通信の有無ではなく、止め方である。</text>
-<text x="8" y="623" class="t sm" fill="#6c7a96">層が分かれているのはファイルの置き場所の話ではない。OS で止められる領域とルールでしか止められない領域の違いによる。だから両方に設定が要る。</text>
+<text x="8" y="623" class="t md" fill="#cdd6f4">どちらも外部と通信する。違うのは通信の有無ではなく、止め方である。</text>
+<text x="8" y="640" class="t sm" fill="#6c7a96">層が分かれているのはファイルの置き場所の話ではない。OS で止められる領域とルールでしか止められない領域の違いによる。だから両方に設定が要る。</text>
 </svg>
         </div>
       </details>
