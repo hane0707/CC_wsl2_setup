@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code セットアップ 設計判断と検証記録</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0e1117; --surface: #161b27; --surface2: #1e2535; --border: #2a3347;
+    --text: #cdd6f4; --muted: #6c7a96; --accent: #89b4fa; --accent2: #cba6f7;
+    --green: #a6e3a1; --yellow: #f9e2af; --red: #f38ba8; --teal: #94e2d5;
+    --orange: #fab387; --pink: #f5c2e7; --tag-bg: #1e2d45;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans JP', sans-serif; font-weight: 300; line-height: 1.8; font-size: 14px; }
+
+  header { border-bottom: 1px solid var(--border); padding: 40px 48px 28px; }
+  header h1 { font-family: 'IBM Plex Mono', monospace; font-size: 21px; font-weight: 600; color: var(--accent); letter-spacing: -0.5px; margin-bottom: 8px; }
+  header p { color: var(--muted); font-size: 13px; max-width: 760px; }
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 10px; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); }
+  .badge.ref { border-color: #6c7a9644; }
+  .badge.ver { border-color: #a6e3a144; color: var(--green); background: #a6e3a10d; }
+
+  main { max-width: 820px; margin: 0 auto; padding: 36px 48px 100px; }
+
+  .lede { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: 0 6px 6px 0; padding: 18px 22px; margin-bottom: 32px; font-size: 13px; color: var(--muted); }
+  .lede b { color: var(--text); font-weight: 500; }
+
+  nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 40px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+  nav.toc a { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--border); }
+  nav.toc a:hover { color: var(--accent); }
+
+  .section { margin-bottom: 52px; scroll-margin-top: 20px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .step-badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; padding: 3px 8px; background: var(--tag-bg); border: 1px solid var(--accent); border-radius: 3px; color: var(--accent); flex-shrink: 0; }
+  .step-badge.p2 { border-color: var(--accent2); color: var(--accent2); }
+  .step-badge.p3 { border-color: var(--green); color: var(--green); }
+  .step-badge.p4 { border-color: var(--pink); color: var(--pink); }
+  .section-header h2 { font-size: 16px; font-weight: 500; color: var(--text); }
+
+  h3 { font-size: 14px; font-weight: 500; color: var(--accent); margin: 26px 0 10px; }
+  h4 { font-size: 13px; font-weight: 500; color: var(--text); margin: 18px 0 8px; }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { margin-bottom: 6px; }
+  code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: var(--surface2); padding: 1px 6px; border-radius: 3px; color: var(--teal); }
+  a { color: var(--accent); }
+
+  .tbl-wrap { overflow-x: auto; margin-bottom: 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; min-width: 480px; }
+  th, td { border: 1px solid var(--border); padding: 8px 11px; text-align: left; vertical-align: top; }
+  th { background: var(--surface2); font-weight: 500; color: var(--text); font-size: 11.5px; }
+  td { color: var(--text); }
+  td.ok { color: var(--green); }
+  td.ng { color: var(--red); }
+  td.warn { color: var(--yellow); }
+
+  .callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 13px 18px; margin: 16px 0; border-radius: 0 5px 5px 0; }
+  .callout.warn { border-left-color: var(--yellow); }
+  .callout.danger { border-left-color: var(--red); }
+  .callout.good { border-left-color: var(--green); }
+  .callout .co-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
+  .callout.warn .co-title { color: var(--yellow); }
+  .callout.danger .co-title { color: var(--red); }
+  .callout.good .co-title { color: var(--green); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .why { font-size: 12.5px; color: var(--muted); border-left: 2px solid var(--border); padding-left: 14px; margin: 0 0 22px 0; }
+  .why b { color: var(--text); font-weight: 500; }
+
+  .decision { border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; margin-bottom: 18px; }
+  .decision h4 { color: var(--accent2); margin-top: 0; }
+  .decision .tradeoff { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  .rejected { border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; margin-bottom: 14px; }
+  .rejected h4 { margin-top: 0; color: var(--orange); }
+  .rejected .cond { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .rejected .cond b { color: var(--text); font-weight: 500; }
+
+  footer { border-top: 1px solid var(--border); padding: 20px 48px; font-size: 11.5px; color: var(--muted); max-width: 820px; margin: 0 auto; }
+
+  @media (max-width: 700px) {
+    header, main, footer { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Claude Code セットアップ 設計判断と検証記録</h1>
+  <p>本資料はセットアップ手順書（<code>claude-code-wsl2-setup.html</code>）の補足資料です。手順そのものはそちらに集約されており、初見の人はそちらだけ読めば完結します。この文書は、後から「なぜこの設定にしたのか」を確認したいとき、チームに展開する際に根拠を説明するとき、設定変更で迷ったときに参照するためのものです。手順は書きません。判断と実測事実の記録に徹します。</p>
+  <div class="badge-row">
+    <span class="badge ver">Claude Code 2.1.220</span>
+    <span class="badge ref">検証環境: Windows 11 + WSL2 (Ubuntu)</span>
+  </div>
+</header>
+
+<main>
+
+<nav class="toc">
+  <a href="#s1">1. 検証で判明した事実</a>
+  <a href="#s2">2. 設計判断</a>
+  <a href="#s3">3. 却下・保留した選択肢</a>
+  <a href="#s4">4. 自律化のロードマップ</a>
+</nav>
+
+<!-- ══════════════ 1章 ══════════════ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <span class="step-badge p3">1</span>
+    <h2>検証で判明した事実（実測データ）</h2>
+  </div>
+  <p>セットアップの前提を左右する事実を、実際に手を動かして確認した。数値・エラー文言は実測そのものであり、推測は含まない。</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:26%">検証項目</th><th>実測結果</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>PR が作れない問題の真因</b></td>
+        <td>ネットワーク・認証・権限はすべて正常。証拠は <code>POST /repos/.../pulls</code> が <b>422</b> で応答したこと。422 は GitHub 側が内容を読んで返す検証エラーであり、経路上の障害がないことを示す。真因は <code>gh pr create</code> の対話 UI が人間の入力を前提にしている点だった。</td>
+      </tr>
+      <tr>
+        <td><b><code>allowedDomains</code> は単体では遮断しない</b></td>
+        <td><code>strictAllowlist</code> が無いと「確認をスキップする一覧」として動く。実測で許可リストに無い <code>example.com</code> に <b>200</b> で到達できた。<code>strictAllowlist</code> 設定後は同じ未許可先が <code>CONNECT tunnel failed, response 403</code> で遮断された。</td>
+      </tr>
+      <tr>
+        <td><b>サンドボックスは Bash コマンド1回ごとに使い捨てられる</b></td>
+        <td>観測されたプロセス番号は <code>1</code>, <code>2</code>, <code>389</code> という極めて小さい値。ネットワークインターフェースも <code>lo</code>（自分自身）のみ。コマンドごとにプロセス空間もネットワークも作り直されている。このため別コマンドや MCP のブラウザから、先に起動した開発サーバーに到達できない。</td>
+      </tr>
+      <tr>
+        <td><b>設定ファイルへの書き込みが黙って失敗する</b></td>
+        <td><code>~/.claude/.config.json</code>、<code>~/.mcp.json</code>、<code>.git/config</code>（<code>.git/config.lock</code> 経由）に <code>/dev/null</code> がマウントされている。<code>.git/config</code> はエラーを返すが、<b><code>.config.json</code> は成功表示だけ出て何も残らない</b>。<code>claude mcp add</code> が典型例で、「Added…」と表示されても再起動後に未登録だった。</td>
+      </tr>
+      <tr>
+        <td><b>書き込み先パスが実行場所で変わる</b></td>
+        <td>同じ MCP 登録コマンドでも、サンドボックス内実行では <code>~/.claude/.config.json</code>、サンドボックス外（自分のターミナル）実行では <code>~/.claude.json</code> に書き込まれる。後者のみ実体を持つ。</td>
+      </tr>
+      <tr>
+        <td><b>許可リストはリダイレクト先まで見ないと判断を誤る</b></td>
+        <td><code>cdn.playwright.dev</code> を許可リストに追加しても <b>307</b> で <code>storage.googleapis.com</code> に転送されるため通らない。後者は GCS（Google Cloud Storage）全体を指す広いドメインで、安易に許可すべきではない。</td>
+      </tr>
+      <tr>
+        <td><b>WSL2 の Ubuntu には日本語フォントが無い</b></td>
+        <td>実測で CJK フォント <b>0件</b>。絵文字フォントも無い。この状態でヘッドレスブラウザのスクリーンショットを撮ると、日本語がすべて豆腐（□）になりアイコンも読めず、画面確認の用を成さない。</td>
+      </tr>
+      <tr>
+        <td><b>設定の反映タイミングが異なる</b></td>
+        <td><code>settings.json</code> の変更は<b>再起動なしで反映</b>される（実測確認）。一方 MCP の登録は起動時にのみ接続されるため<b>再起動が必要</b>。</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout warn">
+    <div class="co-title">422 応答の読み方</div>
+    <p>「422 エラー＝失敗」ではない。ネットワークが遮断されていれば、そもそもサーバーまで届かず接続エラーになる。届いて、認証され、内容を審査された上で「その内容では作れません」と言われた——つまり経路上の障害はゼロだと分かる。この切り分けが、原因をサンドボックスではなくコマンドの対話性だと特定する決め手になった。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 2章 ══════════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <span class="step-badge p2">2</span>
+    <h2>設計判断（なぜこの構成なのか）</h2>
+  </div>
+  <p>なぜこの設定を選んだのか、何とのトレードオフだったのかを記録する。</p>
+
+  <div class="decision">
+    <h4>built-in サンドボックスを維持し、devcontainer に移行しなかった理由</h4>
+    <p>PR が作れない問題も画面確認の問題も、環境全体を作り直さなくても設定とスキルの追加で解決できることが分かった。既存資産（設定・スキル・運用習慣）をほぼそのまま流用できる一方、アーキテクチャの変更は最もコストが高く、最も失敗しやすい選択になる。不満点が構成の欠陥ではなかった以上、構成そのものを変える理由がない。</p>
+  </div>
+
+  <div class="decision">
+    <h4>MCP がサンドボックス外で動く性質を利用した理由</h4>
+    <p>サンドボックス（隔離の壁）が制限しているのは Bash コマンドだけで、MCP サーバーは壁の外で動く。この性質を使えば、隔離を一切緩めずに「AI が画面を見る」機能を追加できる。<br><span class="tradeoff">トレードオフ: MCP は壁の外の経路そのものなので、信頼できるもの（公式・準公式）だけを入れるという原則とセットで運用する。MCP を増やす＝壁の外の経路を増やす、という認識を欠かさない。</span></p>
+  </div>
+
+  <div class="decision">
+    <h4><code>excludedCommands</code> に開発サーバーを入れた理由</h4>
+    <p>ブラウザ（MCP、壁の外）と開発サーバー（Bash 起動、壁の中）は互いに通信できない。画面確認を成立させるには、サーバー側も壁の外に出す必要がある。<code>excludedCommands</code> に登録したコマンドはサンドボックスの外で実行されるため、ブラウザと同じネットワークに立つ。<br><span class="tradeoff">隔離は保たれる: 外に出るのはそのプロセスだけで、サンドボックス内からは依然としてそのサーバーに接続できない（実測確認済み）。壁自体が壊れるわけではない。</span><br><span class="tradeoff">広いパターンを避ける理由: ここに登録したコマンドはファイルもネットワークも制限を受けなくなる。<code>npm run dev</code> のような具体的なコマンドに限定し、<code>npm *</code> のような広いパターンは登録しない。対象は自分のプロジェクトの開発サーバーに限定してリスクを最小化する。</span></p>
+  </div>
+
+  <div class="decision">
+    <h4>プラグインを4つに絞った理由</h4>
+    <p>プラグインは skill（作業手順書）を大量に持ち込む。skill が増えるほど AI が読む情報が増え、判断がぶれやすくなり、費用も増える。使う予定のないものまで残す必要はないため、実際に役割が噛み合うものだけを残した。削除は不可逆ではなく、必要になれば個別に戻せる。</p>
+  </div>
+
+  <h3>GH_TOKEN の mask 化を見送った理由</h3>
+  <div class="callout warn">
+    <div class="co-title">今回は見送り／チーム配布時には採用を推奨</div>
+    <p><b>見送った理由:</b> mask 化にはトークンを環境変数 <code>GH_TOKEN</code> に置く運用変更を伴う。現状トークンはファイル保存のままで問題なく機能しており、見送った場合に残る差分は「AI がトークンファイルを読める状態にある」という一点のみ。個人が自分の権限で自分のリポジトリを触る範囲では、これは許容できるリスクと判断した。</p>
+    <p><b>ただしチーム配布時には採用を推奨する。</b>理由は3点。①権限の大きい共用トークンを扱う可能性がある、②誰か1人の環境で流出すると影響が全員に及ぶ、③各人がトークンを正しく運用しているかを管理者が確認できない。個人利用時とはリスクの重さが変わるため、チーム展開を判断した時点で改めて採用を検討する。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 3章 ══════════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <span class="step-badge p4">3</span>
+    <h2>却下・保留した選択肢</h2>
+  </div>
+  <p>検討したが今回は採用しなかったもの。将来同じ検討を繰り返さないための記録であり、「二度と採らない」という意味ではない。</p>
+
+  <div class="rejected">
+    <h4>devcontainer 全面移行</h4>
+    <p>環境をコンテナ化すれば隔離は最も強くなるが、既存資産の作り直しが大きく、現状の不満は設定変更で解決できるため見送った。</p>
+    <p class="cond"><b>採る条件:</b> チーム展開フェーズで、環境差異の吸収そのものが目的になったとき再検討する。</p>
+  </div>
+
+  <div class="rejected">
+    <h4>ローカルの隔離を緩めて CI に厳格性を寄せる案</h4>
+    <p>手元の作業を自由にする代わりに、危険な操作は GitHub Actions 側で最小権限実行する構成。時間ベースの自律化には適合するが、現時点では手元の隔離を弱める理由がない。</p>
+    <p class="cond"><b>採る条件:</b> 時間ベースの自律実行（Actions 常用）に本格移行する段階で、手元と CI の役割分担として組み込む。</p>
+  </div>
+
+  <div class="rejected">
+    <h4><code>storage.googleapis.com</code> の許可</h4>
+    <p>Playwright のブラウザ本体取得に必要だが、GCS 全体（任意のバケット）を指す広いドメインであり、サンドボックスのネットワーク隔離が持ち出し経路として大きく弱まる。ブラウザ導入はサンドボックス外（自分のターミナル）で一度きり実行する運用とし、恒久的な穴は開けなかった。</p>
+    <p class="cond"><b>採る条件:</b> 現時点では想定していない。同種の取得作業が頻発し、都度サンドボックス外で行う運用コストが無視できなくなった場合にのみ再検討する。</p>
+  </div>
+
+  <div class="rejected">
+    <h4>GitHub Actions による Issue 起点の自律実行</h4>
+    <p>「Issue に書けば AI が着手する」運用。技術的な導入自体は容易だが、どこまで無人で着手させるかという運用方針が未確定のため保留した。</p>
+    <p class="cond"><b>採る条件:</b> 検証 skill と <code>/goal</code> の停止条件の型化が済み、時間ベースの自律化（第4章）に進む判断をしたとき。</p>
+  </div>
+
+  <div class="rejected">
+    <h4>Chrome DevTools MCP</h4>
+    <p>Windows 側の Chrome と連携し、人間と同じ画面を AI が見られる。ただし Windows 側の設定変更（<code>.wslconfig</code> 編集や WSL 再起動）を伴い、無人実行にも不向きなため、任意の選択肢として保留した。</p>
+    <p class="cond"><b>採る条件:</b> デザインの最終確認や込み入った不具合調査で、人間が見ている画面をそのまま AI と共有したい具体的な必要が生じたとき。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 4章 ══════════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <span class="step-badge">4</span>
+    <h2>自律化のロードマップ</h2>
+  </div>
+  <p>段階的にエージェントの自律度を上げる計画。</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th style="width:24%">段階</th><th style="width:28%">誰が終わりを決めるか</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td>1. ターンベース</td><td>人間が毎回確認</td><td>指示するたびに結果を見る、最も基本的な運用</td></tr>
+      <tr><td>2. ゴールベース <code>/goal</code></td><td>検証可能な条件</td><td>「テストが全部通るまで」等を条件にすると、AI が自分で直し続ける</td></tr>
+      <tr><td>3. 時間ベース <code>/schedule</code>・Actions</td><td>スケジュールやイベント</td><td>Issue 起点の自律実行を含む。運用方針は現時点で未確定（第3章）</td></tr>
+      <tr><td>4. プロアクティブ</td><td>AI 自身が仕事を探す</td><td>今回は対象外。コストと暴走管理が別途必要</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout good">
+    <div class="co-title">現在地</div>
+    <p>ゴールベースの手前。手順書側の構成（PR 作成 skill・画面確認・ネットワーク遮断）が完了した時点で、検証可能な停止条件さえ与えれば AI が自走できる状態にある。</p>
+  </div>
+
+  <h3>次の一手</h3>
+  <ul>
+    <li><b>検証 skill</b> — テスト実行と画面確認（コンソールエラーの有無、スクリーンショット比較）を機械判定できる形に落とし込む</li>
+    <li><b><code>/goal</code> の停止条件の型化</b> — 「何をもって完了とするか」を毎回考えるのではなく、再利用できる型として整備する</li>
+  </ul>
+
+  <div class="callout danger">
+    <div class="co-title">重要な原則: AI に自分の成果物を評価させない</div>
+    <p>自己評価は実際の品質より高く出る。したがって作る役と検証する役を分離し、検証は「テストが通ったか」「画面にエラーが出ていないか」といった機械的に判定できる条件に落とし込む。画面確認の仕組み（Playwright MCP、<code>excludedCommands</code> による開発サーバーの解放、日本語フォント導入）を整えたのは、便利さのためだけでなく、この検証役を成立させるための部品でもある。</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  本資料は判断と実測事実の記録に徹しており、コマンドの打ち方や設定の書き方は記載していない。手順は <code>claude-code-wsl2-setup.html</code> を参照のこと。<br>
+  検証時の生の記録（図解つきの検討過程）は <code>archive/</code> に残してある。通常は参照する必要はない。
+</footer>
+
+</body>
+</html>

@@ -679,12 +679,17 @@
     <a href="#s4"><span class="step-num">4</span>Node.js / npm 導入</a>
     <a href="#s5"><span class="step-num">5</span>Claude Code インストール</a>
     <a href="#s6"><span class="step-num">6</span>サンドボックス &amp; settings.json</a>
-    <a href="#s7"><span class="step-num">7</span>認証 &amp; 動作確認</a>
-    <a href="#s8"><span class="step-num">8</span>Git 設定</a>
-    <a href="#s9"><span class="step-num">9</span>GitHub HTTPS 連携 &amp; PR</a>
-    <a href="#s10"><span class="step-num">10</span>ブラウザ確認環境</a>
-    <a href="#s11"><span class="step-num">11</span>Windows Terminal 設定</a>
-    <a href="#s12"><span class="step-num">12</span>Zed / VS Code 設定</a>
+    <a href="#s7"><span class="step-num">7</span>CLAUDE.md 設定</a>
+    <a href="#s8"><span class="step-num">8</span>認証 &amp; 動作確認</a>
+    <a href="#s9"><span class="step-num">9</span>プラグイン導入</a>
+    <a href="#s10"><span class="step-num">10</span>Git 設定</a>
+    <a href="#s11"><span class="step-num">11</span>GitHub HTTPS 連携 &amp; PR</a>
+    <a href="#s12"><span class="step-num">12</span>ブラウザ確認環境</a>
+    <div class="nav-divider"></div>
+    <div class="nav-label">任意</div>
+    <a href="#s13"><span class="step-num">13</span>Windows Terminal 設定</a>
+    <a href="#s14"><span class="step-num">14</span>Zed / VS Code 設定</a>
+    <a href="#s15"><span class="step-num">15</span>dotenvx 暗号化</a>
     <div class="nav-divider"></div>
     <div class="nav-label">補足</div>
     <a href="#tips"><span class="step-num">+</span>運用上の注意点</a>
@@ -733,12 +738,12 @@
           <tr>
             <td class="key-col">WSL2 未導入 / ネイティブ導入済み</td>
             <td>なし（STEP 1 から順に）</td>
-            <td>STEP 3・STEP 5・STEP 7</td>
+            <td>STEP 3・STEP 5・STEP 8</td>
           </tr>
           <tr>
             <td class="key-col">WSL2 導入済み / ネイティブ導入済み</td>
             <td>STEP 1</td>
-            <td>STEP 3・STEP 5・STEP 7</td>
+            <td>STEP 3・STEP 5・STEP 8</td>
           </tr>
         </table>
       </div>
@@ -1304,8 +1309,17 @@
             </div>
             <pre><span class="cmd">cat</span> > ~/.claude/settings.json << <span class="str">'EOF'</span>
 {
+  "model": "opus",
+  "language": "Japanese",
+  "tui": "fullscreen",
+  "agentPushNotifEnabled": true,
   "dangerouslySkipPermissions": "disable",
   "enableAllProjectMcpServers": false,
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": false,
@@ -1377,6 +1391,17 @@
       "Edit(~/.zshrc)",
       "Edit(~/.ssh/**)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "printf '\\a'" } ] }
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "context7@claude-plugins-official": true
   }
 }
 <span class="str">EOF</span></pre>
@@ -1445,11 +1470,46 @@
           <td>権限確認スキップ機能そのものを無効化（"disable"）</td>
           <td>誤って有効化しても機能しないようにする保険。個人の WSL2 開発環境では常時 disable を推奨</td>
         </tr>
+        <tr>
+          <td class="key-col">model</td>
+          <td>既定で使用するモデルを固定（"opus"）</td>
+          <td>セッションごとにモデルを選び直す手間をなくし、意図しないモデルでの応答を防ぐ。好みのモデルに変更して構わない</td>
+        </tr>
+        <tr>
+          <td class="key-col">language</td>
+          <td>応答言語を固定（"Japanese"）</td>
+          <td>入力言語に関わらず日本語での応答を徹底する</td>
+        </tr>
+        <tr>
+          <td class="key-col">tui</td>
+          <td>ターミナル UI の表示モード（"fullscreen"）</td>
+          <td>好みの表示に合わせる任意設定。挙動が気に入らなければ削除してよい</td>
+        </tr>
+        <tr>
+          <td class="key-col">agentPushNotifEnabled</td>
+          <td>サブエージェントの完了時にプッシュ通知を送る（true）</td>
+          <td>バックグラウンドで走らせたサブエージェントの完了に気づきやすくする</td>
+        </tr>
+        <tr>
+          <td class="key-col">statusLine</td>
+          <td>ステータスラインに外部コマンドの出力を表示</td>
+          <td class="warn-td">任意機能。ここでは <span class="inline-code">ccstatusline</span> を使う例。不要なら丸ごと削除してよい</td>
+        </tr>
+        <tr>
+          <td class="key-col">hooks.Stop</td>
+          <td>セッション終了（Stop）時に <span class="inline-code">printf '\a'</span> を実行しビープ音を鳴らす</td>
+          <td>長時間の自動実行が終わったタイミングに気づけるようにする任意設定</td>
+        </tr>
+        <tr>
+          <td class="key-col">enabledPlugins</td>
+          <td>有効化するプラグインの一覧</td>
+          <td class="warn-td">手で書く必要はない。STEP 9（プラグイン導入）で <span class="inline-code">/plugin</span> から導入すると自動的にこのキーが書き込まれる</td>
+        </tr>
       </table>
 
       <div class="notice danger">
         <span class="notice-icon">🚫</span>
-        <p><strong>strictAllowlist を外すと allowedDomains は実質ノーガードになります（実測）。</strong> 許可リストに無い <span class="inline-code">https://example.com</span> に確認もなく接続できてしまう挙動を確認済みです。<span class="inline-code">strictAllowlist: true</span>（Claude Code 2.1.219 以降）を必ず入れてください。</p>
+        <p><strong>strictAllowlist を外すと allowedDomains は実質ノーガードになります。</strong> 許可リストに無い <span class="inline-code">https://example.com</span> に確認もなく接続できてしまう挙動を確認済みです。<span class="inline-code">strictAllowlist: true</span>（Claude Code 2.1.219 以降）を必ず入れてください。</p>
       </div>
         </div>
         <aside class="step-aside">
@@ -1463,7 +1523,7 @@
           </details>
 
           <details>
-            <summary>▶ allowedDomains を書くときの落とし穴（実測）</summary>
+            <summary>▶ allowedDomains を書くときの落とし穴</summary>
             <div class="details-body">
               <p><strong>① ドメイン本体とワイルドカードは両方書く。</strong> <span class="inline-code">*.github.com</span> だけにすると <span class="inline-code">github.com</span> 本体にマッチせず <span class="inline-code">git push</span> が壊れる恐れがあります。<span class="inline-code">github.com</span> と <span class="inline-code">*.github.com</span> を併記してください。</p>
               <p><strong>② api.github.com は必須。</strong> PR 作成は <span class="inline-code">github.com</span> ではなく <span class="inline-code">api.github.com</span> を使います。ワイルドカードで確実に含めます。</p>
@@ -1485,6 +1545,14 @@
               <p><span class="inline-code">autoAllowBashIfSandboxed</span> を <span class="inline-code">true</span> にすると、サンドボックス内で完結するコマンドが確認なしで実行されます。「OS レベルの壁が守っている範囲でのみ自動化する」という考え方です。上の設定では <span class="inline-code">false</span>（毎回確認）にしてあります。エージェントに長時間走らせたくなった段階で切り替えを検討してください。</p>
             </div>
           </details>
+
+          <details>
+            <summary>▶ statusLine / hooks / enabledPlugins は削除・後回しにしてよい</summary>
+            <div class="details-body">
+              <p><span class="inline-code">statusLine</span>（<span class="inline-code">ccstatusline</span> でステータスラインを表示）と <span class="inline-code">hooks.Stop</span>（セッション終了時にビープ音を鳴らす）はどちらも好み次第の任意機能です。不要ならキーごと削除して構いません。</p>
+              <p><span class="inline-code">enabledPlugins</span> はこの STEP の時点では空でも問題ありません。STEP 9（プラグイン導入）で <span class="inline-code">/plugin</span> からインストールすると、Claude Code が自動的にこのキーを settings.json に追記します。手で先に書いておく必要はありません。</p>
+            </div>
+          </details>
         </aside>
       </div>
 
@@ -1497,7 +1565,7 @@
           <details>
             <summary>▶ なぜ MCP の登録だけ再起動が必要なのか</summary>
             <div class="details-body">
-              <p><span class="inline-code">~/.claude/settings.json</span> の変更は Claude Code の<strong>再起動なしで反映されます</strong>（実測確認済み）。一方 MCP サーバーの登録は起動時に接続されるため、稼働中のセッションには反映されず<strong>再起動が必要</strong>です。設定ファイルの読み込みタイミングが異なるためです。</p>
+              <p><span class="inline-code">~/.claude/settings.json</span> の変更は Claude Code の<strong>再起動なしで反映されます</strong>。一方 MCP サーバーの登録は起動時に接続されるため、稼働中のセッションには反映されず<strong>再起動が必要</strong>です。設定ファイルの読み込みタイミングが異なるためです。</p>
             </div>
           </details>
         </aside>
@@ -1505,15 +1573,93 @@
 
       <div class="checkpoint">
         <span class="notice-icon">✅</span>
-        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">~/.claude/settings.json</span> が作成されていれば完了です（構文チェックは次の STEP で行います）。</p>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">~/.claude/settings.json</span> が作成されていれば完了です（構文チェックは STEP 8 で行います）。</p>
       </div>
     </div>
 
-
-    <!-- STEP 7 -->
+    <!-- STEP 7（新設） -->
     <div class="section" id="s7">
       <div class="section-header">
         <div class="step-badge">STEP 7</div>
+        <h2>CLAUDE.md でグローバル方針を明文化</h2>
+        <span class="tag recommend">推奨</span>
+      </div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <p><span class="inline-code">~/.claude/CLAUDE.md</span> は、すべてのプロジェクト・すべてのセッションで自動的に読み込まれる Claude Code へのグローバルな指示ファイルです。ここに書いたルールはセッション開始のたびに読み込まれ、AI の判断方針として働きます。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-1"></label>
+              <span class="label-text">~/.claude/CLAUDE.md を作成</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">mkdir</span> -p ~/.claude
+<span class="cmd">cat</span> > ~/.claude/CLAUDE.md << <span class="str">'EOF'</span>
+# セキュリティルール
+
+## 機密ファイルの取り扱い
+- `.env*`, `secrets*`, `*.key`, `*.pem` ファイルは読み取り・編集・表示を行わない
+- `~/.ssh/`, `~/.aws/`, `~/.gnupg/` 以下のファイルは操作しない
+- APIキーやトークンをコード・コメント・ログに含めない
+
+## 破壊的操作の禁止
+- `rm -rf` は明示的な確認なしに実行しない
+- `git push --force` / `git reset --hard` は確認後のみ実行する
+- `sudo` コマンドは最小権限の原則に従い、不要な場合は使用しない
+
+## ネットワーク・外部通信
+- 許可ドメイン以外への通信が必要な場合は事前に確認する
+- 認証情報を外部サービスに送信しない
+
+## コード品質
+- テストなしで本番コードを変更しない（既存テストがある場合）
+- セキュリティに関わるコード変更は必ず変更内容を説明する
+
+## Git
+- コミットメッセージは日本語で記述すること
+<span class="str">EOF</span></pre>
+          </div>
+
+          <p>作成できたか確認します。</p>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s7-2"></label>
+              <span class="label-text">作成確認</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">cat</span> ~/.claude/CLAUDE.md</pre>
+          </div>
+
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p>内容はあくまで一例です。チームやプロジェクトの実情に合わせて項目を増減させて構いません。プロジェクト固有のルールは、リポジトリ内の <span class="inline-code">CLAUDE.md</span>（プロジェクトルート）に書くと、そのプロジェクトを開いたときだけ追加で読み込まれます。</p>
+          </div>
+        </div>
+
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <details open>
+            <summary>▶ permissions.deny との違い</summary>
+            <div class="details-body">
+              <p><span class="inline-code">CLAUDE.md</span> は<strong>方針の明文化＝AI への指示</strong>です。AI がこれを読んで自発的に守ることを期待するもので、誤読や見落とし、指示の競合などが起きれば破られ得ます。</p>
+              <p>一方 <span class="inline-code">permissions.deny</span> や <span class="inline-code">sandbox</span> は<strong>機械的な強制</strong>です。Claude Code のプロセス自身がツール実行そのものを拒否するため、AI の「判断」を経由しません。</p>
+              <p>両者は<strong>別レイヤーの防御</strong>です。CLAUDE.md は「なぜそれをすべきでないか」まで含めて伝えられる一方、確実性は permissions.deny / sandbox 側にあります。セキュリティに関わる制約は、可能な限り両方に書いてください。</p>
+            </div>
+          </details>
+        </aside>
+      </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">cat ~/.claude/CLAUDE.md</span> で内容が表示されれば完了です。</p>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="step-badge">STEP 8</div>
         <h2>認証 &amp; 動作確認</h2>
         <span class="tag required">必須</span>
       </div>
@@ -1522,7 +1668,7 @@
         <div class="step-main">
           <div class="code-block env-wsl">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s7-1"></label>
+              <label class="task-check"><input type="checkbox" data-task="s8-1"></label>
               <span class="label-text">Claude Code 起動・認証</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
             <pre><span class="cmd">claude</span></pre>
@@ -1532,7 +1678,7 @@
 
           <div class="code-block env-wsl">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s7-2"></label>
+              <label class="task-check"><input type="checkbox" data-task="s8-2"></label>
               <span class="label-text">BROWSER 環境変数を .bashrc に追記</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
             <pre><span class="cmd">echo</span> <span class="str">'export BROWSER="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"'</span> >> ~/.bashrc</pre>
@@ -1540,7 +1686,7 @@
 
           <div class="code-block env-wsl">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s7-3"></label>
+              <label class="task-check"><input type="checkbox" data-task="s8-3"></label>
               <span class="label-text">.bashrc を反映</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
             <pre><span class="cmd">source</span> ~/.bashrc</pre>
@@ -1552,7 +1698,7 @@
 
           <div class="code-block env-wsl">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s7-4"></label>
+              <label class="task-check"><input type="checkbox" data-task="s8-4"></label>
               <span class="label-text">settings.json の構文チェック（シェルで実行）</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
             <pre><span class="cmd">cat</span> ~/.claude/settings.json | python3 -m json.tool</pre>
@@ -1567,7 +1713,7 @@
 
           <div class="code-block env-cc">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s7-5"></label>
+              <label class="task-check"><input type="checkbox" data-task="s8-5"></label>
               <span class="label-text">サンドボックスの有効確認（「Sandbox: enabled」と表示されれば完了）</span><span class="env-tag cc">Claude Code セッション内</span>
             </div>
             <pre>/sandbox</pre>
@@ -1575,19 +1721,19 @@
 
           <div class="code-block env-cc">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s7-6"></label>
+              <label class="task-check"><input type="checkbox" data-task="s8-6"></label>
               <span class="label-text">インストール状態・設定の総合チェック（seccomp filter: installed も確認）</span><span class="env-tag cc">Claude Code セッション内</span>
             </div>
             <pre>/doctor</pre>
           </div>
 
-          <div class="section-group-label">7-2 ネットワーク遮断が効いているか確認（2026-08 追記）</div>
+          <div class="section-group-label">8-2 ネットワーク遮断が効いているか確認</div>
 
           <p><strong>「有効になっている」と「実際に遮断されている」は別です。</strong>必ず両方を実測で確認してください。Claude Code に以下を実行させます。</p>
 
           <div class="code-block env-cc">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s7-7"></label>
+              <label class="task-check"><input type="checkbox" data-task="s8-7"></label>
               <span class="label-text">許可済みドメイン → 200 が返るはず</span><span class="env-tag cc">Claude Code セッション内</span>
             </div>
             <pre><span class="cmd">curl</span> -sS -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://api.github.com/zen</pre>
@@ -1595,7 +1741,7 @@
 
           <div class="code-block env-cc">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s7-8"></label>
+              <label class="task-check"><input type="checkbox" data-task="s8-8"></label>
               <span class="label-text">未許可ドメイン → 遮断されるはず</span><span class="env-tag cc">Claude Code セッション内</span>
             </div>
             <pre><span class="cmd">curl</span> -sS -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://example.com</pre>
@@ -1635,10 +1781,122 @@
       </div>
     </div>
 
-    <!-- STEP 8 -->
-    <div class="section" id="s8">
+    <!-- STEP 9（新設） -->
+    <div class="section" id="s9">
       <div class="section-header">
-        <div class="step-badge">STEP 8</div>
+        <div class="step-badge">STEP 9</div>
+        <h2>プラグインの導入</h2>
+        <span class="tag recommend">推奨</span>
+      </div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <p>Claude Code には公式マーケットプレイスからプラグインを追加できます。認証が済んだこの段階で導入します。ここでは以下の4プラグイン + 1スキルに絞って導入します。</p>
+
+          <table>
+            <tr>
+              <th>名前</th>
+              <th>役割</th>
+            </tr>
+            <tr>
+              <td class="key-col">superpowers</td>
+              <td>作業プロセスの土台（設計 → 計画 → 実装 → 検証の型）。自律化の基盤</td>
+            </tr>
+            <tr>
+              <td class="key-col">frontend-design</td>
+              <td>画面デザインの指針。公式ディレクトリで最多導入</td>
+            </tr>
+            <tr>
+              <td class="key-col">code-review</td>
+              <td>手元でコードレビューを回す</td>
+            </tr>
+            <tr>
+              <td class="key-col">context7</td>
+              <td>ライブラリの最新ドキュメント取得。AI の知識は学習時点で止まるため、バージョン差異による誤りを防ぐ</td>
+            </tr>
+            <tr>
+              <td class="key-col">grill-me<br><span class="inline-code">スキル</span></td>
+              <td>計画を問い詰めて穴を潰す。<strong>プラグインではなく</strong> <span class="inline-code">~/.claude/skills/grill-me/</span> に置くユーザースキル</td>
+            </tr>
+          </table>
+
+          <div class="section-group-label">9-1 プラグイン（superpowers / frontend-design / code-review / context7）</div>
+
+          <p>Claude Code セッション内で <span class="inline-code">/plugin</span> を実行すると、マーケットプレイスの閲覧・検索・インストールができる画面が開きます。公式マーケットプレイスは初回起動時に自動で登録されているため、通常はマーケットプレイスを追加する操作は不要です。</p>
+
+          <div class="code-block env-cc">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s9-1"></label>
+              <span class="label-text">プラグイン管理画面を開く</span><span class="env-tag cc">Claude Code セッション内</span>
+            </div>
+            <pre>/plugin</pre>
+          </div>
+
+          <p>「Discover」などのタブから <span class="inline-code">superpowers</span> <span class="inline-code">frontend-design</span> <span class="inline-code">code-review</span> <span class="inline-code">context7</span> を検索し、それぞれインストールしてください。インストールが完了すると <span class="inline-code">~/.claude/settings.json</span> の <span class="inline-code">enabledPlugins</span> に自動的に追記されます（STEP 6 で手書きしていなくても問題ありません）。</p>
+
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p><strong>コマンドの正確な構文はバージョンによって変わることがあります。</strong> <span class="inline-code">/plugin</span> 内のヘルプ表示、または <span class="inline-code">claude --help</span> / <span class="inline-code">claude plugin --help</span> で最新の使い方を確認してください。対話操作を避けたい場合は非対話コマンド（<span class="inline-code">claude plugin install &lt;プラグイン名&gt;@&lt;マーケットプレイス名&gt; --scope user</span> など）が用意されている場合があります。<br>
+            どうしても見つからない・入らない場合は、<span class="inline-code">~/.claude/settings.json</span> の <span class="inline-code">enabledPlugins</span> に直接キーを追記する方法でも構いません。ただし手書きだけではプラグイン本体は取得されないため、まずは <span class="inline-code">/plugin</span> からのインストールを優先してください。</p>
+          </div>
+
+          <div class="code-block env-cc">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s9-2"></label>
+              <span class="label-text">導入状況の確認</span><span class="env-tag cc">Claude Code セッション内</span>
+            </div>
+            <pre>/plugin</pre>
+          </div>
+
+          <p>「Installed」などのタブに4つとも表示されていれば導入完了です。</p>
+
+          <div class="section-group-label">9-2 grill-me（スキル）の配置</div>
+
+          <p><span class="inline-code">grill-me</span> はプラグインではなく、単体のスキルとして配布されています。<span class="inline-code">~/.claude/skills/grill-me/SKILL.md</span> に配置してください。</p>
+
+          <div class="notice danger">
+            <span class="notice-icon">🚫</span>
+            <p><strong><span class="inline-code">cp</span> では設置できません。</strong> <span class="inline-code">~/.claude/skills/</span> はサンドボックスが書き込みを拒否します（<span class="inline-code">Read-only file system</span>）。AI が自分の手順書を書き換えるのを防ぐための保護です。エディタで直接保存するか、Claude Code のファイル編集ツールに書かせてください。</p>
+          </div>
+
+          <div class="code-block env-cc">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s9-3"></label>
+              <span class="label-text">配置できたか確認</span><span class="env-tag cc">Claude Code セッション内</span>
+            </div>
+            <pre>/grill-me</pre>
+          </div>
+        </div>
+
+        <aside class="step-aside">
+          <div class="step-aside-label">補足</div>
+          <details open>
+            <summary>▶ なぜ4つに絞るのか</summary>
+            <div class="details-body">
+              <p>プラグインは skill を大量に持ち込みます。導入するプラグインが増えるほど、AI がセッション開始時に読み込む情報量が増え、<strong>判断がぶれやすくなり、トークン消費（費用）も増えます</strong>。</p>
+              <p>「使うかもしれない」ではなく<strong>実際に使う予定のもの</strong>だけを入れる方針を推奨します。ここに挙げた4つ＋1スキル以外にも公式ディレクトリには多数のプラグインがありますが、必要になった時点で個別に検討・追加してください。</p>
+            </div>
+          </details>
+          <details>
+            <summary>▶ 他のプラグインについて</summary>
+            <div class="details-body">
+              <p>公式マーケットプレイスには 100 以上、サードパーティを含めると数千のプラグインがあります。役割が重なるもの（複数の開発ワークフロー系プラグインなど）を同時に入れると、AI が読む手順書が競合して判断がぶれます。</p>
+              <p>上記の 4 プラグイン＋1 スキルを基本とし、<strong>必要になった時点で1つずつ追加する</strong>のが確実です。合わなければ外せばよいので、迷うものは入れないでおきます。</p>
+            </div>
+          </details>
+        </aside>
+      </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">/plugin</span> の一覧に4プラグインが表示され、<span class="inline-code">/grill-me</span> が応答すれば完了です。</p>
+      </div>
+    </div>
+
+    <!-- STEP 10 -->
+    <div class="section" id="s10">
+      <div class="section-header">
+        <div class="step-badge">STEP 10</div>
         <h2>Git の設定（WSL内）</h2>
         <span class="tag required">必須</span>
       </div>
@@ -1652,7 +1910,7 @@
 
       <div class="code-block env-wsl">
         <div class="code-label">
-          <label class="task-check"><input type="checkbox" data-task="s8-1"></label>
+          <label class="task-check"><input type="checkbox" data-task="s10-1"></label>
           <span class="label-text">Git バージョン確認</span><span class="env-tag wsl">WSL Ubuntu</span>
         </div>
         <pre><span class="cmd">git</span> --version</pre>
@@ -1660,7 +1918,7 @@
 
       <div class="code-block env-wsl">
         <div class="code-label">
-          <label class="task-check"><input type="checkbox" data-task="s8-2"></label>
+          <label class="task-check"><input type="checkbox" data-task="s10-2"></label>
           <span class="label-text">Git インストール（入っていない場合のみ）</span><span class="env-tag wsl">WSL Ubuntu</span>
         </div>
         <pre><span class="cmd">sudo apt</span> install -y git</pre>
@@ -1670,7 +1928,7 @@
 
       <div class="code-block env-wsl">
         <div class="code-label">
-          <label class="task-check"><input type="checkbox" data-task="s8-3"></label>
+          <label class="task-check"><input type="checkbox" data-task="s10-3"></label>
           <span class="label-text">ユーザー情報の設定</span><span class="env-tag wsl">WSL Ubuntu</span>
         </div>
         <pre><span class="cmd">git</span> config --global user.name <span class="str">"Your Name"</span>
@@ -1681,7 +1939,7 @@
 
       <div class="code-block env-wsl">
         <div class="code-label">
-          <label class="task-check"><input type="checkbox" data-task="s8-4"></label>
+          <label class="task-check"><input type="checkbox" data-task="s10-4"></label>
           <span class="label-text">デフォルトブランチと改行コードの設定</span><span class="env-tag wsl">WSL Ubuntu</span>
         </div>
         <pre><span class="cmd">git</span> config --global init.defaultBranch main
@@ -1694,10 +1952,10 @@
       </div>
     </div>
 
-    <!-- STEP 9 -->
-    <div class="section" id="s9">
+    <!-- STEP 11 -->
+    <div class="section" id="s11">
       <div class="section-header">
-        <div class="step-badge">STEP 9</div>
+        <div class="step-badge">STEP 11</div>
         <h2>GitHub HTTPS 連携 &amp; PR</h2>
         <span class="tag required">必須</span>
       </div>
@@ -1719,7 +1977,7 @@
 
           <div class="code-block env-wsl">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s9-1"></label>
+              <label class="task-check"><input type="checkbox" data-task="s11-1"></label>
               <span class="label-text">credential helper の設定</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
             <pre><span class="cmd">git</span> config --global credential.helper store</pre>
@@ -1729,7 +1987,7 @@
 
           <div class="code-block env-wsl">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s9-2"></label>
+              <label class="task-check"><input type="checkbox" data-task="s11-2"></label>
               <span class="label-text">projects ディレクトリを作成してクローン</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
             <pre><span class="cmd">mkdir</span> -p ~/projects
@@ -1760,7 +2018,7 @@
 
           <div class="code-block env-win">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s9-3"></label>
+              <label class="task-check"><input type="checkbox" data-task="s11-3"></label>
               <span class="label-text">credential helper の確認</span><span class="env-tag win">Windows（PowerShell）</span>
             </div>
             <pre><span class="cmd">git</span> config --global credential.helper</pre>
@@ -1770,7 +2028,7 @@
 
           <div class="code-block env-win">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s9-4"></label>
+              <label class="task-check"><input type="checkbox" data-task="s11-4"></label>
               <span class="label-text">GCM を有効化（未設定の場合のみ）</span><span class="env-tag win">Windows（PowerShell）</span>
             </div>
             <pre><span class="cmd">git</span> config --global credential.helper manager</pre>
@@ -1789,13 +2047,13 @@
 
       <div class="step-grid">
         <div class="step-main">
-          <div class="section-group-label">9-3 PR を作れるようにする（2026-08 追記）</div>
+          <div class="section-group-label">11-3 PR を作れるようにする</div>
 
           <p>Claude Code から PR を作ろうとすると失敗する、という現象がよく報告されます。<strong>原因はサンドボックスではありません。</strong>実測で切り分けた結果、通信・認証・書き込み権限はいずれも正常でした。フラグをすべて明示すれば解決します。</p>
 
           <div class="code-block env-wsl">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s9-5"></label>
+              <label class="task-check"><input type="checkbox" data-task="s11-5"></label>
               <span class="label-text">非対話での PR 作成</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
             <pre><span class="cmd">gh</span> pr create \
@@ -1830,7 +2088,7 @@
 
       <div class="step-grid">
         <div class="step-main">
-          <div class="section-group-label">9-4 PR 作成手順を skill として固定する</div>
+          <div class="section-group-label">11-4 PR 作成手順を skill として固定する</div>
 
           <p>毎回 AI に正しいフラグを思い出させるのではなく、手順書ファイル（skill）として固定するのが確実です。配置先は <span class="inline-code">~/.claude/skills/create-pr/SKILL.md</span>。内容は本リポジトリの <span class="inline-code">skills/create-pr/SKILL.md</span> にあります。</p>
 
@@ -1857,17 +2115,17 @@
       </div>
     </div>
 
-    <!-- STEP 10 -->
-    <div class="section" id="s10">
+    <!-- STEP 12 -->
+    <div class="section" id="s12">
       <div class="section-header">
-        <div class="step-badge">STEP 10</div>
+        <div class="step-badge">STEP 12</div>
         <h2>ブラウザ確認環境（AI に画面を見せる）</h2>
         <span class="tag required">必須</span>
       </div>
 
       <p>Claude Code が作った画面を、AI 自身に確認させるための設定です。Web 開発をするなら<strong>これが無いと「見た目が正しいか」を人間が毎回目視する</strong>ことになります。Web アプリ開発を前提とするこのガイドでは必須の STEP です。</p>
 
-      <div class="section-group-label">10-1 MCP サーバーの登録</div>
+      <div class="section-group-label">12-1 MCP サーバーの登録</div>
 
       <div class="step-grid">
         <div class="step-main">
@@ -1878,7 +2136,7 @@
 
           <div class="code-block env-outside">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s10-1"></label>
+              <label class="task-check"><input type="checkbox" data-task="s12-1"></label>
               <span class="label-text">Playwright MCP を登録</span><span class="env-tag outside">Claude Code の外</span>
             </div>
             <pre><span class="cmd">claude</span> mcp add playwright --scope user -- npx @playwright/mcp@latest \
@@ -1890,7 +2148,7 @@
 
           <div class="code-block env-wsl">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s10-2"></label>
+              <label class="task-check"><input type="checkbox" data-task="s12-2"></label>
               <span class="label-text">登録できたか確認（✔ Connected になること）</span><span class="env-tag wsl">WSL Ubuntu</span>
             </div>
             <pre><span class="cmd">claude</span> mcp list</pre>
@@ -1913,7 +2171,7 @@
 
       <div class="step-grid">
         <div class="step-main">
-          <div class="section-group-label">10-2 ブラウザ本体と依存パッケージ</div>
+          <div class="section-group-label">12-2 ブラウザ本体と依存パッケージ</div>
 
           <div class="notice warn">
             <span class="notice-icon">⚠️</span>
@@ -1922,7 +2180,7 @@
 
           <div class="code-block env-outside">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s10-3"></label>
+              <label class="task-check"><input type="checkbox" data-task="s12-3"></label>
               <span class="label-text">ブラウザ本体・依存ライブラリ・日本語フォント</span><span class="env-tag outside">Claude Code の外</span>
             </div>
             <pre><span class="cmd">npx</span> @playwright/mcp install-browser chrome-for-testing
@@ -1950,7 +2208,7 @@
 
       <div class="step-grid">
         <div class="step-main">
-          <div class="section-group-label">10-3 最後の一手：開発サーバーを壁の外に出す</div>
+          <div class="section-group-label">12-3 最後の一手：開発サーバーを壁の外に出す</div>
 
           <p>ここが<strong>最も見落としやすい</strong>ところです。MCP のブラウザは壁の外にいますが、<span class="inline-code">npm run dev</span> で起動する開発サーバーは<strong>壁の中</strong>にいます。このままでは両者は通信できません。<span class="inline-code">sandbox.excludedCommands</span> に開発サーバーの起動コマンドを登録すると、<strong>そのプロセスだけがサンドボックスの外</strong>に立ち、ブラウザと同じネットワークで動きます（設定は settings.json 作成時に済ませてあります）。使うフレームワークに合わせて <span class="inline-code">"npx vite *"</span> などを追加してください（広いパターンは避けること）。</p>
         </div>
@@ -1968,13 +2226,13 @@
 
       <div class="step-grid">
         <div class="step-main">
-          <div class="section-group-label">10-4 動作確認</div>
+          <div class="section-group-label">12-4 動作確認</div>
 
           <p>Claude Code のセッション内で、開発サーバーを起動してから次のように指示します。</p>
 
           <div class="code-block env-cc">
             <div class="code-label">
-              <label class="task-check"><input type="checkbox" data-task="s10-4"></label>
+              <label class="task-check"><input type="checkbox" data-task="s12-4"></label>
               <span class="label-text">指示の例</span><span class="env-tag cc">Claude Code セッション内</span>
             </div>
             <pre>http://localhost:5173 を開いてスクリーンショットを撮って、
@@ -1984,7 +2242,7 @@
         <aside class="step-aside">
           <div class="step-aside-label">補足・任意設定</div>
           <details>
-            <summary>▶ 複数ブラウザ同時起動とキャッシュに関する注意（実測・任意）</summary>
+            <summary>▶ 複数ブラウザ同時起動とキャッシュに関する注意（任意）</summary>
             <div class="details-body">
               <p><strong>WSL2 特有の注意：</strong> ブラウザを複数同時に立ち上げると、GPU メモリの制約で連鎖クラッシュする既知の問題があります。並列実行は避けてください。</p>
               <p><strong>ページを更新したのに反映されないとき：</strong> URL の末尾に <span class="inline-code">?v=2</span> のようなパラメータを付けると確実に再読み込みされます（ハッシュだけの変更ではリロードされないため）。</p>
@@ -2005,10 +2263,10 @@
       </div>
     </div>
 
-    <!-- STEP 11 -->
-    <div class="section" id="s11">
+    <!-- STEP 13 -->
+    <div class="section" id="s13">
       <div class="section-header">
-        <div class="step-badge">STEP 11</div>
+        <div class="step-badge">STEP 13</div>
         <h2>Windows Terminal の設定（任意・推奨）</h2>
         <span class="tag recommend">推奨</span>
       </div>
@@ -2034,10 +2292,10 @@
       </div>
     </div>
 
-    <!-- STEP 12 -->
-    <div class="section" id="s12">
+    <!-- STEP 14 -->
+    <div class="section" id="s14">
       <div class="section-header">
-        <div class="step-badge">STEP 12</div>
+        <div class="step-badge">STEP 14</div>
         <h2>Zed / VS Code のターミナルを WSL2 に向ける（任意）</h2>
         <span class="tag recommend">推奨</span>
       </div>
@@ -2050,7 +2308,7 @@
 
       <div class="code-block env-win">
         <div class="code-label">
-          <label class="task-check"><input type="checkbox" data-task="s12-1"></label>
+          <label class="task-check"><input type="checkbox" data-task="s14-1"></label>
           <span class="label-text">Zed — settings.json に追加</span><span class="env-tag win">Windows</span>
         </div>
         <pre>{
@@ -2071,7 +2329,7 @@
 
       <div class="code-block env-win">
         <div class="code-label">
-          <label class="task-check"><input type="checkbox" data-task="s12-2"></label>
+          <label class="task-check"><input type="checkbox" data-task="s14-2"></label>
           <span class="label-text">VS Code — settings.json に追加</span><span class="env-tag win">Windows</span>
         </div>
         <pre>{
@@ -2092,7 +2350,75 @@
 
       <div class="checkpoint">
         <span class="notice-icon">✅</span>
-        <p><strong>ここまでできれば次へ：</strong> エディタ内蔵ターミナルで Ubuntu プロンプトが表示され、<span class="inline-code">claude --version</span> が通れば完了です。これでセットアップはすべて完了です。</p>
+        <p><strong>ここまでできれば次へ：</strong> エディタ内蔵ターミナルで Ubuntu プロンプトが表示され、<span class="inline-code">claude --version</span> が通れば完了です。必須の STEP はここまでで完了です（STEP 15 は任意）。</p>
+      </div>
+    </div>
+
+    <!-- STEP 15（新設） -->
+    <div class="section" id="s15">
+      <div class="section-header">
+        <div class="step-badge">STEP 15</div>
+        <h2>dotenvx による .env ファイル暗号化（任意）</h2>
+        <span class="tag optional">任意</span>
+      </div>
+
+      <div class="step-grid">
+        <div class="step-main">
+          <p><span class="inline-code">dotenvx</span> は <span class="inline-code">.env</span> ファイルをコミット前に暗号化するツールです。暗号化済みの <span class="inline-code">.env</span> はリポジトリにそのまま含められ、復号鍵は <span class="inline-code">.env.keys</span> に分離して管理します。</p>
+
+          <div class="notice info">
+            <span class="notice-icon">ℹ️</span>
+            <p>STEP 6 で設定した <span class="inline-code">permissions.deny</span> / <span class="inline-code">sandbox.filesystem.denyRead</span>（<span class="inline-code">.env</span> の読み取り拒否）だけでも保護としては機能します。dotenvx は、<strong>Git リポジトリで .env を複数人・複数環境で共有・管理したい場合</strong>に有効な追加手段です。</p>
+          </div>
+
+          <div class="section-group-label">15-1 インストール（Linux / WSL2）</div>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s15-1"></label>
+              <span class="label-text">dotenvx インストール（Linux x64）</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">curl</span> -fsSL https://github.com/dotenvx/dotenvx/releases/latest/download/dotenvx-linux-x64.tar.gz \
+  -o /tmp/dotenvx.tar.gz \
+  && tar xzf /tmp/dotenvx.tar.gz -C /tmp/ \
+  && mv /tmp/dotenvx ~/.local/bin/
+<span class="cmd">dotenvx</span> --version</pre>
+          </div>
+
+          <div class="section-group-label">15-2 使い方</div>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s15-2"></label>
+              <span class="label-text">.env を暗号化（プロジェクトルートで実行）</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">dotenvx</span> encrypt
+<span class="comment"># .env が暗号化され、復号鍵が .env.keys に書き出される</span>
+<span class="comment"># .env.keys は .gitignore に追加し、安全な場所で保管すること</span></pre>
+          </div>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s15-3"></label>
+              <span class="label-text">暗号化済み .env を使ってコマンドを実行</span><span class="env-tag wsl">WSL Ubuntu</span>
+            </div>
+            <pre><span class="cmd">dotenvx</span> run -- node server.js</pre>
+          </div>
+
+          <div class="code-block env-wsl">
+            <div class="code-label">
+              <label class="task-check"><input type="checkbox" data-task="s15-4"></label>
+              <span class="label-text">.gitignore に .env.keys を追加</span><span class="env-tag file">.gitignore</span>
+            </div>
+            <pre>.env.keys</pre>
+          </div>
+        </div>
+        <aside class="step-aside"></aside>
+      </div>
+
+      <div class="checkpoint">
+        <span class="notice-icon">✅</span>
+        <p><strong>ここまでできれば次へ：</strong> <span class="inline-code">dotenvx encrypt</span> で <span class="inline-code">.env</span> が暗号化され、<span class="inline-code">.env.keys</span> が <span class="inline-code">.gitignore</span> に追加されていれば完了です。これで、すべての STEP（任意を含む）が完了です。</p>
       </div>
     </div>
 
@@ -2138,6 +2464,70 @@
         </tr>
       </table>
 
+      <div class="section-group-label">メンテナンス</div>
+
+      <p>Claude Code は編集バックアップを <span class="inline-code">~/.claude/file-history/</span> に自動で蓄積します。放置するとディスク使用量が数十 MB 以上になる場合があるため、定期的に削除する仕組みを入れておきます。</p>
+
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="tips-maint-1"></label>
+          <span class="label-text">file-history のサイズ確認</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
+        <pre><span class="cmd">du</span> -sh ~/.claude/file-history/ 2>/dev/null || <span class="cmd">echo</span> <span class="str">"ディレクトリなし"</span></pre>
+      </div>
+
+      <p>今すぐ削除したい場合は以下を実行します。</p>
+
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="tips-maint-2"></label>
+          <span class="label-text">手動で即座に削除</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
+        <pre><span class="cmd">find</span> ~/.claude/file-history -mindepth 1 -delete</pre>
+      </div>
+
+      <p>毎回手動で消すのは面倒なので、cron で毎日 0 時に自動削除する設定を入れておきます。</p>
+
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="tips-maint-3"></label>
+          <span class="label-text">crontab を編集</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
+        <pre><span class="cmd">crontab</span> -e</pre>
+      </div>
+
+      <p>エディタが開いたら末尾に以下を追加します。</p>
+
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="tips-maint-4"></label>
+          <span class="label-text">cron エントリ（毎日 0:00 に自動削除）</span><span class="env-tag file">crontab</span>
+        </div>
+        <pre>0 0 * * * find $HOME/.claude/file-history -mindepth 1 -delete >> /tmp/file-history-cleanup.log 2>&amp;1</pre>
+      </div>
+
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="tips-maint-5"></label>
+          <span class="label-text">設定確認</span><span class="env-tag wsl">WSL Ubuntu</span>
+        </div>
+        <pre><span class="cmd">crontab</span> -l</pre>
+      </div>
+
+      <div class="notice info">
+        <span class="notice-icon">ℹ️</span>
+        <p>WSL2 環境では cron デーモンが自動起動しない場合があります。<span class="inline-code">sudo service cron start</span> で起動するか、<span class="inline-code">/etc/wsl.conf</span> に以下を追記して自動起動させてください。</p>
+      </div>
+
+      <div class="code-block env-wsl">
+        <div class="code-label">
+          <label class="task-check"><input type="checkbox" data-task="tips-maint-6"></label>
+          <span class="label-text">WSL2 で cron を自動起動（/etc/wsl.conf に追記）</span><span class="env-tag file">/etc/wsl.conf</span>
+        </div>
+        <pre>[boot]
+<span class="val">command</span> = service cron start</pre>
+      </div>
+
       <div class="section-group-label">Windows側（ネイティブ）との使い分け</div>
 
       <table>
@@ -2173,7 +2563,7 @@
         </tr>
       </table>
 
-      <div class="section-group-label">実行場所の使い分け（2026-08 追記・実測）</div>
+      <div class="section-group-label">実行場所の使い分け</div>
 
       <p>このガイドで最も事故が起きやすいのが<strong>「そのコマンドをどこで実行するか」</strong>です。サンドボックスは Claude Code 自身の設定ファイルを <span class="inline-code">/dev/null</span> にマウントして保護しており、<strong>書き込みがエラーにならず黙って捨てられる</strong>ケースがあります。</p>
 
@@ -2246,12 +2636,12 @@
         </tr>
       </table>
 
-      <div class="notice info">
-        <span class="notice-icon">ℹ️</span>
-        <p><strong>より詳しい背景と検証記録：</strong> 各設定を選んだ理由、実測データ、段階的な自律化のロードマップは <a href="./claude-code-2026-setup-proposal.html" style="color: var(--accent);">業務セットアップ改善提案</a> にまとめてあります。</p>
-      </div>
-
     </div>
+
+    <footer style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px;">
+      <p>この手順で採用した設定の設計判断・実測データ・検討の経緯は claude-code-design-notes.html に記録しています。<br>
+      セットアップには不要です。「なぜこの設定なのか」を後から確認したいときにご覧ください。</p>
+    </footer>
 
   </main>
 </div>
